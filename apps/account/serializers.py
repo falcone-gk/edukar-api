@@ -19,12 +19,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = User
         fields = ('username', 'email', 'first_name', 'last_name', 'password', 'profile')
 
-    def get_fields(self):
-
-        fields = super(UserProfileSerializer, self).get_fields()
-        print(fields.values())
-        return fields
-
     def create(self, validated_data):
 
         # Removing profile dict from main json
