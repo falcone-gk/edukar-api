@@ -50,7 +50,7 @@ class UserTestCase(TestCase):
         duplicate_user_msg = {"username":["A user with that username already exists."]}
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), duplicate_user_msg)
-    
+
     #def test_failed_user_creation(self):
 
     #    json_form = {

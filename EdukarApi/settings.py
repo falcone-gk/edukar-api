@@ -36,6 +36,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     # Custom apps installed
     'account',
+    'forum',
 
     'django.contrib.admin',
     'django.contrib.auth',
