@@ -7,7 +7,7 @@ from django.utils import timezone
 class BaseContentPublication(models.Model):
 
     author = models.ForeignKey(User, on_delete=models.CASCADE)
-    body = models.CharField(max_length=255)
+    body = models.TextField()
     date = models.DateTimeField(default=timezone.now)
     likes = models.ManyToManyField(User, default=None, blank=True, related_name='liked_content')
 
@@ -43,16 +43,16 @@ class Post(BaseContentPublication):
     SECTION_CHOICES = [
         ('Cursos', (
                 ('aritmetica', 'Aritmética'),
-                ('rm', 'Razonmaiento Matemático'),
+                ('rm', 'Razonamiento Matemático'),
                 ('quimica', 'Química')
             ),
         ),
         ('articulos-y-noticias', 'Artículos y Noticias')
     ]
 
-    section = models.CharField(choices=SECTION_CHOICES, max_length=255)
-    title = models.CharField(max_length=255)
-    slug = models.SlugField(max_length=255, null=True, blank=True, unique=True)
+    section = models.CharField(choices=SECTION_CHOICES, max_length=30)
+    title = models.CharField(max_length=100)
+    slug = models.SlugField(max_length=100, null=True, blank=True, unique=True)
 
     def __str__(self):
 
