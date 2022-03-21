@@ -38,19 +38,27 @@ class BaseContentPublication(models.Model):
     class Meta:
         abstract = True
 
+class Section(models.Model):
+    name = models.CharField(max_length=50)
+    slug = models.SlugField(max_length=60, null=True, blank=True, unique=True)
+
+    def __str__(self):
+
+        return self.name
+
+class Subsection(models.Model):
+    section = models.ForeignKey(Section, on_delete=models.CASCADE, related_name='subsection')
+    name = models.CharField(max_length=50)
+    slug = models.SlugField(max_length=60, null=True, blank=True, unique=True)
+
+    def __str__(self):
+
+        return self.name
+
 class Post(BaseContentPublication):
 
-    SECTION_CHOICES = [
-        ('Cursos', (
-                ('aritmetica', 'Aritmética'),
-                ('rm', 'Razonamiento Matemático'),
-                ('quimica', 'Química')
-            ),
-        ),
-        ('articulos-y-noticias', 'Artículos y Noticias')
-    ]
-
-    section = models.CharField(choices=SECTION_CHOICES, max_length=30)
+    section = models.ForeignKey(Section, on_delete=models.CASCADE, related_name='posts')
+    subsection = models.ForeignKey(Subsection, on_delete=models.CASCADE, related_name='posts', null=True, blank=True)
     title = models.CharField(max_length=100)
     slug = models.SlugField(max_length=100, null=True, blank=True, unique=True)
 
