@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 
 from rest_framework import status
+from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 
 from account.models import Profile
@@ -150,3 +151,39 @@ class TokenAuthTests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), {"non_field_errors":["Unable to log in with provided credentials."]})
+
+class UserTestsWithToken(TestCase):
+
+    def setUp(self):
+
+        json_form = {
+            'username': 'testuser',
+            'email': 'testuser@example.com',
+            'first_name': 'testuser',
+            'last_name': 'testuser',
+            'password': 'testpassword',
+            'profile': {
+                'about_me': 'testing about me'
+            }
+        }
+
+        profile = json_form.pop('profile')
+        self.user = User.objects.create_user(**json_form)
+        Profile.objects.create(user=self.user, **profile)
+        self.token, _ = Token.objects.get_or_create(user=self.user)
+
+    def test_get_username_by_token(self):
+
+        client = APIClient()
+        response = client.get(reverse('account:get-username', kwargs={'token': self.token.key}))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(json.loads(response.content), {"username": "testuser"})
+
+    def test_get_username_by_token_failed(self):
+
+        client = APIClient()
+        response = client.get(reverse('account:get-username', kwargs={'token': 'wrong_token'}))
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(json.loads(response.content), {"detail": "Not found."})

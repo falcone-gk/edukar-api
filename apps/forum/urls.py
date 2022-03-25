@@ -9,8 +9,8 @@ router.register(r'posts', views.CreateUpdatePostAPIView, basename='posts')
 app_name = 'forum'
 urlpatterns = [
     path('sections/', views.GetAllPostBySection.as_view(), name='sections-list'),
-    path('section-posts/<slug:slug>', views.GetPostsListBySection.as_view(), name='section-posts'),
-    path('subsection-posts/<slug:slug>', views.GetPostsListBySubsection.as_view(), name='subsection-posts')
+    path('sections/<slug:slug>', views.GetPostsListBySection.as_view(), name='section-posts'),
+    path('subsection/<slug:slug>', views.GetPostsListBySubsection.as_view(), name='subsection-posts')
 ]
 
 urlpatterns += router.urls

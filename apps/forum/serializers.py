@@ -7,16 +7,17 @@ from forum.models import Post, Section, Subsection
 
 class SubsectionSerializer(serializers.ModelSerializer):
 
-    last_post_title = serializers.SerializerMethodField()
-    last_post_date = serializers.SerializerMethodField()
-    last_post_author = serializers.SerializerMethodField()
+    item1 = serializers.SerializerMethodField()
+    item2 = serializers.SerializerMethodField()
+    item3 = serializers.SerializerMethodField()
 
     class Meta:
 
         model = Subsection
-        fields = ('name', 'last_post_title', 'last_post_date', 'last_post_author')
+        fields = ('name', 'slug', 'item1', 'item2', 'item3')
     
-    def get_last_post_title(self, obj):
+    def get_item1(self, obj):
+        """Returns last post title of the current subsection."""
 
         try:
             post_title = obj.posts.all().latest('date').title
@@ -24,7 +25,8 @@ class SubsectionSerializer(serializers.ModelSerializer):
         except ObjectDoesNotExist:
             return 'No post'
 
-    def get_last_post_author(self, obj):
+    def get_item2(self, obj):
+        """Returns last post author of the current subsection."""
 
         try:
             post_author = obj.posts.all().latest('date').author.username
@@ -32,7 +34,8 @@ class SubsectionSerializer(serializers.ModelSerializer):
         except ObjectDoesNotExist:
             return 'No post'
 
-    def get_last_post_date(self, obj):
+    def get_item3(self, obj):
+        """Returns last post date of the current subsection."""
 
         try:
             post_date = obj.posts.all().latest('date').get_time_difference()
@@ -47,26 +50,31 @@ class SectionSerializer(serializers.ModelSerializer):
     class Meta:
 
         model = Section
-        fields = ('name', 'subsection')
+        fields = ('name', 'slug', 'subsection')
 
 class PostDescriptionSerializer(serializers.ModelSerializer):
 
-    published = serializers.CharField(source='get_time_difference')
-    author = serializers.StringRelatedField()
+    name = serializers.CharField(source='title')
+
+    # Item 1 is post author username
+    item1 = serializers.CharField(source='author.username')
+
+    # Item 2 is post date
+    item2 = serializers.CharField(source='get_time_difference')
 
     class Meta:
 
         model = Post
-        fields = ('title', 'author', 'published')
+        fields = ('name', 'slug', 'item1', 'item2')
 
 class SectionWithPosts(serializers.ModelSerializer):
 
-    posts = PostDescriptionSerializer(many=True)
+    subsection = PostDescriptionSerializer(many=True, source='posts')
 
     class Meta:
 
         model = Section
-        fields = ('name', 'posts',)
+        fields = ('name', 'slug', 'subsection',)
 
 class CreatePostSerializer(serializers.ModelSerializer):
 
