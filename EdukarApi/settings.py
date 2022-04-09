@@ -135,7 +135,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
-CORS_ALLOWED_ORIGINS = ["http://127.0.0.1:8080"]
+CORS_ALLOWED_ORIGINS = ["http://127.0.0.1:8080", "http://localhost:8080"]
 
 STATIC_URL = 'static/'
 MEDIA_URL = 'media/'
