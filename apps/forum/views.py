@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 
 from forum.models import Post, Section, Subsection
 from forum.permissions import IsAuthorOrReadOnly
-from forum.serializers import SectionSerializer, SectionWithPosts, CreatePostSerializer, UpdatePostSerializer
+from forum.serializers import SectionSerializer, SectionWithPosts, SubsectionWithPosts, CreatePostSerializer, UpdatePostSerializer
 
 # Create your views here.
 
@@ -35,7 +35,7 @@ class GetPostsListBySection(generics.RetrieveAPIView):
 class GetPostsListBySubsection(generics.RetrieveAPIView):
 
     queryset = Subsection.objects.all()
-    serializer_class = SectionWithPosts
+    serializer_class = SubsectionWithPosts
     lookup_field = 'slug'
 
 class CreateUpdatePostAPIView(

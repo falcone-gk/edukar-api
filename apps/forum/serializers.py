@@ -76,6 +76,16 @@ class SectionWithPosts(serializers.ModelSerializer):
         model = Section
         fields = ('name', 'slug', 'subsection',)
 
+class SubsectionWithPosts(serializers.ModelSerializer):
+
+    section = serializers.SlugRelatedField(read_only=True, slug_field='slug')
+    subsection = PostDescriptionSerializer(many=True, source='posts')
+
+    class Meta:
+
+        model = Subsection
+        fields = ('name', 'slug', 'section', 'subsection')
+
 class CreatePostSerializer(serializers.ModelSerializer):
 
     author = serializers.HiddenField(default=serializers.CurrentUserDefault())
