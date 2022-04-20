@@ -95,6 +95,23 @@ class UserTestCase(TestCase):
         error_user_msg = {"username":["This field is required."]}
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), error_user_msg)
+
+    def test_create_user_failed_no_profile_field(self):
+
+        user_form = self.json_form.copy()
+        user_form.pop('profile', None)
+
+        client = APIClient()
+        response = client.post(
+            reverse('account:create_account'),
+            user_form,
+            format='json'
+        )
+
+        error_user_msg = {"profile":["This field is required."]}
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(json.loads(response.content), error_user_msg)
+
     #def test_failed_user_creation(self):
 
     #    json_form = {
