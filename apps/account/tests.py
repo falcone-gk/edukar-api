@@ -45,10 +45,12 @@ class UserTestCase(TestCase):
         msg = {'success': 'Cuentra creada correctamente!'}
         self.assertEqual(json.loads(response.content), msg)
 
-    def test_create_user_failed_duplicate(self):
+    def test_create_user_failed_duplicate_username(self):
 
         user_form = self.json_form.copy()
+        user_form['email'] = 'test2@example.com'
         profile = user_form.pop('profile')
+
         user = User.objects.create_user(**user_form)
         Profile.objects.create(user=user, **profile)
 
@@ -63,6 +65,43 @@ class UserTestCase(TestCase):
         duplicate_user_msg = {"username":["A user with that username already exists."]}
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), duplicate_user_msg)
+
+    def test_create_user_failed_duplicate_email(self):
+
+        user_form = self.json_form.copy()
+        user_form['username'] = 'testuser2'
+        profile = user_form.pop('profile')
+
+        user = User.objects.create_user(**user_form)
+        Profile.objects.create(user=user, **profile)
+
+        # Testing duplicated user error message
+        client = APIClient()
+        response = client.post(
+            reverse('account:create_account'),
+            self.json_form,
+            format='json'
+        )
+
+        duplicate_user_msg = {"email":["Email already in use"]}
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(json.loads(response.content), duplicate_user_msg)
+
+    def test_create_user_failed_no_profile_field(self):
+
+        user_form = self.json_form.copy()
+        user_form.pop('profile', None)
+
+        client = APIClient()
+        response = client.post(
+            reverse('account:create_account'),
+            user_form,
+            format='json'
+        )
+
+        error_user_msg = {"profile":["This field is required."]}
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(json.loads(response.content), error_user_msg)
 
     def test_create_user_failed_no_password(self):
 
@@ -96,10 +135,10 @@ class UserTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), error_user_msg)
 
-    def test_create_user_failed_no_profile_field(self):
+    def test_create_user_failed_no_email(self):
 
         user_form = self.json_form.copy()
-        user_form.pop('profile', None)
+        user_form.pop('email', None)
 
         client = APIClient()
         response = client.post(
@@ -108,34 +147,25 @@ class UserTestCase(TestCase):
             format='json'
         )
 
-        error_user_msg = {"profile":["This field is required."]}
+        error_user_msg = {"email":["This field is required."]}
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), error_user_msg)
 
-    #def test_failed_user_creation(self):
+    def test_create_user_failed_wrong_email_format(self):
 
-    #    json_form = {
-    #        'username': 'testuser',
-    #        'email': 'testuser@example.com',
-    #        'first_name': 'testuser',
-    #        'last_name': 'testuser',
-    #        'password': 'testpassword',
-    #        'profile': {
-    #            'about_me': 'testing about me'
-    #        }
-    #    }
+        user_form = self.json_form.copy()
+        user_form['email'] = 'wrong_email'
 
-    #    client = APIClient()
+        client = APIClient()
+        response = client.post(
+            reverse('account:create_account'),
+            user_form,
+            format='json'
+        )
 
-    #    response = client.post(
-    #        reverse('account:create_account'),
-    #        json_form,
-    #        format='json'
-    #    )
-
-    #    json_form.pop('email')
-    #    print(response.content)
-    #    self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        error_user_msg = {"email":["Enter a valid email address."]}
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(json.loads(response.content), error_user_msg)
 
 class TokenAuthTests(TestCase):
 
