@@ -14,12 +14,19 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 class UserProfileSerializer(serializers.ModelSerializer):
 
+    email = serializers.EmailField(required=True)
     profile = ProfileSerializer()
 
     class Meta:
 
         model = User
         fields = ('username', 'email', 'first_name', 'last_name', 'password', 'profile')
+
+    def validate_email(self, value=None):
+
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Email already in use")
+        return value
 
     def create(self, validated_data):
 
