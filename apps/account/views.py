@@ -1,6 +1,8 @@
-from django.http import Http404
+from django_email_verification import verify_token
+from django.http import Http404, HttpResponse
 from rest_framework import generics, status, views
 from rest_framework.authtoken.models import Token
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from account.serializers import UserProfileSerializer, TokenSerializer
@@ -23,6 +25,17 @@ class CreateUserAPIView(generics.CreateAPIView):
         # Sending a success message instead of object (default).
         msg = {'success': 'Cuentra creada correctamente!'}
         return Response(msg, status=status.HTTP_201_CREATED)
+
+@api_view()
+def confirm(request, token):
+    success, user = verify_token(token)
+    if success:
+        msg = {
+            'success': 'Cuenta verificada',
+            'username': user.username
+        }
+        return Response(msg)
+    return Response({'error': 'Token no existe o ya ha sido usado!'})
 
 class GetUsernameByToken(views.APIView):
 
