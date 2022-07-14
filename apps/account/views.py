@@ -31,8 +31,7 @@ def confirm(request, token):
     success, user = verify_token(token)
     if success:
         msg = {
-            'success': 'Cuenta verificada',
-            'username': user.username
+            'success': f'Cuenta verificada {user.username}',
         }
         return Response(msg)
     return Response({'error': 'Token no existe o ya ha sido usado!'})
