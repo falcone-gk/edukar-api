@@ -12,7 +12,7 @@ from account.models import Profile
 
 # Create your tests here.
 
-class UserTestCase(TestCase):
+class CreateUserTests(TestCase):
 
     def setUp(self):
 
@@ -22,11 +22,6 @@ class UserTestCase(TestCase):
             'first_name': 'testuser',
             'last_name': 'testuser',
             'password': 'testpassword',
-            'profile': {
-                # This field is not required but 'profile' field it is required
-                # even though it is empty.
-                'about_me': 'testing about me'
-            }
         }
 
     def test_create_user(self):
@@ -47,15 +42,17 @@ class UserTestCase(TestCase):
 
     def test_create_user_failed_duplicate_username(self):
 
+        client = APIClient()
+
         user_form = self.json_form.copy()
         user_form['email'] = 'test2@example.com'
-        profile = user_form.pop('profile')
-
-        user = User.objects.create_user(**user_form)
-        Profile.objects.create(user=user, **profile)
+        client.post(
+            reverse('account:create_account'),
+            user_form,
+            format='json'
+        )
 
         # Testing duplicated user error message
-        client = APIClient()
         response = client.post(
             reverse('account:create_account'),
             self.json_form,
@@ -68,15 +65,17 @@ class UserTestCase(TestCase):
 
     def test_create_user_failed_duplicate_email(self):
 
+        client = APIClient()
+
         user_form = self.json_form.copy()
         user_form['username'] = 'testuser2'
-        profile = user_form.pop('profile')
-
-        user = User.objects.create_user(**user_form)
-        Profile.objects.create(user=user, **profile)
+        client.post(
+            reverse('account:create_account'),
+            user_form,
+            format='json'
+        )
 
         # Testing duplicated user error message
-        client = APIClient()
         response = client.post(
             reverse('account:create_account'),
             self.json_form,
@@ -87,26 +86,10 @@ class UserTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), duplicate_user_msg)
 
-    def test_create_user_failed_no_profile_field(self):
-
-        user_form = self.json_form.copy()
-        user_form.pop('profile', None)
-
-        client = APIClient()
-        response = client.post(
-            reverse('account:create_account'),
-            user_form,
-            format='json'
-        )
-
-        error_user_msg = {"profile":["This field is required."]}
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(json.loads(response.content), error_user_msg)
-
     def test_create_user_failed_no_password(self):
 
         user_form = self.json_form.copy()
-        user_form.pop('password', None)
+        user_form.pop('password')
 
         client = APIClient()
         response = client.post(
@@ -122,7 +105,7 @@ class UserTestCase(TestCase):
     def test_create_user_failed_no_username(self):
 
         user_form = self.json_form.copy()
-        user_form.pop('username', None)
+        user_form.pop('username')
 
         client = APIClient()
         response = client.post(
@@ -138,7 +121,7 @@ class UserTestCase(TestCase):
     def test_create_user_failed_no_email(self):
 
         user_form = self.json_form.copy()
-        user_form.pop('email', None)
+        user_form.pop('email')
 
         client = APIClient()
         response = client.post(
