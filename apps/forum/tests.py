@@ -7,8 +7,8 @@ from django.urls import reverse
 from django.utils.text import slugify
 
 from rest_framework import status
-from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from forum.models import Post, Section, Subsection
 from account.models import Profile
@@ -58,7 +58,8 @@ class BaseSetup(TestCase):
         Profile.objects.create(user=self.user, **profile)
 
         # Getting user token
-        self.token, _ = Token.objects.get_or_create(user=self.user)
+        refresh = RefreshToken.for_user(self.user)
+        self.access = str(refresh.access_token)
 
         # Creating section and subsection
         self.section = Section.objects.create(name='Cursos')
@@ -76,7 +77,7 @@ class PostCreateTestCase(BaseSetup):
         }
 
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+        client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access)
         response = client.post(
             reverse('forum:posts-list'),
             post_form,
@@ -117,7 +118,7 @@ class PostCreateTestCase(BaseSetup):
         }
 
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+        client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access)
 
         # Removing body field.
         post_form.pop('body')
@@ -171,7 +172,7 @@ class PostUpdateTestCase(BaseSetup):
     def test_update_post_success(self):
 
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+        client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access)
 
         response = client.put(
             reverse('forum:posts-detail', kwargs={'pk': self.post.pk}), 
@@ -216,10 +217,11 @@ class PostUpdateTestCase(BaseSetup):
         profile2 = json_form.pop('profile')
         user2 = User.objects.create_user(**json_form)
         Profile.objects.create(user=user2, **profile2)
-        token, _ = Token.objects.get_or_create(user=user2)
+        refresh = RefreshToken.for_user(user2)
+        access = str(refresh.access_token)
 
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+        client.credentials(HTTP_AUTHORIZATION='Bearer ' + access)
 
         response = client.put(
             reverse('forum:posts-detail', kwargs={'pk': self.post.pk}), 
