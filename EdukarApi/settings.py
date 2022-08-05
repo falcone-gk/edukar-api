@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 import environ
 import sys
 import os
+from datetime import timedelta
 from pathlib import Path
 
 # Importing environment variables from .env file.
@@ -52,15 +53,22 @@ INSTALLED_APPS = [
 
     # Packages installed
     'rest_framework',
-    'rest_framework.authtoken',
     'corsheaders',
 ]
 
 # Rest Framework configuration
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ALGORITHM': 'HS256',
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
 }
 
 MIDDLEWARE = [

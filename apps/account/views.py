@@ -1,6 +1,4 @@
-from django.http import Http404
-from rest_framework import generics, status, views
-from rest_framework.authtoken.models import Token
+from rest_framework import generics, status
 from rest_framework.response import Response
 
 from account.serializers import UserProfileSerializer
@@ -23,15 +21,3 @@ class CreateUserAPIView(generics.CreateAPIView):
         # Sending a success message instead of object (default).
         msg = {'success': 'Cuentra creada correctamente!'}
         return Response(msg, status=status.HTTP_201_CREATED)
-
-class GetUsernameByToken(views.APIView):
-
-    def get_object(self, token):
-        try:
-            return Token.objects.get(key=token)
-        except Token.DoesNotExist:
-            raise Http404
-
-    def get(self, request, token, format=None):
-        token = self.get_object(token)
-        return Response({'username': token.user.username}, status=status.HTTP_200_OK)
