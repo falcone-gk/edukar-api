@@ -1,4 +1,3 @@
-from django_email_verification import send_email
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
@@ -34,7 +33,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
         user = User.objects.create_user(**validated_data)
         user.is_active = False
-        send_email(user)
 
         # Creating profile
         profile = Profile.objects.create(user=user, **profile)

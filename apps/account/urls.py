@@ -6,7 +6,6 @@ from account import views
 app_name = 'account'
 urlpatterns = [
     path('create', views.CreateUserAPIView.as_view(), name='create_account'),
-    path('email/<str:token>/', views.confirm),
     path('login', obtain_auth_token, name='login'),
     path('user/<slug:token>', views.GetUsernameByToken.as_view(), name='get-username'),
 ]

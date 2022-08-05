@@ -53,7 +53,6 @@ INSTALLED_APPS = [
     # Packages installed
     'rest_framework',
     'rest_framework.authtoken',
-    'django_email_verification',
     'corsheaders',
 ]
 
@@ -153,20 +152,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# Email configuration
-
-def verified_callback(user):
-    user.is_active = True
-
-EMAIL_VERIFIED_CALLBACK = verified_callback
-EMAIL_FROM_ADDRESS = 'noreply@gmail.com'
-EMAIL_MAIL_SUBJECT = 'Confirma tu email'
-EMAIL_MAIL_HTML = 'email/mail_body.html'
-EMAIL_MAIL_PLAIN = 'email/mail_body.txt'
-EMAIL_TOKEN_LIFE = 60 * 60
-EMAIL_PAGE_TEMPLATE = 'email/confirm_template.html'
-EMAIL_PAGE_DOMAIN = env('EMAIL_PAGE_DOMAIN')
 
 # For Django Email Backend
 EMAIL_BACKEND = env('EMAIL_BACKEND')
