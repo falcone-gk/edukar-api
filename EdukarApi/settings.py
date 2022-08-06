@@ -53,6 +53,7 @@ INSTALLED_APPS = [
 
     # Packages installed
     'rest_framework',
+    'djoser',
     'corsheaders',
 ]
 
@@ -67,8 +68,16 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ALGORITHM': 'HS256',
-    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_HEADER_TYPES': ('JWT',),
     'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+}
+
+DJOSER = {
+    'PASSWORD_RESET_CONFIRM_URL': '#/password/reset/confirm/{uid}/{token}',
+    'USERNAME_RESET_CONFIRM_URL': '#/username/reset/confirm/{uid}/{token}',
+    'ACTIVATION_URL': '#/activate/{uid}/{token}',
+    'SEND_ACTIVATION_EMAIL': True,
+    'SERIALIZERS': {},
 }
 
 MIDDLEWARE = [
