@@ -6,6 +6,7 @@ from account.models import Profile
 class UserProfileSerializer(serializers.ModelSerializer):
 
     email = serializers.EmailField(required=True)
+    password = serializers.CharField(style={"input_type": "password"}, write_only=True)
     picture = serializers.ImageField(source="profile.picture", required=False)
     about_me = serializers.CharField(source="profile.about_me", required=False)
 
