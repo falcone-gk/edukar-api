@@ -18,16 +18,15 @@ class CreateUserTests(TestCase):
         self.json_form = {
             'username': 'testuser',
             'email': 'testuser@example.com',
-            'first_name': 'testuser',
-            'last_name': 'testuser',
             'password': 'testpassword',
+            're_password': 'testpassword',
         }
 
     def test_create_user(self):
 
         client = APIClient()
         response = client.post(
-            reverse('account:create_account'),
+            reverse('account:user-list'),
             self.json_form,
             format='json'
         )
@@ -36,7 +35,7 @@ class CreateUserTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         # Testing response content
-        msg = {'success': 'Cuentra creada correctamente!'}
+        msg = {'email': 'testuser@example.com', 'id': 1, 'username': 'testuser'}
         self.assertEqual(json.loads(response.content), msg)
 
     def test_create_user_failed_duplicate_username(self):
@@ -46,14 +45,14 @@ class CreateUserTests(TestCase):
         user_form = self.json_form.copy()
         user_form['email'] = 'test2@example.com'
         client.post(
-            reverse('account:create_account'),
+            reverse('account:user-list'),
             user_form,
             format='json'
         )
 
         # Testing duplicated user error message
         response = client.post(
-            reverse('account:create_account'),
+            reverse('account:user-list'),
             self.json_form,
             format='json'
         )
@@ -69,14 +68,14 @@ class CreateUserTests(TestCase):
         user_form = self.json_form.copy()
         user_form['username'] = 'testuser2'
         client.post(
-            reverse('account:create_account'),
+            reverse('account:user-list'),
             user_form,
             format='json'
         )
 
         # Testing duplicated user error message
         response = client.post(
-            reverse('account:create_account'),
+            reverse('account:user-list'),
             self.json_form,
             format='json'
         )
@@ -92,7 +91,7 @@ class CreateUserTests(TestCase):
 
         client = APIClient()
         response = client.post(
-            reverse('account:create_account'),
+            reverse('account:user-list'),
             user_form,
             format='json'
         )
@@ -108,7 +107,7 @@ class CreateUserTests(TestCase):
 
         client = APIClient()
         response = client.post(
-            reverse('account:create_account'),
+            reverse('account:user-list'),
             user_form,
             format='json'
         )
@@ -124,7 +123,7 @@ class CreateUserTests(TestCase):
 
         client = APIClient()
         response = client.post(
-            reverse('account:create_account'),
+            reverse('account:user-list'),
             user_form,
             format='json'
         )
@@ -140,7 +139,7 @@ class CreateUserTests(TestCase):
 
         client = APIClient()
         response = client.post(
-            reverse('account:create_account'),
+            reverse('account:user-list'),
             user_form,
             format='json'
         )
@@ -172,7 +171,7 @@ class TokenAuthTests(TestCase):
 
         client = APIClient()
         response = client.post(
-            reverse('account:token_obtain_pair'), {
+            reverse('account:jwt-create'), {
                 'username': 'testuser',
                 'password': 'testpassword',
             },
@@ -187,7 +186,7 @@ class TokenAuthTests(TestCase):
 
         client = APIClient()
         response = client.post(
-            reverse('account:token_obtain_pair'), {
+            reverse('account:jwt-create'), {
                 'password': 'testpassword',
             },
             format='json'
@@ -196,11 +195,11 @@ class TokenAuthTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), {"username":["This field is required."]})
 
-    def test_token_auth_failed_missing_passowrd(self):
+    def test_token_auth_failed_missing_password(self):
 
         client = APIClient()
         response = client.post(
-            reverse('account:token_obtain_pair'), {
+            reverse('account:jwt-create'), {
                 'username': 'testuser',
             },
             format='json'
@@ -213,7 +212,7 @@ class TokenAuthTests(TestCase):
 
         client = APIClient()
         response = client.post(
-            reverse('account:token_obtain_pair'), {
+            reverse('account:jwt-create'), {
                 # Testing error in both field because it doesn't matter which field is wrong
                 # api will give the same error.
                 'username': 'test_wrong_username',
