@@ -35,7 +35,8 @@ class CreateUserTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         # Testing response content
-        msg = {'email': 'testuser@example.com', 'id': 1, 'username': 'testuser'}
+        msg = {'email': 'testuser@example.com', 'username': 'testuser',
+                'first_name': '', 'last_name': ''}
         self.assertEqual(json.loads(response.content), msg)
 
     def test_create_user_failed_duplicate_username(self):
