@@ -22,7 +22,7 @@ class CreateUserTests(TestCase):
             're_password': 'testpassword',
         }
 
-    def test_create_user(self):
+    def test_create_user_and_check_if_is_not_active(self):
 
         client = APIClient()
         response = client.post(
@@ -38,6 +38,9 @@ class CreateUserTests(TestCase):
         msg = {'email': 'testuser@example.com', 'username': 'testuser',
                 'first_name': '', 'last_name': ''}
         self.assertEqual(json.loads(response.content), msg)
+
+        user = User.objects.get(username='testuser')
+        self.assertFalse(user.is_active)
 
     def test_create_user_failed_duplicate_username(self):
 
