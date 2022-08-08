@@ -77,7 +77,7 @@ class PostCreateTestCase(BaseSetup):
         }
 
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
         response = client.post(
             reverse('forum:posts-list'),
             post_form,
@@ -118,7 +118,7 @@ class PostCreateTestCase(BaseSetup):
         }
 
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
 
         # Removing body field.
         post_form.pop('body')
@@ -172,7 +172,7 @@ class PostUpdateTestCase(BaseSetup):
     def test_update_post_success(self):
 
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
 
         response = client.put(
             reverse('forum:posts-detail', kwargs={'pk': self.post.pk}), 
@@ -221,7 +221,7 @@ class PostUpdateTestCase(BaseSetup):
         access = str(refresh.access_token)
 
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='Bearer ' + access)
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + access)
 
         response = client.put(
             reverse('forum:posts-detail', kwargs={'pk': self.post.pk}), 
