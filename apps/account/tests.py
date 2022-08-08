@@ -1,5 +1,8 @@
 import json
+import re
 
+from django.conf import settings
+from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -151,6 +154,92 @@ class CreateUserTests(TestCase):
         error_user_msg = {"email":["Enter a valid email address."]}
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), error_user_msg)
+
+class EmailVerificationTests(TestCase):
+
+    def setUp(self):
+
+        self.json_form = {
+            'username': 'testuser',
+            'email': 'testuser@example.com',
+            'password': 'testpassword',
+            're_password': 'testpassword',
+        }
+
+        # This POST request will send an email to the user
+        self.client = APIClient()
+        self.client.post(
+            reverse('account:user-list'),
+            self.json_form,
+            format='json'
+        )
+
+    def test_user_recieved_verification_email(self):
+
+        # In 'mail.outbox' we get the email sent by Django.
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [self.json_form['email']])
+        self.assertEqual(mail.outbox[0].from_email, settings.DEFAULT_FROM_EMAIL)
+
+        # Test if email has the correct URL for activation email.
+        domain = settings.DOMAIN
+        activation_url = settings.DJOSER['ACTIVATION_URL'].replace('/{uid}/{token}', '')
+        base_url = '{0}/{1}'.format(domain, activation_url)
+
+        self.assertRegex(mail.outbox[0].body, r'{0}/(.*?)/(?P<id>[\w\.-]+)'.format(base_url))
+
+    def test_user_is_active_after_email_verification(self):
+
+        domain = settings.DOMAIN
+        activation_url = settings.DJOSER['ACTIVATION_URL'].replace('/{uid}/{token}', '')
+        base_url = '{0}/{1}'.format(domain, activation_url)
+        search = re.search(r'{0}/(.*?)/(?P<id>[\w\.-]+)'.format(base_url), mail.outbox[0].body)
+        uid, token = search.groups() # Getting the exact url generated for the frontend to activate email.
+
+        self.client.post(
+            reverse('account:user-activation'),
+            {'uid': uid, 'token': token},
+            format='json'
+        )
+
+        user = User.objects.get(username=self.json_form['username'])
+        self.assertTrue(user.is_active)
+
+    def test_error_activation_email_uid_or_token_missing(self):
+
+        response = self.client.post(
+            reverse('account:user-activation'),
+            format='json'
+        )
+
+        error_msg = {"uid":["This field is required."],"token":["This field is required."]}
+        self.assertEqual(json.loads(response.content), error_msg)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_error_activation_email_when_user_already_active(self):
+
+        domain = settings.DOMAIN
+        activation_url = settings.DJOSER['ACTIVATION_URL'].replace('/{uid}/{token}', '')
+        base_url = '{0}/{1}'.format(domain, activation_url)
+        search = re.search(r'{0}/(.*?)/(?P<id>[\w\.-]+)'.format(base_url), mail.outbox[0].body)
+        uid, token = search.groups() # Getting the exact url generated for the frontend to activate email.
+
+        self.client.post(
+            reverse('account:user-activation'),
+            {'uid': uid, 'token': token},
+            format='json'
+        )
+
+        # Second POST request to activate email which is wrong.
+        response = self.client.post(
+            reverse('account:user-activation'),
+            {'uid': uid, 'token': token},
+            format='json'
+        )
+
+        error_msg = {"detail":"Stale token for given user."}
+        self.assertEqual(json.loads(response.content), error_msg)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 class TokenAuthTests(TestCase):
 
