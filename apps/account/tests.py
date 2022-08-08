@@ -316,3 +316,85 @@ class TokenAuthTests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(json.loads(response.content), {"detail":'No active account found with the given credentials'})
+
+    def test_access_token_is_working(self):
+
+        client = APIClient()
+        response = client.post(
+            reverse('account:jwt-create'), {
+                'username': self.json_form['username'],
+                'password': self.json_form['password']
+            },
+            format='json'
+        )
+
+        access = json.loads(response.content)['access']
+
+        response_verify = client.post(
+            reverse('account:jwt-verify'), {
+                'token': access
+            },
+            format='json'
+        )
+
+        self.assertEqual(response_verify.status_code, status.HTTP_200_OK)
+
+    def test_access_token_is_wrong(self):
+
+        client = APIClient()
+        client.post(
+            reverse('account:jwt-create'), {
+                'username': self.json_form['username'],
+                'password': self.json_form['password']
+            },
+            format='json'
+        )
+
+        response_verify = client.post(
+            reverse('account:jwt-verify'), {
+                'token': 'wrong_access_token'
+            },
+            format='json'
+        )
+
+        self.assertEqual(response_verify.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_token_refresh_success(self):
+
+        client = APIClient()
+        response = client.post(
+            reverse('account:jwt-create'), {
+                'username': self.json_form['username'],
+                'password': self.json_form['password']
+            },
+            format='json'
+        )
+        
+        refresh = json.loads(response.content)['refresh']
+
+        response_refresh = client.post(
+            reverse('account:jwt-refresh'), {
+                'refresh': refresh
+            },
+            format='json'
+        )
+
+        self.assertIn('access', response_refresh.content.decode('utf-8'))
+
+    def test_token_refresh_error(self):
+
+        client = APIClient()
+        refresh = 'wrong_refresh_token'
+
+        response = client.post(
+            reverse('account:jwt-refresh'), {
+                'refresh': refresh
+            },
+            format='json'
+        )
+
+        error_msg = {"detail":"Token is invalid or expired","code":"token_not_valid"}
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(json.loads(response.content), error_msg)
+
