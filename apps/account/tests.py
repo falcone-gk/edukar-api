@@ -245,7 +245,7 @@ class TokenAuthTests(TestCase):
 
     def setUp(self):
 
-        json_form = {
+        self.json_form = {
             'username': 'testuser',
             'email': 'testuser@example.com',
             'first_name': 'testuser',
@@ -256,8 +256,8 @@ class TokenAuthTests(TestCase):
             }
         }
 
-        profile = json_form.pop('profile')
-        user = User.objects.create_user(**json_form)
+        profile = self.json_form.pop('profile')
+        user = User.objects.create_user(**self.json_form)
         Profile.objects.create(user=user, **profile)
 
     def test_token_auth_success(self):
@@ -265,8 +265,8 @@ class TokenAuthTests(TestCase):
         client = APIClient()
         response = client.post(
             reverse('account:jwt-create'), {
-                'username': 'testuser',
-                'password': 'testpassword',
+                'username': self.json_form['username'],
+                'password': self.json_form['password']
             },
             format='json'
         )
@@ -280,7 +280,7 @@ class TokenAuthTests(TestCase):
         client = APIClient()
         response = client.post(
             reverse('account:jwt-create'), {
-                'password': 'testpassword',
+                'password': self.json_form['password'],
             },
             format='json'
         )
@@ -293,7 +293,7 @@ class TokenAuthTests(TestCase):
         client = APIClient()
         response = client.post(
             reverse('account:jwt-create'), {
-                'username': 'testuser',
+                'username': self.json_form['username']
             },
             format='json'
         )
