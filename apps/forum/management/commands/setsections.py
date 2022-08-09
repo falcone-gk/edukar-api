@@ -7,10 +7,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        # Section structure where we define sections that has subsection and others that
-        # doesn't. Later this list must be as json file.
+        # Section structure where we define sections that has subsections each.
         sections = [
-            'Artículos y Noticias',
             {'Cursos': ['Aritmética', 'Algebra', 'Trigonometría', 'Geometría', 'Física', 'Química',
                 'Razonamiento Matemático', 'Razonamiento Verbal']}
         ]
@@ -18,20 +16,19 @@ class Command(BaseCommand):
         try:
             for section in sections:
                 try:
-                    if isinstance(section, str):
-                        section_name = section
-                        section_obj = Section(name=section_name)
-                        section_obj.save()
-                    else:
-                        section_name = list(section.keys())[0]
-                        section_obj = Section(name=section_name)
-                        section_obj.save()
+                    section_name = list(section.keys())[0]
+                    section_obj = Section(name=section_name)
+                    section_obj.save()
 
-                        # In this case the section has subsection, so we create those
-                        # subsections and sync to the section.
-                        for subsection in section.values():
+                    # In this case the section has subsection, so we create those
+                    # subsections and sync to the section.
+                    for subsection in section.values():
+                        try:
                             subsection_obj = Subsection(section=section_obj, name=subsection)
                             subsection_obj.save()
+                        except IntegrityError:
+                            # Raise error in case subsection already exists.
+                            self.stdout.write("{0} subsection already exists".format(subsection))
                 except IntegrityError:
                     # If for some reason the section already exists, then we catch
                     # the error
