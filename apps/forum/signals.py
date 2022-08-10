@@ -15,7 +15,7 @@ def create_post_title_slug(sender, instance, **kwargs):
 
     random_suffix = ''.join([
         random.choice(string.ascii_letters + string.digits)
-        for i in range(5)
+        for _ in range(5)
     ])
     generated_slug += '-%s' % random_suffix
 
@@ -24,7 +24,6 @@ def create_post_title_slug(sender, instance, **kwargs):
 @receiver(pre_save, sender=Section)
 def create_section_slug(sender, instance, **kwargs):
 
-    # Creates a random suffix for slug post title.
     generated_slug = slugify(instance.name)
 
     instance.slug = generated_slug
@@ -32,7 +31,6 @@ def create_section_slug(sender, instance, **kwargs):
 @receiver(pre_save, sender=Subsection)
 def create_subsection_slug(sender, instance, **kwargs):
 
-    # Creates a random suffix for slug post title.
     generated_slug = slugify(instance.name)
 
     instance.slug = generated_slug
