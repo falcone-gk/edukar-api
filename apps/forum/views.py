@@ -1,36 +1,17 @@
 from rest_framework import generics, status, viewsets, mixins
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
 
 from forum.models import Post, Section, Subsection
 from forum.permissions import IsAuthorOrReadOnly
-from forum.serializers import SectionSerializer, SectionWithPosts, SubsectionWithPosts, CreatePostSerializer, UpdatePostSerializer
+from forum.serializers import SectionSerializer, SubsectionWithPosts, CreatePostSerializer, UpdatePostSerializer
 
 # Create your views here.
 
-class GetAllPostBySection(APIView):
+class ForumHomeAPIView(generics.ListAPIView):
 
-    def get(self, request, format=None):
-
-        sections_with_sub = Section.objects.exclude(subsection__isnull=True)
-        serializer1 = SectionSerializer(sections_with_sub, many=True)
-
-        sections_with_no_sub = Section.objects.exclude(subsection__isnull=False)
-        serializer2 = SectionWithPosts(sections_with_no_sub, many=True)
-
-        data = {
-            'no_sub': serializer2.data,
-            'with_sub': serializer1.data
-        }
-
-        return Response(data)
-
-class GetPostsListBySection(generics.RetrieveAPIView):
-
+    serializer_class = SectionSerializer
     queryset = Section.objects.all()
-    serializer_class = SectionWithPosts
-    lookup_field = 'slug'
 
 class GetPostsListBySubsection(generics.RetrieveAPIView):
 

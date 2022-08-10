@@ -1,10 +1,9 @@
-from pyexpat import model
-from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
 from forum.models import Post, Section, Subsection
 
+########### Serializers for home page in forum ###########
 class SubsectionSerializer(serializers.ModelSerializer):
 
     item1 = serializers.SerializerMethodField()
@@ -52,6 +51,7 @@ class SectionSerializer(serializers.ModelSerializer):
         model = Section
         fields = ('name', 'slug', 'subsection')
 
+############ Serializer to show subsection posts ############
 class PostDescriptionSerializer(serializers.ModelSerializer):
 
     name = serializers.CharField(source='title')
@@ -67,15 +67,6 @@ class PostDescriptionSerializer(serializers.ModelSerializer):
         model = Post
         fields = ('name', 'slug', 'item1', 'item2')
 
-class SectionWithPosts(serializers.ModelSerializer):
-
-    subsection = PostDescriptionSerializer(many=True, source='posts')
-
-    class Meta:
-
-        model = Section
-        fields = ('name', 'slug', 'subsection',)
-
 class SubsectionWithPosts(serializers.ModelSerializer):
 
     section = serializers.SlugRelatedField(read_only=True, slug_field='slug')
@@ -86,6 +77,7 @@ class SubsectionWithPosts(serializers.ModelSerializer):
         model = Subsection
         fields = ('name', 'slug', 'section', 'subsection')
 
+############ Serializer about Posts ############
 class CreatePostSerializer(serializers.ModelSerializer):
 
     author = serializers.HiddenField(default=serializers.CurrentUserDefault())
