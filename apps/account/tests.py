@@ -1,5 +1,8 @@
 import json
 import re
+import io
+
+from PIL import Image
 
 from django.conf import settings
 from django.core import mail
@@ -24,6 +27,14 @@ class CreateUserTests(TestCase):
             'password': 'testpassword',
             're_password': 'testpassword',
         }
+    
+    def generate_photo_file(self):
+        file = io.BytesIO()
+        image = Image.new('RGBA', size=(100, 100), color=(155, 0, 0))
+        image.save(file, 'png')
+        file.name = 'test.png'
+        file.seek(0)
+        return file
 
     def test_create_user_and_check_if_is_not_active(self):
 
@@ -154,6 +165,28 @@ class CreateUserTests(TestCase):
         error_user_msg = {"email":["Enter a valid email address."]}
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), error_user_msg)
+
+    def test_create_user_with_picture(self):
+
+        form = {
+            'username': 'testuser',
+            'email': 'testuser@example.com',
+            'password': 'testpassword',
+            're_password': 'testpassword',
+            'picture': self.generate_photo_file(),
+            'about_me': ''
+        }
+
+        client = APIClient()
+        response = client.post(
+            reverse('account:user-list'),
+            form,
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        
+        user = User.objects.get(username='testuser')
+        profile_url = user.profile.all()[0].picture.url
+        self.assertEqual(profile_url, '/media/profile/test.png')
 
 class EmailVerificationTests(TestCase):
 
