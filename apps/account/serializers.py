@@ -24,12 +24,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
 
         # Removing profile fields dict from main json
-        profile = {}
-        if validated_data.get('picture'):
-            profile['picture'] = validated_data.pop('picture')
-
-        if validated_data.get('about_me'):
-            profile['about_me'] = validated_data.pop('about_me')
+        try:
+            profile = validated_data.pop('profile')
+        except KeyError:
+            profile = {'picture': '', 'about_me': ''}
 
         user = User.objects.create_user(**validated_data)
         user.is_active = False
