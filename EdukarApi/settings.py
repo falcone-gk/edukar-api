@@ -58,6 +58,14 @@ INSTALLED_APPS = [
     'django_cleanup',
 ]
 
+# Change defualt storage when running test
+# Avoid storing image in media file when running tests.
+if 'test' in sys.argv :
+    # store files in memory, no cleanup after tests are finished
+    DEFAULT_FILE_STORAGE = 'inmemorystorage.InMemoryStorage'
+    # much faster password hashing, default one is super slow (on purpose)
+    PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
+
 # Rest Framework configuration
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
