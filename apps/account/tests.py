@@ -1,6 +1,9 @@
+from email.mime import base
+from http import client
 import json
 import re
 import io
+from urllib import response
 
 from PIL import Image
 
@@ -9,6 +12,7 @@ from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
 
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -431,3 +435,98 @@ class TokenAuthTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(json.loads(response.content), error_msg)
 
+class ResetPasswordTest(TestCase):
+
+    def setUp(self):
+
+        self.json_form = {
+            'username': 'testuser',
+            'email': 'testuser@example.com',
+            'first_name': 'testuser',
+            'last_name': 'testuser',
+            'password': 'testpassword',
+            'profile': {
+                'about_me': 'testing about me'
+            }
+        }
+
+        profile = self.json_form.pop('profile')
+        user = User.objects.create_user(**self.json_form)
+        Profile.objects.create(user=user, **profile)
+
+        self.client = APIClient()
+        self.client.post(
+            reverse('account:user-reset-password'),
+            {
+                'email': self.json_form['email']
+            }
+        )
+
+    def test_send_email_reset_password(self):
+
+        # In 'mail.outbox' we get the email sent by Django.
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [self.json_form['email']])
+        self.assertEqual(mail.outbox[0].from_email, settings.DEFAULT_FROM_EMAIL)
+
+        # Test if email has the correct URL for activation email.
+        domain = settings.DOMAIN
+        reset_password_url = settings.DJOSER['PASSWORD_RESET_CONFIRM_URL'].replace('/{uid}/{token}', '')
+        base_url = '{0}/{1}'.format(domain, reset_password_url)
+
+        self.assertRegex(mail.outbox[0].body, r'{0}/(.*?)/(?P<id>[\w\.-]+)'.format(base_url))
+    
+    def test_reset_password_confirm_success(self):
+
+        domain = settings.DOMAIN
+        reset_password_url = settings.DJOSER['PASSWORD_RESET_CONFIRM_URL'].replace('/{uid}/{token}', '')
+        base_url = '{0}/{1}'.format(domain, reset_password_url)
+        search = re.search(r'{0}/(.*?)/(?P<id>[\w\.-]+)'.format(base_url), mail.outbox[0].body)
+        uid, token = search.groups() # Getting the exact url generated for the frontend to activate email.
+
+        new_password = 'test_new_password'
+        self.client.post(
+            reverse('account:user-reset-password-confirm'),
+            {'uid': uid, 'token': token,
+            'new_password': new_password, 're_new_password': new_password},
+            format='json'
+        )
+
+        response = self.client.post(
+            reverse('account:jwt-create'),
+            {
+                'username': self.json_form['username'],
+                'password': new_password
+            },
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', response.content.decode('utf-8'))
+        self.assertIn('refresh', response.content.decode('utf-8'))
+
+        response = self.client.post(
+            reverse('account:jwt-create'),
+            {
+                'username': self.json_form['username'],
+                'password': 'wrong_new_password'
+            },
+        )
+
+        # Test if past password doesn't work
+        error_msg = {"detail":'No active account found with the given credentials'}
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(error_msg, json.loads(response.content))
+    
+    def test_refresh_password_no_eamil_found(self):
+
+        client = APIClient()
+        response = client.post(
+            reverse('account:user-reset-password'),
+            {
+                'email': 'wrong_email@wrong.com'
+            }
+        )
+
+        error_msg = ["User with given email does not exist."]
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(error_msg, json.loads(response.content))
