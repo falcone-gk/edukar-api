@@ -79,7 +79,7 @@ class CreateUserTests(TestCase):
             format='json'
         )
 
-        duplicate_user_msg = {"username":["A user with that username already exists."]}
+        duplicate_user_msg = {"username":["Ya existe un usuario con este nombre."]}
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), duplicate_user_msg)
 
@@ -118,7 +118,7 @@ class CreateUserTests(TestCase):
             format='json'
         )
 
-        error_user_msg = {"password":["This field is required."]}
+        error_user_msg = {"password":["Este campo es requerido."]}
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), error_user_msg)
 
@@ -134,7 +134,7 @@ class CreateUserTests(TestCase):
             format='json'
         )
 
-        error_user_msg = {"username":["This field is required."]}
+        error_user_msg = {"username":["Este campo es requerido."]}
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), error_user_msg)
 
@@ -150,7 +150,7 @@ class CreateUserTests(TestCase):
             format='json'
         )
 
-        error_user_msg = {"email":["This field is required."]}
+        error_user_msg = {"email":["Este campo es requerido."]}
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), error_user_msg)
 
@@ -166,7 +166,7 @@ class CreateUserTests(TestCase):
             format='json'
         )
 
-        error_user_msg = {"email":["Enter a valid email address."]}
+        error_user_msg = {"email":["Introduzca una dirección de correo electrónico válida."]}
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), error_user_msg)
 
@@ -249,7 +249,7 @@ class EmailVerificationTests(TestCase):
             format='json'
         )
 
-        error_msg = {"uid":["This field is required."],"token":["This field is required."]}
+        error_msg = {"uid":["Este campo es requerido."],"token":["Este campo es requerido."]}
         self.assertEqual(json.loads(response.content), error_msg)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -274,7 +274,7 @@ class EmailVerificationTests(TestCase):
             format='json'
         )
 
-        error_msg = {"detail":"Stale token for given user."}
+        error_msg = {"detail":"El token del usuario ha expirado."}
         self.assertEqual(json.loads(response.content), error_msg)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -323,7 +323,7 @@ class TokenAuthTests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(json.loads(response.content), {"username":["This field is required."]})
+        self.assertEqual(json.loads(response.content), {"username":["Este campo es requerido."]})
 
     def test_token_auth_failed_missing_password(self):
 
@@ -336,7 +336,7 @@ class TokenAuthTests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(json.loads(response.content), {"password":["This field is required."]})
+        self.assertEqual(json.loads(response.content), {"password":["Este campo es requerido."]})
 
     def test_token_auth_failed_credential_error(self):
 
@@ -527,6 +527,6 @@ class ResetPasswordTest(TestCase):
             }
         )
 
-        error_msg = ["User with given email does not exist."]
+        error_msg = ["No existe un usuario con el email dado."]
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(error_msg, json.loads(response.content))
