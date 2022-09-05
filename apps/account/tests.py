@@ -301,22 +301,25 @@ class TokenAuthTests(TestCase):
 
         client = APIClient()
         response = client.post(
-            reverse('account:jwt-create'), {
+            reverse('account:token_create'), {
                 'username': self.json_form['username'],
                 'password': self.json_form['password']
             },
             format='json'
         )
 
+        response_decode = response.content.decode('utf-8')
+        keys_expected = ['access', 'refresh', 'username', 'email']
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('access', response.content.decode('utf-8'))
-        self.assertIn('refresh', response.content.decode('utf-8'))
+        for key in keys_expected:
+            self.assertIn(key, keys_expected)
 
     def test_token_auth_failed_missing_username(self):
 
         client = APIClient()
         response = client.post(
-            reverse('account:jwt-create'), {
+            reverse('account:token_create'), {
                 'password': self.json_form['password'],
             },
             format='json'
@@ -329,7 +332,7 @@ class TokenAuthTests(TestCase):
 
         client = APIClient()
         response = client.post(
-            reverse('account:jwt-create'), {
+            reverse('account:token_create'), {
                 'username': self.json_form['username']
             },
             format='json'
@@ -342,7 +345,7 @@ class TokenAuthTests(TestCase):
 
         client = APIClient()
         response = client.post(
-            reverse('account:jwt-create'), {
+            reverse('account:token_create'), {
                 # Testing error in both field because it doesn't matter which field is wrong
                 # api will give the same error.
                 'username': 'test_wrong_username',
@@ -358,7 +361,7 @@ class TokenAuthTests(TestCase):
 
         client = APIClient()
         response = client.post(
-            reverse('account:jwt-create'), {
+            reverse('account:token_create'), {
                 'username': self.json_form['username'],
                 'password': self.json_form['password']
             },
@@ -368,7 +371,7 @@ class TokenAuthTests(TestCase):
         access = json.loads(response.content)['access']
 
         response_verify = client.post(
-            reverse('account:jwt-verify'), {
+            reverse('account:token_verify'), {
                 'token': access
             },
             format='json'
@@ -380,7 +383,7 @@ class TokenAuthTests(TestCase):
 
         client = APIClient()
         client.post(
-            reverse('account:jwt-create'), {
+            reverse('account:token_create'), {
                 'username': self.json_form['username'],
                 'password': self.json_form['password']
             },
@@ -388,7 +391,7 @@ class TokenAuthTests(TestCase):
         )
 
         response_verify = client.post(
-            reverse('account:jwt-verify'), {
+            reverse('account:token_verify'), {
                 'token': 'wrong_access_token'
             },
             format='json'
@@ -400,7 +403,7 @@ class TokenAuthTests(TestCase):
 
         client = APIClient()
         response = client.post(
-            reverse('account:jwt-create'), {
+            reverse('account:token_create'), {
                 'username': self.json_form['username'],
                 'password': self.json_form['password']
             },
@@ -410,7 +413,7 @@ class TokenAuthTests(TestCase):
         refresh = json.loads(response.content)['refresh']
 
         response_refresh = client.post(
-            reverse('account:jwt-refresh'), {
+            reverse('account:token_refresh'), {
                 'refresh': refresh
             },
             format='json'
@@ -424,7 +427,7 @@ class TokenAuthTests(TestCase):
         refresh = 'wrong_refresh_token'
 
         response = client.post(
-            reverse('account:jwt-refresh'), {
+            reverse('account:token_refresh'), {
                 'refresh': refresh
             },
             format='json'
@@ -493,7 +496,7 @@ class ResetPasswordTest(TestCase):
         )
 
         response = self.client.post(
-            reverse('account:jwt-create'),
+            reverse('account:token_create'),
             {
                 'username': self.json_form['username'],
                 'password': new_password
@@ -505,7 +508,7 @@ class ResetPasswordTest(TestCase):
         self.assertIn('refresh', response.content.decode('utf-8'))
 
         response = self.client.post(
-            reverse('account:jwt-create'),
+            reverse('account:token_create'),
             {
                 'username': self.json_form['username'],
                 'password': 'wrong_new_password'
