@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from account.models import Profile
 
@@ -38,3 +39,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
         return user
 
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        data.update({'username': self.user.username})
+        data.update({'email': self.user.email})
+        return data
