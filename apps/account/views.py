@@ -1,7 +1,8 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework_simplejwt.views import TokenObtainPairView
 
-from account.serializers import UserProfileSerializer
+from account.serializers import UserProfileSerializer, MyTokenObtainPairSerializer
 
 # Create your views here.
 
@@ -21,3 +22,6 @@ class CreateUserAPIView(generics.CreateAPIView):
         # Sending a success message instead of object (default).
         msg = {'success': 'Cuentra creada correctamente!'}
         return Response(msg, status=status.HTTP_201_CREATED)
+
+class LoginAPIView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer

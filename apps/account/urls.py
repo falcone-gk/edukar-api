@@ -1,11 +1,18 @@
 from django.urls import path, include
+from account.views import LoginAPIView
+from rest_framework_simplejwt.views import (
+    TokenRefreshView,
+    TokenVerifyView
+)
 
 # from account import views
 
 app_name = 'account'
 urlpatterns = [
     path('', include('djoser.urls')),
-    path('', include('djoser.urls.jwt')),
+    path('token/create', LoginAPIView.as_view(), name='token_create'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('token/verify/', TokenVerifyView.as_view(), name='token_verify'),
 ]
 
 ### Explaining 'djoser.urls' Urls
