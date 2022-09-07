@@ -104,7 +104,7 @@ class PostCreateTestCase(BaseSetup):
             format='json'
         )
 
-        msg = {"detail":"Authentication credentials were not provided."}
+        msg = {"detail":"Las credenciales de autenticación no se proveyeron."}
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(json.loads(response.content), msg)
 
@@ -128,7 +128,7 @@ class PostCreateTestCase(BaseSetup):
             format='json'
         )
 
-        msg = {"body":["This field is required."]}
+        msg = {"body":["Este campo es requerido."]}
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), msg)
     
@@ -196,7 +196,7 @@ class PostUpdateTestCase(BaseSetup):
             format='json'
         )
 
-        msg = {"detail":"Authentication credentials were not provided."}
+        msg = {"detail":"Las credenciales de autenticación no se proveyeron."}
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(json.loads(response.content), msg)
 
@@ -231,7 +231,7 @@ class PostUpdateTestCase(BaseSetup):
 
         original_title = Post.objects.get(pk=self.post.pk).title
 
-        msg = {'detail': 'You do not have permission to perform this action.'}
+        msg = {'detail': 'Usted no tiene permiso para realizar esta acción.'}
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(json.loads(response.content), msg)
         self.assertNotEqual(original_title, self.update_form['title'])
