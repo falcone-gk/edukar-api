@@ -28,7 +28,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         try:
             profile = validated_data.pop('profile')
         except KeyError:
-            profile = {'picture': '', 'about_me': ''}
+            profile = {}
 
         user = User.objects.create_user(**validated_data)
         user.is_active = False
@@ -46,4 +46,6 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
         data.update({'username': self.user.username})
         data.update({'email': self.user.email})
+        request = self.context.get("request")
+        data.update({'picture': request.build_absolute_uri(self.user.profile.get().picture.url)})
         return data
