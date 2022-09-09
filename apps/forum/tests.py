@@ -235,3 +235,74 @@ class PostUpdateTestCase(BaseSetup):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(json.loads(response.content), msg)
         self.assertNotEqual(original_title, self.update_form['title'])
+
+class TestForumHome(BaseSetup):
+
+    def setUp(self):
+        super(TestForumHome, self).setUp()
+
+        self.post_form = {
+            'body': '<p> test text </p>',
+            'title': 'Test title'
+        }
+
+        self.num_post_create = 5
+        for _ in range(self.num_post_create):
+            Post.objects.create(
+                author=self.user,
+                section=self.section,
+                subsection=self.subsection,
+                **self.post_form)
+
+    def test_get_all_post(self):
+
+        client = APIClient()
+        url_format = '{0}?course={1}'
+        response = client.get(url_format.format(reverse('forum:sections-list'), '0'))
+        json_data = json.loads(response.content)
+
+        self.assertEqual(len(json_data), self.num_post_create)
+    
+    def test_get_specific_subsection_posts(self):
+
+        # Create new subsection
+        subsection = Subsection.objects.create(section=self.section, name='Algebra')
+
+        # Create new posts for the new subsection
+        new_num_post_create = 3
+        for _ in range(new_num_post_create):
+            Post.objects.create(
+                author=self.user,
+                section=self.section,
+                subsection=subsection,
+                **self.post_form)
+
+        client = APIClient()
+        url_format = '{0}?course={1}'
+        response = client.get(url_format.format(reverse('forum:sections-list'), subsection.pk))
+        json_data = json.loads(response.content)
+        self.assertEqual(len(json_data), new_num_post_create)
+
+    def test_no_found_subsection(self):
+
+        client = APIClient()
+        url_format = '{0}?course={1}'
+
+        # Adding 'course=-1' will not found a subsection with that value
+        response = client.get(url_format.format(reverse('forum:sections-list'), '-1'))
+        json_data = json.loads(response.content)
+
+        # No subsection found, we exepect an empty dictionary
+        self.assertEqual(len(json_data), 0)
+
+    def test_subsection_value_is_not_number(self):
+
+        client = APIClient()
+        url_format = '{0}?course={1}'
+
+        # Adding 'course=wrong_value' will trigger an error
+        response = client.get(url_format.format(reverse('forum:sections-list'), 'wrong_value'))
+        json_data = json.loads(response.content)
+
+        # No number value in course we expect to return an empty dictionary
+        self.assertEqual(len(json_data), 0)
