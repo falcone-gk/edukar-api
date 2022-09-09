@@ -1,3 +1,4 @@
+from dataclasses import fields
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
@@ -12,6 +13,13 @@ class PostSerializerResume(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ('title', 'slug', 'author', 'time_difference', 'picture')
+
+########### Serializer for Course subsection ###########
+class SubsectionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Subsection
+        fields = ('id', 'name')
 
 ############ Serializer about Posts ############
 class CreatePostSerializer(serializers.ModelSerializer):

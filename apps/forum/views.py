@@ -6,6 +6,7 @@ from forum.models import Post, Section, Subsection
 from forum.permissions import IsAuthorOrReadOnly
 from forum.serializers import (
     PostSerializerResume,
+    SubsectionSerializer,
     CreatePostSerializer,
     UpdatePostSerializer
 )
@@ -30,6 +31,11 @@ class ForumHomeAPIView(generics.ListAPIView):
         except (ValueError, TypeError):
             queryset = Post.objects.filter(subsection=None)
         return queryset
+
+class SubsectionAPIView(generics.ListAPIView):
+
+    serializer_class = SubsectionSerializer
+    queryset = Subsection.objects.all()
 
 class CreateUpdatePostAPIView(
     mixins.CreateModelMixin,
