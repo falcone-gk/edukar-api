@@ -11,7 +11,7 @@ class BaseContentPublication(models.Model):
     date = models.DateTimeField(default=timezone.now)
     likes = models.ManyToManyField(User, default=None, blank=True, related_name='liked_content')
 
-    def get_time_difference(self):
+    def time_difference(self):
         
         difference = timezone.now() - self.date
         seconds = difference.total_seconds()
