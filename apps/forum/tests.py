@@ -254,6 +254,20 @@ class TestForumHome(BaseSetup):
                 subsection=self.subsection,
                 **self.post_form)
 
+    def test_get_all_subsection(self):
+
+        num_new_subsections = 5
+        new_subsections = ['Sub' + str(i+1) for i in range(num_new_subsections)]
+        for subs in new_subsections:
+            Subsection.objects.create(section=self.section, name=subs)
+
+        client = APIClient()
+        response = client.get(reverse('forum:subsections-list'))
+        json_data = json.loads(response.content)
+
+        # We adding one more subsection because in setup we create one by default.
+        self.assertEqual(len(json_data), num_new_subsections + 1)
+
     def test_get_all_post(self):
 
         client = APIClient()
