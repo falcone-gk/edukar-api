@@ -4,20 +4,32 @@ from rest_framework.permissions import IsAuthenticated
 
 from forum.models import Post, Section, Subsection
 from forum.permissions import IsAuthorOrReadOnly
-from forum.serializers import SectionSerializer, SubsectionWithPosts, CreatePostSerializer, UpdatePostSerializer
+from forum.serializers import (
+    PostSerializerResume,
+    CreatePostSerializer,
+    UpdatePostSerializer
+)
 
 # Create your views here.
 
 class ForumHomeAPIView(generics.ListAPIView):
 
-    serializer_class = SectionSerializer
-    queryset = Section.objects.all()
+    serializer_class = PostSerializerResume
+    queryset = Post.objects.all()
 
-class GetPostsListBySubsection(generics.RetrieveAPIView):
+    def get_queryset(self):
 
-    queryset = Subsection.objects.all()
-    serializer_class = SubsectionWithPosts
-    lookup_field = 'slug'
+        course = self.request.query_params.get('course')
+        # If '0' is sent then we return all posts.
+        if course == '0':
+            return Post.objects.all()
+
+        # Catch error when query param sent is not a number or empty
+        try:
+            queryset = Post.objects.filter(subsection=int(course))
+        except (ValueError, TypeError):
+            queryset = Post.objects.filter(subsection=None)
+        return queryset
 
 class CreateUpdatePostAPIView(
     mixins.CreateModelMixin,
