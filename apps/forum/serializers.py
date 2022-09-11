@@ -8,11 +8,16 @@ from forum.models import Post, Section, Subsection
 class PostSerializerResume(serializers.ModelSerializer):
 
     author = serializers.StringRelatedField()
-    picture = serializers.CharField(source='author.profile.get.picture.url')
+    picture = serializers.SerializerMethodField('get_picture')
 
     class Meta:
         model = Post
         fields = ('title', 'slug', 'author', 'time_difference', 'picture')
+    
+    def get_picture(self, obj):
+
+        request = self.context.get("request")
+        return request.build_absolute_uri(obj.author.profile.get().picture.url)
 
 ########### Serializer for Course subsection ###########
 class SubsectionSerializer(serializers.ModelSerializer):
