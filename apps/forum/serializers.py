@@ -21,10 +21,11 @@ class AuthorSerializer(serializers.ModelSerializer):
 class PostSerializerResume(serializers.ModelSerializer):
 
     author = AuthorSerializer(read_only=True)
+    subsection = serializers.CharField(source='subsection.name')
 
     class Meta:
         model = Post
-        fields = ('title', 'slug', 'time_difference', 'author')
+        fields = ('title', 'slug', 'time_difference', 'author', 'subsection')
 
 ########### Serializer for Course subsection ###########
 class SubsectionSerializer(serializers.ModelSerializer):
