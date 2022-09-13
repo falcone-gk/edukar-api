@@ -1,23 +1,30 @@
-from dataclasses import fields
-from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from forum.models import Post, Section, Subsection
+from forum.models import Post, Subsection
+
+
+class AuthorSerializer(serializers.ModelSerializer):
+
+    picture = serializers.SerializerMethodField('get_picture')
+
+    class Meta:
+        model = User
+        fields = ('username', 'picture',)
+
+    def get_picture(self, obj):
+
+        request = self.context.get("request")
+        return request.build_absolute_uri(obj.profile.get().picture.url)
 
 ########### Serializers for home page in forum ###########
 class PostSerializerResume(serializers.ModelSerializer):
 
-    author = serializers.StringRelatedField()
-    picture = serializers.SerializerMethodField('get_picture')
+    author = AuthorSerializer(read_only=True)
 
     class Meta:
         model = Post
-        fields = ('title', 'slug', 'author', 'time_difference', 'picture')
-    
-    def get_picture(self, obj):
-
-        request = self.context.get("request")
-        return request.build_absolute_uri(obj.author.profile.get().picture.url)
+        fields = ('title', 'slug', 'time_difference', 'author')
 
 ########### Serializer for Course subsection ###########
 class SubsectionSerializer(serializers.ModelSerializer):
@@ -42,3 +49,12 @@ class UpdatePostSerializer(serializers.ModelSerializer):
 
         model = Post
         fields = ('title', 'section', 'body')
+
+class PostSerializer(serializers.ModelSerializer):
+
+    subsection = serializers.CharField(source='subsection.name')
+    author = AuthorSerializer(read_only=True)
+
+    class Meta:
+        model = Post
+        exclude = ('id', 'likes', 'section',)
