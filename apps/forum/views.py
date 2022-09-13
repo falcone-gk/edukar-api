@@ -1,12 +1,13 @@
 from rest_framework import generics, status, viewsets, mixins
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 
 from forum.models import Post, Section, Subsection
 from forum.permissions import IsAuthorOrReadOnly
 from forum.serializers import (
     PostSerializerResume,
     SubsectionSerializer,
+    PostSerializer,
     CreatePostSerializer,
     UpdatePostSerializer
 )
@@ -37,19 +38,17 @@ class SubsectionAPIView(generics.ListAPIView):
     serializer_class = SubsectionSerializer
     queryset = Subsection.objects.all()
 
-class CreateUpdatePostAPIView(
-    mixins.CreateModelMixin,
-    mixins.UpdateModelMixin,
-    viewsets.GenericViewSet
-    ):
+class CreateUpdatePostAPIView(viewsets.ModelViewSet):
 
     queryset = Post.objects.all()
-    permission_classes = (IsAuthenticated, IsAuthorOrReadOnly,)
+    permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly,)
 
     def get_serializer_class(self):
 
         if self.action == 'create':
             return CreatePostSerializer
+        elif self.action == 'retrieve':
+            return PostSerializer
         elif (self.action == 'update') | (self.action == 'partial_update'):
             return UpdatePostSerializer
 
