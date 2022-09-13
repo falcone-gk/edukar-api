@@ -149,6 +149,21 @@ class PostCreateTestCase(BaseSetup):
         # slug is unique.
         self.assertEqual(len_posts, 1, msg="Slug field is not unique!")
 
+    def test_get_post_created_info(self):
+
+        post_info = {
+            'author': self.user,
+            'body': '<p> test text </p>',
+            'section': self.section,
+            'subsection': self.subsection,
+            'title': 'Test title'
+        }
+        post = Post.objects.create(**post_info)
+
+        client = APIClient()
+        response = client.get(reverse('forum:posts-detail', kwargs={'pk': post.pk}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
 class PostUpdateTestCase(BaseSetup):
 
     def setUp(self):
