@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
 import environ
+import locale
 import sys
 import os
 from datetime import timedelta
@@ -19,6 +20,9 @@ from pathlib import Path
 # Importing environment variables from .env file.
 env = environ.Env()
 environ.Env.read_env()
+
+# Set local time to 'es_PE' peruvian hour and date in spanish
+locale.setlocale(locale.LC_TIME, 'es_PE.UTF-8')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -158,7 +162,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
 
-LANGUAGE_CODE = 'es'
+LANGUAGE_CODE = 'es-PE'
 
 TIME_ZONE = 'America/Lima'
 
