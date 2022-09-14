@@ -161,7 +161,7 @@ class PostCreateTestCase(BaseSetup):
         post = Post.objects.create(**post_info)
 
         client = APIClient()
-        response = client.get(reverse('forum:posts-detail', kwargs={'pk': post.pk}))
+        response = client.get(reverse('forum:posts-detail', kwargs={'slug': post.slug}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 class PostUpdateTestCase(BaseSetup):
@@ -190,7 +190,7 @@ class PostUpdateTestCase(BaseSetup):
         client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
 
         response = client.put(
-            reverse('forum:posts-detail', kwargs={'pk': self.post.pk}), 
+            reverse('forum:posts-detail', kwargs={'slug': self.post.slug}), 
             self.update_form,
             format='json'
         )
@@ -206,7 +206,7 @@ class PostUpdateTestCase(BaseSetup):
 
         client = APIClient()
         response = client.put(
-            reverse('forum:posts-detail', kwargs={'pk': self.post.pk}), 
+            reverse('forum:posts-detail', kwargs={'slug': self.post.slug}),
             self.update_form,
             format='json'
         )
@@ -239,7 +239,7 @@ class PostUpdateTestCase(BaseSetup):
         client.credentials(HTTP_AUTHORIZATION='JWT ' + access)
 
         response = client.put(
-            reverse('forum:posts-detail', kwargs={'pk': self.post.pk}), 
+            reverse('forum:posts-detail', kwargs={'slug': self.post.slug}), 
             self.update_form,
             format='json'
         )

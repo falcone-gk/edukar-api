@@ -42,6 +42,7 @@ class CreateUpdatePostAPIView(viewsets.ModelViewSet):
 
     queryset = Post.objects.all()
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly,)
+    lookup_field = 'slug'
 
     def get_serializer_class(self):
 
