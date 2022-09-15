@@ -42,7 +42,14 @@ class CreatePostSerializer(serializers.ModelSerializer):
     class Meta:
 
         model = Post
-        exclude = ('date', 'slug', 'likes')
+        read_only_fields = ('slug',)
+        exclude = ('id', 'date', 'likes',)
+        extra_kwargs = {
+            'body': {'write_only': True},
+            'title': {'write_only': True},
+            'section': {'write_only': True},
+            'subsection': {'write_only': True},
+        }
 
 class UpdatePostSerializer(serializers.ModelSerializer):
 

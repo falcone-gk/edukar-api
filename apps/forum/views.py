@@ -53,16 +53,6 @@ class CreateUpdatePostAPIView(viewsets.ModelViewSet):
         elif (self.action == 'update') | (self.action == 'partial_update'):
             return UpdatePostSerializer
 
-    def create(self, request, *args, **kwargs):
-
-        response = super(CreateUpdatePostAPIView, self).create(request, *args, **kwargs)
-
-        if response.status_code == 201:
-            msg = {'success': 'Post creado correctamente!'}
-            return Response(msg, status=status.HTTP_201_CREATED)
-
-        return response
-
     def update(self, request, *args, **kwargs):
 
         response = super(CreateUpdatePostAPIView, self).update(request, *args, **kwargs)
