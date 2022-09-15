@@ -24,11 +24,11 @@ class ForumHomeAPIView(generics.ListAPIView):
         course = self.request.query_params.get('course')
         # If '0' is sent then we return all posts.
         if course == '0':
-            return Post.objects.all()
+            return Post.objects.all().order_by('-date')
 
         # Catch error when query param sent is not a number or empty
         try:
-            queryset = Post.objects.filter(subsection=int(course))
+            queryset = Post.objects.filter(subsection=int(course)).order_by('-date')
         except (ValueError, TypeError):
             queryset = Post.objects.filter(subsection=None)
         return queryset
