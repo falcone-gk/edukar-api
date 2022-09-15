@@ -55,6 +55,7 @@ class PostSerializer(serializers.ModelSerializer):
 
     subsection = serializers.CharField(source='subsection.name')
     author = AuthorSerializer(read_only=True)
+    date = serializers.DateTimeField(format="%d de %B del %Y, a las %H:%M")
 
     class Meta:
         model = Post
