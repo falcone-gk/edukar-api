@@ -9,7 +9,6 @@ class BaseContentPublication(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     body = models.TextField()
     date = models.DateTimeField(default=timezone.now)
-    likes = models.ManyToManyField(User, default=None, blank=True, related_name='liked_content')
 
     def time_difference(self):
         
@@ -64,4 +63,26 @@ class Post(BaseContentPublication):
 
     def __str__(self):
 
-        return self.slug
+        return self.title
+
+class Comment(BaseContentPublication):
+
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
+
+    def __str__(self):
+
+        if len(self.comment) > 100:
+            return self.body[:100] + '...'
+
+        return self.body
+
+class Reply(BaseContentPublication):
+
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='replies')
+
+    def __str__(self):
+
+        if len(self.comment) > 100:
+            return self.body[:100] + '...'
+
+        return self.body
