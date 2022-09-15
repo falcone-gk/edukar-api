@@ -313,7 +313,7 @@ class TokenAuthTests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         for key in keys_expected:
-            self.assertIn(key, keys_expected)
+            self.assertIn(key, response_decode)
 
     def test_token_auth_failed_missing_username(self):
 
