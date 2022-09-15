@@ -84,9 +84,8 @@ class PostCreateTestCase(BaseSetup):
             format='json'
         )
 
-        msg = {'success': 'Post creado correctamente!'}
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(json.loads(response.content), msg)
+        self.assertIn('slug', response.content.decode('utf-8'))
     
     def test_create_post_missing_token(self):
 
