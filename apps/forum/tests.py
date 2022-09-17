@@ -10,7 +10,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from forum.models import Post, Section, Subsection
+from forum.models import Post, Section, Subsection, Comment
 from account.models import Profile
 # Create your tests here.
 
@@ -163,6 +163,68 @@ class PostCreateTestCase(BaseSetup):
         response = client.get(reverse('forum:posts-detail', kwargs={'slug': post.slug}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+class CommentsAndRepliesTestCase(BaseSetup):
+
+    def setUp(self):
+        super(CommentsAndRepliesTestCase, self).setUp()
+
+        post_form = {
+            'body': '<p> test text </p>',
+            'title': 'Test title'
+        }
+
+        self.post = Post.objects.create(author=self.user, section=self.section, subsection=self.subsection, **post_form)
+
+    def test_comment_post_success(self):
+
+        comment_form = {
+            'post': self.post.pk,
+            'body': '<p>Commentario</p>'
+        }
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        response = client.post(
+            reverse('forum:comments-list'),
+            comment_form,
+            format='json'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_comment_post_fail_missing_token(self):
+
+        comment_form = {
+            'post': self.post.pk,
+            'body': '<p>Commentario</p>'
+        }
+        client = APIClient()
+        response = client.post(
+            reverse('forum:comments-list'),
+            comment_form,
+            format='json'
+        )
+        msg = {"detail":"Las credenciales de autenticación no se proveyeron."}
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(json.loads(response.content), msg)
+
+    def test_comment_post_fail_missing_body(self):
+
+        comment_form = {
+            'post': self.post.pk,
+        }
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        response = client.post(
+            reverse('forum:comments-list'),
+            comment_form,
+            format='json'
+        )
+        msg = {'body': ['Este campo es requerido.']}
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(json.loads(response.content), msg)
+
 class PostUpdateTestCase(BaseSetup):
 
     def setUp(self):
@@ -197,9 +259,9 @@ class PostUpdateTestCase(BaseSetup):
         new_post_title = Post.objects.get(pk=self.post.pk).title
 
         msg = {'success': 'Post actualizado correctamente!'}
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(json.loads(response.content), msg)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(new_post_title, self.update_form['title'])
+        self.assertEqual(json.loads(response.content), msg)
 
     def test_update_post_missing_token(self):
 
