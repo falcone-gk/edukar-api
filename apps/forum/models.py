@@ -71,7 +71,7 @@ class Comment(BaseContentPublication):
 
     def __str__(self):
 
-        if len(self.comment) > 100:
+        if len(self.body) > 100:
             return self.body[:100] + '...'
 
         return self.body
@@ -82,7 +82,7 @@ class Reply(BaseContentPublication):
 
     def __str__(self):
 
-        if len(self.comment) > 100:
+        if len(self.body) > 100:
             return self.body[:100] + '...'
 
         return self.body
