@@ -64,8 +64,8 @@ class UpdatePostSerializer(serializers.ModelSerializer):
 
 class ReplySerializer(serializers.ModelSerializer):
 
-    author = AuthorSerializer(read_only=True)
-    date = serializers.DateTimeField(format="%d de %B del %Y, a las %H:%M")
+    author = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    date = serializers.DateTimeField(format="%d de %B del %Y, a las %H:%M", read_only=True)
 
     class Meta:
         model = Reply
