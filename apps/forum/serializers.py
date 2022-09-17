@@ -1,7 +1,11 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from forum.models import Post, Subsection
+from forum.models import (
+    Post,
+    Comment,
+    Reply,
+    Subsection)
 
 
 class AuthorSerializer(serializers.ModelSerializer):
@@ -43,7 +47,7 @@ class CreatePostSerializer(serializers.ModelSerializer):
 
         model = Post
         read_only_fields = ('slug',)
-        exclude = ('id', 'date', 'likes',)
+        exclude = ('id', 'date',)
         extra_kwargs = {
             'body': {'write_only': True},
             'title': {'write_only': True},
@@ -56,14 +60,40 @@ class UpdatePostSerializer(serializers.ModelSerializer):
     class Meta:
 
         model = Post
-        fields = ('title', 'section', 'body')
+        fields = ('title', 'subsection', 'body',)
+
+class ReplySerializer(serializers.ModelSerializer):
+
+    author = AuthorSerializer(read_only=True)
+    date = serializers.DateTimeField(format="%d de %B del %Y, a las %H:%M")
+
+    class Meta:
+        model = Reply
+        exclude = ('id',)
+        extra_kwargs = {
+            'comment': {'write_only': True}
+        }
+
+class CommentSerializer(serializers.ModelSerializer):
+
+    author = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    date = serializers.DateTimeField(format="%d de %B del %Y, a las %H:%M", read_only=True)
+    replies = ReplySerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = '__all__'
+        extra_kwargs = {
+            'post': {'write_only': True}
+        }
 
 class PostSerializer(serializers.ModelSerializer):
 
     subsection = serializers.CharField(source='subsection.name')
     author = AuthorSerializer(read_only=True)
     date = serializers.DateTimeField(format="%d de %B del %Y, a las %H:%M")
+    comments = CommentSerializer(many=True, read_only=True)
 
     class Meta:
         model = Post
-        exclude = ('id', 'likes', 'section',)
+        exclude = ('id', 'section',)
