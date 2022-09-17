@@ -163,10 +163,10 @@ class PostCreateTestCase(BaseSetup):
         response = client.get(reverse('forum:posts-detail', kwargs={'slug': post.slug}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-class CommentsAndRepliesTestCase(BaseSetup):
+class CommentsTestCase(BaseSetup):
 
     def setUp(self):
-        super(CommentsAndRepliesTestCase, self).setUp()
+        super(CommentsTestCase, self).setUp()
 
         post_form = {
             'body': '<p> test text </p>',
@@ -218,6 +218,69 @@ class CommentsAndRepliesTestCase(BaseSetup):
         response = client.post(
             reverse('forum:comments-list'),
             comment_form,
+            format='json'
+        )
+        msg = {'body': ['Este campo es requerido.']}
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(json.loads(response.content), msg)
+
+class ReplyTestCase(BaseSetup):
+
+    def setUp(self):
+        super(ReplyTestCase, self).setUp()
+
+        post_form = {
+            'body': '<p> test text </p>',
+            'title': 'Test title'
+        }
+
+        post = Post.objects.create(author=self.user, section=self.section, subsection=self.subsection, **post_form)
+        self.comment = Comment.objects.create(author=self.user, post=post, body='<p> test comment </p>')
+
+    def test_reply_comment_success(self):
+
+        reply_form = {
+            'comment': self.comment.pk,
+            'body': '<p>Respuesta a comentario</p>'
+        }
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        response = client.post(
+            reverse('forum:replies-list'),
+            reply_form,
+            format='json'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_comment_post_fail_missing_token(self):
+
+        reply_form = {
+            'comment': self.comment.pk,
+            'body': '<p>Commentario</p>'
+        }
+        client = APIClient()
+        response = client.post(
+            reverse('forum:replies-list'),
+            reply_form,
+            format='json'
+        )
+        msg = {"detail":"Las credenciales de autenticación no se proveyeron."}
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(json.loads(response.content), msg)
+
+    def test_comment_post_fail_missing_body(self):
+
+        reply_form = {
+            'comment': self.comment.pk,
+        }
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        response = client.post(
+            reverse('forum:replies-list'),
+            reply_form,
             format='json'
         )
         msg = {'body': ['Este campo es requerido.']}
