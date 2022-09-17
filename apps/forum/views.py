@@ -2,14 +2,16 @@ from rest_framework import generics, status, viewsets, mixins
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 
-from forum.models import Post, Section, Subsection
+from forum.models import Post, Comment, Reply, Subsection
 from forum.permissions import IsAuthorOrReadOnly
 from forum.serializers import (
     PostSerializerResume,
     SubsectionSerializer,
     PostSerializer,
     CreatePostSerializer,
-    UpdatePostSerializer
+    UpdatePostSerializer,
+    CommentSerializer,
+    ReplySerializer
 )
 
 # Create your views here.
@@ -57,8 +59,20 @@ class CreateUpdatePostAPIView(viewsets.ModelViewSet):
 
         response = super(CreateUpdatePostAPIView, self).update(request, *args, **kwargs)
 
-        if response.status_code == 400:
-            return response
+        if response.status_code == 200:
+            msg = {'success': 'Post actualizado correctamente!'}
+            return Response(msg, status=status.HTTP_200_OK)
 
-        msg = {'success': 'Post actualizado correctamente!'}
-        return Response(msg, status=status.HTTP_201_CREATED)
+        return response
+
+class CreateUpdateCommentAPIView(viewsets.ModelViewSet):
+
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly,)
+
+class CreateUpdateReplyAPIView(viewsets.ModelViewSet):
+
+    queryset = Reply.objects.all()
+    serializer_class = ReplySerializer
+    permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly,)
