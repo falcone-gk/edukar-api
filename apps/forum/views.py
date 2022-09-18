@@ -10,8 +10,8 @@ from forum.serializers import (
     PostSerializer,
     CreatePostSerializer,
     UpdatePostSerializer,
-    CommentSerializer,
-    ReplySerializer
+    CommentCreateSerializer,
+    ReplyCreateSerializer
 )
 
 # Create your views here.
@@ -68,11 +68,33 @@ class CreateUpdatePostAPIView(viewsets.ModelViewSet):
 class CreateUpdateCommentAPIView(viewsets.ModelViewSet):
 
     queryset = Comment.objects.all()
-    serializer_class = CommentSerializer
+    serializer_class = CommentCreateSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly,)
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+
+        if response.status_code == 201:
+            post_id = request.data['post']
+            post = Post.objects.get(pk=post_id)
+            serializer = PostSerializer(post, context={'request': request})
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return response
 
 class CreateUpdateReplyAPIView(viewsets.ModelViewSet):
 
     queryset = Reply.objects.all()
-    serializer_class = ReplySerializer
+    serializer_class = ReplyCreateSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly,)
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+
+        if response.status_code == 201:
+            post_id = request.data['post']
+            post = Post.objects.get(pk=post_id)
+            serializer = PostSerializer(post, context={'request': request})
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return response
