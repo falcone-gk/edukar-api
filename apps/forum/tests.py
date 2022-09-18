@@ -235,12 +235,13 @@ class ReplyTestCase(BaseSetup):
             'title': 'Test title'
         }
 
-        post = Post.objects.create(author=self.user, section=self.section, subsection=self.subsection, **post_form)
-        self.comment = Comment.objects.create(author=self.user, post=post, body='<p> test comment </p>')
+        self.post = Post.objects.create(author=self.user, section=self.section, subsection=self.subsection, **post_form)
+        self.comment = Comment.objects.create(author=self.user, post=self.post, body='<p> test comment </p>')
 
     def test_reply_comment_success(self):
 
         reply_form = {
+            'post': self.post.pk,
             'comment': self.comment.pk,
             'body': '<p>Respuesta a comentario</p>'
         }
@@ -257,6 +258,7 @@ class ReplyTestCase(BaseSetup):
     def test_comment_post_fail_missing_token(self):
 
         reply_form = {
+            'post': self.post.pk,
             'comment': self.comment.pk,
             'body': '<p>Commentario</p>'
         }
@@ -274,6 +276,7 @@ class ReplyTestCase(BaseSetup):
     def test_comment_post_fail_missing_body(self):
 
         reply_form = {
+            'post': self.post.pk,
             'comment': self.comment.pk,
         }
         client = APIClient()
@@ -284,6 +287,24 @@ class ReplyTestCase(BaseSetup):
             format='json'
         )
         msg = {'body': ['Este campo es requerido.']}
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(json.loads(response.content), msg)
+
+    def test_comment_post_fail_empty_post_id(self):
+
+        reply_form = {
+            'comment': self.comment.pk,
+            'body': '<p>Respuesta a comentario</p>'
+        }
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        response = client.post(
+            reverse('forum:replies-list'),
+            reply_form,
+            format='json'
+        )
+        msg = {"post":["Este campo es requerido."]}
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), msg)
