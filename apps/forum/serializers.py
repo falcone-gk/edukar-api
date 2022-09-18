@@ -62,10 +62,10 @@ class UpdatePostSerializer(serializers.ModelSerializer):
         model = Post
         fields = ('title', 'subsection', 'body',)
 
-class ReplySerializer(serializers.ModelSerializer):
+class ReplyCreateSerializer(serializers.ModelSerializer):
 
     author = serializers.HiddenField(default=serializers.CurrentUserDefault())
-    date = serializers.DateTimeField(format="%d de %B del %Y, a las %H:%M", read_only=True)
+    post = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = Reply
@@ -74,11 +74,13 @@ class ReplySerializer(serializers.ModelSerializer):
             'comment': {'write_only': True}
         }
 
-class CommentSerializer(serializers.ModelSerializer):
+    def create(self, validated_data):
+        validated_data.pop('post', None)
+        return super().create(validated_data)
+
+class CommentCreateSerializer(serializers.ModelSerializer):
 
     author = serializers.HiddenField(default=serializers.CurrentUserDefault())
-    date = serializers.DateTimeField(format="%d de %B del %Y, a las %H:%M", read_only=True)
-    replies = ReplySerializer(many=True, read_only=True)
 
     class Meta:
         model = Comment
@@ -86,6 +88,25 @@ class CommentSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'post': {'write_only': True}
         }
+
+class ReplySerializer(serializers.ModelSerializer):
+
+    author = AuthorSerializer(read_only=True)
+    date = serializers.DateTimeField(format="%d de %B del %Y, a las %H:%M", read_only=True)
+
+    class Meta:
+        model = Reply
+        exclude = ('id', 'comment',)
+
+class CommentSerializer(serializers.ModelSerializer):
+
+    author = AuthorSerializer(read_only=True)
+    date = serializers.DateTimeField(format="%d de %B del %Y, a las %H:%M", read_only=True)
+    replies = ReplySerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Comment
+        exclude = ('post',)
 
 class PostSerializer(serializers.ModelSerializer):
 
