@@ -11,6 +11,7 @@ from forum.serializers import (
     CreatePostSerializer,
     UpdatePostSerializer,
     CommentCreateSerializer,
+    CommentSerializer,
     ReplyCreateSerializer
 )
 
@@ -76,8 +77,8 @@ class CreateUpdateCommentAPIView(viewsets.ModelViewSet):
 
         if response.status_code == 201:
             post_id = request.data['post']
-            post = Post.objects.get(pk=post_id)
-            serializer = PostSerializer(post, context={'request': request})
+            comments = Comment.objects.filter(post_id=post_id)
+            serializer = CommentSerializer(comments, many=True, context={'request': request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return response
@@ -93,8 +94,8 @@ class CreateUpdateReplyAPIView(viewsets.ModelViewSet):
 
         if response.status_code == 201:
             post_id = request.data['post']
-            post = Post.objects.get(pk=post_id)
-            serializer = PostSerializer(post, context={'request': request})
+            comments = Comment.objects.filter(post_id=post_id)
+            serializer = CommentSerializer(comments, many=True, context={'request': request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return response
