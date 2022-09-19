@@ -85,9 +85,6 @@ class CommentCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = '__all__'
-        extra_kwargs = {
-            'post': {'write_only': True}
-        }
 
 class ReplySerializer(serializers.ModelSerializer):
 
@@ -117,4 +114,4 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        exclude = ('id', 'section',)
+        exclude = ('section',)
