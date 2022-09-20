@@ -93,7 +93,7 @@ class ReplySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Reply
-        exclude = ('id', 'comment',)
+        exclude = ('comment',)
 
 class CommentSerializer(serializers.ModelSerializer):
 
