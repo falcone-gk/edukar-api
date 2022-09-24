@@ -406,7 +406,7 @@ class TestForumHome(BaseSetup):
             'title': 'Test title'
         }
 
-        self.num_post_create = 5
+        self.num_post_create = 20
         for _ in range(self.num_post_create):
             Post.objects.create(
                 author=self.user,
@@ -435,7 +435,7 @@ class TestForumHome(BaseSetup):
         response = client.get(url_format.format(reverse('forum:sections-list'), '0'))
         json_data = json.loads(response.content)
 
-        self.assertEqual(len(json_data), self.num_post_create)
+        self.assertEqual(json_data['count'], self.num_post_create)
     
     def test_get_specific_subsection_posts(self):
 
@@ -455,7 +455,7 @@ class TestForumHome(BaseSetup):
         url_format = '{0}?course={1}'
         response = client.get(url_format.format(reverse('forum:sections-list'), subsection.pk))
         json_data = json.loads(response.content)
-        self.assertEqual(len(json_data), new_num_post_create)
+        self.assertEqual(len(json_data['results']), new_num_post_create)
 
     def test_no_found_subsection(self):
 
@@ -467,7 +467,7 @@ class TestForumHome(BaseSetup):
         json_data = json.loads(response.content)
 
         # No subsection found, we exepect an empty dictionary
-        self.assertEqual(len(json_data), 0)
+        self.assertEqual(len(json_data['results']), 0)
 
     def test_subsection_value_is_not_number(self):
 
@@ -479,4 +479,4 @@ class TestForumHome(BaseSetup):
         json_data = json.loads(response.content)
 
         # No number value in course we expect to return an empty dictionary
-        self.assertEqual(len(json_data), 0)
+        self.assertEqual(len(json_data['results']), 0)
