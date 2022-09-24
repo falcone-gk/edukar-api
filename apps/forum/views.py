@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 
 from forum.models import Post, Comment, Reply, Subsection
 from forum.permissions import IsAuthorOrReadOnly
+from forum.paginators import PostCoursePagination
 from forum.serializers import (
     PostSerializerResume,
     SubsectionSerializer,
@@ -20,6 +21,7 @@ from forum.serializers import (
 class ForumHomeAPIView(generics.ListAPIView):
 
     serializer_class = PostSerializerResume
+    pagination_class = PostCoursePagination
     queryset = Post.objects.all()
 
     def get_queryset(self):
@@ -27,13 +29,13 @@ class ForumHomeAPIView(generics.ListAPIView):
         course = self.request.query_params.get('course')
         # If '0' is sent then we return all posts.
         if course == '0':
-            return Post.objects.all().order_by('-date')
+            return Post.objects.all().order_by('-date').order_by('-date')
 
         # Catch error when query param sent is not a number or empty
         try:
             queryset = Post.objects.filter(subsection=int(course)).order_by('-date')
         except (ValueError, TypeError):
-            queryset = Post.objects.filter(subsection=None)
+            queryset = Post.objects.filter(subsection=None).order_by('-date')
         return queryset
 
 class SubsectionAPIView(generics.ListAPIView):
