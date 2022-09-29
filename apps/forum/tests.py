@@ -225,6 +225,46 @@ class CommentsTestCase(BaseSetup):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), msg)
 
+    def test_delete_comment_success(self):
+
+        json_form = {
+            'username': 'testuser2',
+            'email': 'testuser2@example.com',
+            'first_name': 'testuser2',
+            'last_name': 'testuser2',
+            'password': 'testpassword',
+        }
+
+        # Creating user
+        user2 = User.objects.create_user(**json_form)
+
+        # Getting user token
+        refresh = RefreshToken.for_user(user2)
+        access2 = str(refresh.access_token)
+
+        comment = Comment.objects.create(author=self.user, body='text', post=self.post)
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + access2)
+        response = client.delete(
+            reverse('forum:comments-detail', kwargs={'pk': comment.pk}),
+            format='json'
+        )
+
+        msg = {"detail":"Usted no tiene permiso para realizar esta acción."}
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(json.loads(response.content), msg)
+
+    def test_delete_comment_failes_no_owner(self):
+
+        comment = Comment.objects.create(author=self.user, body='text', post=self.post)
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        response = client.delete(
+            reverse('forum:comments-detail', kwargs={'pk': comment.pk}),
+            format='json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
 class ReplyTestCase(BaseSetup):
 
     def setUp(self):

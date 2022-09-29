@@ -68,7 +68,11 @@ class CreateUpdatePostAPIView(viewsets.ModelViewSet):
 
         return response
 
-class CreateUpdateCommentAPIView(viewsets.ModelViewSet):
+class CreateUpdateCommentAPIView(
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet
+):
 
     queryset = Comment.objects.all()
     serializer_class = CommentCreateSerializer
@@ -85,7 +89,11 @@ class CreateUpdateCommentAPIView(viewsets.ModelViewSet):
 
         return response
 
-class CreateUpdateReplyAPIView(viewsets.ModelViewSet):
+class CreateUpdateReplyAPIView(
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet
+):
 
     queryset = Reply.objects.all()
     serializer_class = ReplyCreateSerializer
