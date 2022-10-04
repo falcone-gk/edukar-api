@@ -18,6 +18,12 @@ from forum.serializers import (
 
 # Create your views here.
 
+def comment_serializer(request):
+    post_id = request.data['post']
+    comments = Comment.objects.filter(post_id=post_id)
+    serializer = CommentSerializer(comments, many=True, context={'request': request})
+    return serializer
+
 class ForumHomeAPIView(generics.ListAPIView):
 
     serializer_class = PostSerializerResume
@@ -82,12 +88,25 @@ class CreateUpdateCommentAPIView(
         response = super().create(request, *args, **kwargs)
 
         if response.status_code == 201:
-            post_id = request.data['post']
-            comments = Comment.objects.filter(post_id=post_id)
-            serializer = CommentSerializer(comments, many=True, context={'request': request})
+            serializer = comment_serializer(request)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return response
+
+    def destroy(self, request, *args, **kwargs):
+
+        # Check if post id was sent before deleting comment
+        if not request.data.get('post'):
+            msg = {'post': ['Este campo es requerido.']}
+            return Response(msg, status=status.HTTP_400_BAD_REQUEST)
+
+        response = super().destroy(request, *args, **kwargs)
+        if response.status_code != 204:
+            return response
+
+        serializer = comment_serializer(request)
+        # Since it has content we change status code to '200'
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class CreateUpdateReplyAPIView(
     mixins.CreateModelMixin,
@@ -103,9 +122,7 @@ class CreateUpdateReplyAPIView(
         response = super().create(request, *args, **kwargs)
 
         if response.status_code == 201:
-            post_id = request.data['post']
-            comments = Comment.objects.filter(post_id=post_id)
-            serializer = CommentSerializer(comments, many=True, context={'request': request})
+            serializer = comment_serializer(request)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return response
