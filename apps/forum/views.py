@@ -18,12 +18,6 @@ from forum.serializers import (
 
 # Create your views here.
 
-def comment_serializer(request):
-    post_id = request.data['post']
-    comments = Comment.objects.filter(post_id=post_id)
-    serializer = CommentSerializer(comments, many=True, context={'request': request})
-    return serializer
-
 class ForumHomeAPIView(generics.ListAPIView):
 
     serializer_class = PostSerializerResume
@@ -74,24 +68,29 @@ class CreateUpdatePostAPIView(viewsets.ModelViewSet):
 
         return response
 
-class CreateUpdateCommentAPIView(
+class UnsafeCommentsAPI(
     mixins.CreateModelMixin,
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
 
-    queryset = Comment.objects.all()
-    serializer_class = CommentCreateSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly,)
+
+    @staticmethod
+    def comment_serializer(request):
+        post_id = request.data['post']
+        comments = Comment.objects.filter(post_id=post_id)
+        serializer = CommentSerializer(comments, many=True, context={'request': request})
+        return serializer
 
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
 
-        if response.status_code == 201:
-            serializer = comment_serializer(request)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        if response.status_code != 201:
+            return response
 
-        return response
+        serializer = self.comment_serializer(request)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, *args, **kwargs):
 
@@ -104,25 +103,16 @@ class CreateUpdateCommentAPIView(
         if response.status_code != 204:
             return response
 
-        serializer = comment_serializer(request)
+        serializer = self.comment_serializer(request)
         # Since it has content we change status code to '200'
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-class CreateUpdateReplyAPIView(
-    mixins.CreateModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet
-):
+class UnsafeCommentAPIView(UnsafeCommentsAPI):
+
+    queryset = Comment.objects.all()
+    serializer_class = CommentCreateSerializer
+
+class UnsafeReplyAPIView(UnsafeCommentsAPI):
 
     queryset = Reply.objects.all()
     serializer_class = ReplyCreateSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly,)
-
-    def create(self, request, *args, **kwargs):
-        response = super().create(request, *args, **kwargs)
-
-        if response.status_code == 201:
-            serializer = comment_serializer(request)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        return response
