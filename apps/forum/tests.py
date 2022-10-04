@@ -10,7 +10,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from forum.models import Post, Section, Subsection, Comment
+from forum.models import Post, Section, Subsection, Comment, Reply
 from account.models import Profile
 # Create your tests here.
 
@@ -318,7 +318,7 @@ class ReplyTestCase(BaseSetup):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    def test_comment_post_fail_missing_token(self):
+    def test_reply_comment_fail_missing_token(self):
 
         reply_form = {
             'post': self.post.pk,
@@ -336,7 +336,7 @@ class ReplyTestCase(BaseSetup):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(json.loads(response.content), msg)
 
-    def test_comment_post_fail_missing_body(self):
+    def test_reply_comment_fail_missing_body(self):
 
         reply_form = {
             'post': self.post.pk,
@@ -354,7 +354,7 @@ class ReplyTestCase(BaseSetup):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), msg)
 
-    def test_comment_post_fail_empty_post_id(self):
+    def test_reply_comment_fail_empty_post_id(self):
 
         reply_form = {
             'comment': self.comment.pk,
@@ -370,6 +370,71 @@ class ReplyTestCase(BaseSetup):
         msg = {"post":["Este campo es requerido."]}
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(json.loads(response.content), msg)
+
+    def test_delete_reply_success(self):
+
+        # One reply created to check if it is maintained
+        Reply.objects.create(comment=self.comment, body='rand reply2', author=self.user)
+        reply = Reply.objects.create(comment=self.comment, body='rand reply', author=self.user)
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        response = client.delete(
+            reverse('forum:replies-detail', kwargs={'pk': reply.pk}),
+            {'post': self.post.pk},
+            format='json'
+        )
+
+        reply_list = json.loads(response.content)[0]['replies']
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Number of comments equal to '1' because of previous reply created
+        self.assertEqual(len(reply_list), 1)
+
+    def test_delete_reply_failed_no_post_id(self):
+
+        reply = Reply.objects.create(comment=self.comment, body='rand reply', author=self.user)
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        response = client.delete(
+            reverse('forum:replies-detail', kwargs={'pk': reply.pk}),
+            format='json'
+        )
+
+        msg = {'post': ['Este campo es requerido.']}
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(json.loads(response.content), msg)
+
+    def test_delete_reply_fail_no_owner(self):
+
+        json_form = {
+            'username': 'testuser2',
+            'email': 'testuser2@example.com',
+            'first_name': 'testuser2',
+            'last_name': 'testuser2',
+            'password': 'testpassword',
+        }
+
+        # Creating user
+        user2 = User.objects.create_user(**json_form)
+
+        # Getting user token
+        refresh = RefreshToken.for_user(user2)
+        access2 = str(refresh.access_token)
+
+        reply = Reply.objects.create(comment=self.comment, body='rand reply', author=self.user)
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + access2)
+        response = client.delete(
+            reverse('forum:replies-detail', kwargs={'pk': reply.pk}),
+            {'post': self.post.pk},
+            format='json'
+        )
+
+        msg = {"detail":"Usted no tiene permiso para realizar esta acción."}
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(json.loads(response.content), msg)
 
 class PostUpdateTestCase(BaseSetup):
