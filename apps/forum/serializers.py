@@ -78,6 +78,19 @@ class ReplyCreateSerializer(serializers.ModelSerializer):
         validated_data.pop('post', None)
         return super().create(validated_data)
 
+class ReplyUpdateSerializer(serializers.ModelSerializer):
+
+    author = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    post = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = Reply
+        exclude = ('id', 'comment',)
+
+    def create(self, validated_data):
+        validated_data.pop('post', None)
+        return super().create(validated_data)
+
 class CommentCreateSerializer(serializers.ModelSerializer):
 
     author = serializers.HiddenField(default=serializers.CurrentUserDefault())
