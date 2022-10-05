@@ -13,7 +13,8 @@ from forum.serializers import (
     UpdatePostSerializer,
     CommentCreateSerializer,
     CommentSerializer,
-    ReplyCreateSerializer
+    ReplyCreateSerializer,
+    ReplyUpdateSerializer
 )
 
 # Create your views here.
@@ -70,6 +71,7 @@ class CreateUpdatePostAPIView(viewsets.ModelViewSet):
 
 class UnsafeCommentsAPI(
     mixins.CreateModelMixin,
+    mixins.UpdateModelMixin,
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
@@ -107,6 +109,15 @@ class UnsafeCommentsAPI(
         # Since it has content we change status code to '200'
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    def update(self, request, *args, **kwargs):
+        response = super().update(request, *args, **kwargs)
+
+        if response.status_code != 200:
+            return response
+
+        serializer = self.comment_serializer(request)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 class UnsafeCommentAPIView(UnsafeCommentsAPI):
 
     queryset = Comment.objects.all()
@@ -116,3 +127,10 @@ class UnsafeReplyAPIView(UnsafeCommentsAPI):
 
     queryset = Reply.objects.all()
     serializer_class = ReplyCreateSerializer
+
+    def get_serializer_class(self):
+
+        if (self.action == 'update') | (self.action == 'partial_update'):
+            return ReplyUpdateSerializer
+        else:
+            return ReplyCreateSerializer
