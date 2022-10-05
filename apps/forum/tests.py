@@ -288,6 +288,57 @@ class CommentsTestCase(BaseSetup):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(json.loads(response.content), msg)
 
+    def test_update_comment_success(self):
+
+        comment = Comment.objects.create(author=self.user, body='text', post=self.post)
+        new_text = 'updated text'
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        response = client.put(
+            reverse('forum:comments-detail', kwargs={'pk': comment.pk}),
+            {'post': self.post.pk, 'body': new_text},
+            format='json'
+        )
+
+        json_data = json.loads(response.content)[0]
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(json_data['body'], new_text)
+
+    def test_update_comment_fail_no_owner(self):
+
+        json_form = {
+            'username': 'testuser2',
+            'email': 'testuser2@example.com',
+            'first_name': 'testuser2',
+            'last_name': 'testuser2',
+            'password': 'testpassword',
+        }
+        # Creating user
+        user2 = User.objects.create_user(**json_form)
+
+        # Getting user token
+        refresh = RefreshToken.for_user(user2)
+        access2 = str(refresh.access_token)
+
+        comment = Comment.objects.create(author=self.user, body='text', post=self.post)
+        new_text = 'updated text'
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + access2)
+        response = client.put(
+            reverse('forum:comments-detail', kwargs={'pk': comment.pk}),
+            {'post': self.post.pk, 'body': new_text},
+            format='json'
+        )
+
+        msg = {"detail":"Usted no tiene permiso para realizar esta acción."}
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(json.loads(response.content), msg)
+        # checking that comment is not updated
+        comment_body = Comment.objects.get(id=comment.pk).body
+        self.assertEqual(comment_body, comment.body)
+
 class ReplyTestCase(BaseSetup):
 
     def setUp(self):
@@ -436,6 +487,57 @@ class ReplyTestCase(BaseSetup):
         msg = {"detail":"Usted no tiene permiso para realizar esta acción."}
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(json.loads(response.content), msg)
+
+    def test_update_reply_success(self):
+
+        reply = Reply.objects.create(comment=self.comment, body='rand reply', author=self.user)
+        new_text = 'updated text'
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        response = client.put(
+            reverse('forum:replies-detail', kwargs={'pk': reply.pk}),
+            {'post': self.post.pk, 'body': new_text},
+            format='json'
+        )
+
+        reply_obj = json.loads(response.content)[0]['replies'][0]
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(reply_obj['body'], new_text)
+
+    def test_update_reply_fail_no_owner(self):
+
+        json_form = {
+            'username': 'testuser2',
+            'email': 'testuser2@example.com',
+            'first_name': 'testuser2',
+            'last_name': 'testuser2',
+            'password': 'testpassword',
+        }
+        # Creating user
+        user2 = User.objects.create_user(**json_form)
+
+        # Getting user token
+        refresh = RefreshToken.for_user(user2)
+        access2 = str(refresh.access_token)
+  
+        reply = Reply.objects.create(comment=self.comment, body='rand reply', author=self.user)
+        new_text = 'updated text'
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + access2)
+        response = client.put(
+            reverse('forum:replies-detail', kwargs={'pk': reply.pk}),
+            {'post': self.post.pk, 'body': new_text},
+            format='json'
+        )
+
+        msg = {"detail":"Usted no tiene permiso para realizar esta acción."}
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(json.loads(response.content), msg)
+        # checking that reply is not updated
+        reply_body = Reply.objects.get(id=reply.pk).body
+        self.assertEqual(reply_body, reply.body)
 
 class PostUpdateTestCase(BaseSetup):
 
