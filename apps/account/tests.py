@@ -1,9 +1,6 @@
-from email.mime import base
-from http import client
 import json
 import re
 import io
-from urllib import response
 
 from PIL import Image
 
@@ -12,10 +9,10 @@ from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.models import User
-from django.contrib.auth.password_validation import validate_password
 
 from rest_framework import status
 from rest_framework.test import APIClient
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from account.models import Profile
 
@@ -31,7 +28,7 @@ class CreateUserTests(TestCase):
             'password': 'testpassword',
             're_password': 'testpassword',
         }
-    
+
     def generate_photo_file(self):
         file = io.BytesIO()
         image = Image.new('RGBA', size=(100, 100), color=(155, 0, 0))
@@ -520,7 +517,7 @@ class ResetPasswordTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(error_msg, json.loads(response.content))
     
-    def test_refresh_password_no_eamil_found(self):
+    def test_refresh_password_no_email_found(self):
 
         client = APIClient()
         response = client.post(
@@ -533,3 +530,34 @@ class ResetPasswordTest(TestCase):
         error_msg = ["No existe un usuario con el email dado."]
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(error_msg, json.loads(response.content))
+
+class TestProfileSerializer(TestCase):
+
+    def setUp(self):
+
+        json_form = {
+            'username': 'testuser',
+            'email': 'testuser@example.com',
+            'first_name': 'testuser',
+            'last_name': 'testuser',
+            'password': 'testpassword',
+            'profile': {
+                'about_me': 'testing about me'
+            }
+        }
+
+        # Creating user and user profile
+        profile = json_form.pop('profile')
+        self.user = User.objects.create_user(**json_form)
+        Profile.objects.create(user=self.user, **profile)
+
+        # Getting user token
+        refresh = RefreshToken.for_user(self.user)
+        self.access = str(refresh.access_token)
+
+    def test_get_profile_account_success(self):
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        res = client.get(reverse('account:user-me'))
+        print(res.content)

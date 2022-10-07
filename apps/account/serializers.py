@@ -39,6 +39,19 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
         return user
 
+class UserProfileInfoSerializer(serializers.ModelSerializer):
+
+    about_me = serializers.CharField(source='profile.get.about_me')
+    picture = serializers.SerializerMethodField('get_picture')
+
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name', 'username', 'email', 'about_me', 'picture')
+
+    def get_picture(self, obj):
+
+        request = self.context.get("request")
+        return request.build_absolute_uri(obj.profile.get().picture.url)
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
