@@ -1,11 +1,11 @@
 import random
 import string
 
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.utils.text import slugify
 
-from forum.models import Post, Section, Subsection
+from forum.models import Post, Section, Subsection, Comment
 
 @receiver(pre_save, sender=Post)
 def create_post_title_slug(sender, instance, **kwargs):
@@ -34,3 +34,14 @@ def create_subsection_slug(sender, instance, **kwargs):
     generated_slug = slugify(instance.name)
 
     instance.slug = generated_slug
+
+@receiver(post_save, sender=Comment)
+def send_notification(sender, instance, created, **kwargs):
+
+    if not created:
+        return
+
+    sender = instance.author.username
+    receiver = instance.post.author.username
+    source = instance.post
+    print(sender, receiver, source.title)
