@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     # Custom apps installed
     'account',
     'forum',
+    'notification',
 
     'django.contrib.admin',
     'django.contrib.auth',
