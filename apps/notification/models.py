@@ -15,7 +15,7 @@ class Notification(models.Model):
 
     user = models.ForeignKey(User, related_name='notif', on_delete=models.CASCADE)
     sender = models.ForeignKey(User, related_name='notif_sent', on_delete=models.CASCADE)
-    source_id = models.ForeignKey(Post)
+    source_id = models.ForeignKey(Post, related_name='notif_post', on_delete=models.CASCADE)
     notif_type = models.ForeignKey(NotificationTypes, related_name='notif_type', on_delete=models.CASCADE)
     date = models.DateTimeField(default=timezone.now)
     is_read = models.BooleanField(default=False)
