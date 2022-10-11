@@ -5,7 +5,8 @@ from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.utils.text import slugify
 
-from forum.models import Post, Section, Subsection, Comment
+from notification.models import NotificationTypes, Notification
+from forum.models import Post, Section, Subsection, Comment, Reply
 
 @receiver(pre_save, sender=Post)
 def create_post_title_slug(sender, instance, **kwargs):
@@ -41,7 +42,34 @@ def send_notification(sender, instance, created, **kwargs):
     if not created:
         return
 
-    sender = instance.author.username
-    receiver = instance.post.author.username
+    sender = instance.author
+    receiver = instance.post.author
     source = instance.post
-    print(sender, receiver, source.title)
+    notif_type = NotificationTypes.objects.get(type_notif='comment')
+
+    # Send notification to the post owner
+    Notification.objects.create(
+        sender=sender,
+        user=receiver,
+        source_id=source,
+        notif_type=notif_type
+    )
+
+@receiver(post_save, sender=Reply)
+def send_notification(sender, instance, created, **kwargs):
+
+    if not created:
+        return
+
+    sender = instance.author
+    receiver = instance.comment.author
+    source = instance.comment.post
+    notif_type = NotificationTypes.objects.get(type_notif='reply')
+
+    # Send notification to the post owner
+    Notification.objects.create(
+        sender=sender,
+        user=receiver,
+        source_id=source,
+        notif_type=notif_type
+    )
