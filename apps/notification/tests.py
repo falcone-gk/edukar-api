@@ -1,7 +1,11 @@
 from django.contrib.auth.models import User
 from django.test import TestCase
+from django.urls import reverse
 
+from rest_framework import status
+from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
+from notification.models import Notification
 
 from notification.models import NotificationTypes
 from account.models import Profile
@@ -32,7 +36,7 @@ class BaseNotificationTestSetup(TestCase):
         # Creating default notif types
         NotificationTypes.objects.create(
             type_notif='comment',
-            description='commentó en tu post'
+            description='comentó en tu post'
         )
 
         NotificationTypes.objects.create(
@@ -69,8 +73,37 @@ class TestNotificationCommentSignals(BaseNotificationTestSetup):
 
     def test_notification_after_comment_success(self):
 
-        Comment.objects.create(
-            author=self.user,
-            body='body comment',
-            post=self.post
+        comment_form = {
+            'post': self.post.pk,
+            'body': '<p>Commentario</p>'
+        }
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.post(
+            reverse('forum:comments-list'),
+            comment_form,
+            format='json'
         )
+
+        notif = Notification.objects.all()
+        user_notif = Notification.objects.filter(user=self.user_post_owner.pk)
+        self.assertEqual(len(notif), 1)
+        self.assertEqual(len(user_notif), 1)
+
+    def test_notification_no_created_after_updated_comment(self):
+
+        comment = Comment.objects.create(author=self.user, body='text', post=self.post)
+        new_text = 'updated text'
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.put(
+            reverse('forum:comments-detail', kwargs={'pk': comment.pk}),
+            {'post': self.post.pk, 'body': new_text},
+            format='json'
+        )
+
+        # In case of the user updating their comment. This action shouldn't be notified
+        notif = Notification.objects.all()
+        user_notif = Notification.objects.filter(user=self.user_post_owner.pk)
+        self.assertEqual(len(notif), 1)
+        self.assertEqual(len(user_notif), 1)
