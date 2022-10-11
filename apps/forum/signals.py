@@ -39,11 +39,12 @@ def create_subsection_slug(sender, instance, **kwargs):
 @receiver(post_save, sender=Comment)
 def send_notification(sender, instance, created, **kwargs):
 
-    if not created:
-        return
-
     sender = instance.author
     receiver = instance.post.author
+
+    if (not created) or (sender.pk == receiver.pk):
+        return
+
     source = instance.post
     notif_type = NotificationTypes.objects.get(type_notif='comment')
 
@@ -58,11 +59,12 @@ def send_notification(sender, instance, created, **kwargs):
 @receiver(post_save, sender=Reply)
 def send_notification(sender, instance, created, **kwargs):
 
-    if not created:
-        return
-
     sender = instance.author
     receiver = instance.comment.author
+
+    if (not created) or (sender.pk == receiver.pk):
+        return
+
     source = instance.comment.post
     notif_type = NotificationTypes.objects.get(type_notif='reply')
 

@@ -41,7 +41,7 @@ class BaseNotificationTestSetup(TestCase):
 
         NotificationTypes.objects.create(
             type_notif='reply',
-            description='respondió a tu comentario en el post'
+            description='respondió a tu comentario'
         )
 
         self.post = Post.objects.create(
@@ -103,6 +103,51 @@ class TestNotificationCommentSignals(BaseNotificationTestSetup):
         )
 
         # In case of the user updating their comment. This action shouldn't be notified
+        notif = Notification.objects.all()
+        user_notif = Notification.objects.filter(user=self.user_post_owner.pk)
+        self.assertEqual(len(notif), 1)
+        self.assertEqual(len(user_notif), 1)
+
+class TestNotificationReplySignals(BaseNotificationTestSetup):
+
+    def setUp(self):
+        super().setUp()
+        self.comment = Comment.objects.create(author=self.user_post_owner, body='text', post=self.post)
+
+    def test_notification_after_reply_success(self):
+
+        reply_form = {
+            'post': self.post.pk,
+            'comment': self.comment.pk,
+            'body': '<p>Respuesta a comentario</p>'
+        }
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.post(
+            reverse('forum:replies-list'),
+            reply_form,
+            format='json'
+        )
+
+        notif = Notification.objects.all()
+        user_notif = Notification.objects.filter(user=self.user_post_owner.pk)
+        self.assertEqual(len(notif), 1)
+        self.assertEqual(len(user_notif), 1)
+
+    def test_notification_no_created_after_updated_reply(self):
+
+        reply = Reply.objects.create(comment=self.comment, body='rand reply', author=self.user)
+        new_text = 'updated text'
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.put(
+            reverse('forum:replies-detail', kwargs={'pk': reply.pk}),
+            {'post': self.post.pk, 'body': new_text},
+            format='json'
+        )
+
+        # In case of the user updating their reply. This action shouldn't be notified
         notif = Notification.objects.all()
         user_notif = Notification.objects.filter(user=self.user_post_owner.pk)
         self.assertEqual(len(notif), 1)
