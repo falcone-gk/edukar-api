@@ -22,5 +22,5 @@ class Notification(models.Model):
 
     def __str__(self):
 
-        format_str = f'{self.sender.username} {self.notif_type.description} in {self.source_id.title}'
+        format_str = f'{self.sender.username} {self.notif_type.description} en {self.source_id.title}'
         return format_str
