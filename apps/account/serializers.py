@@ -3,6 +3,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from account.models import Profile
+from notification.serializers import NotificationReceiverSerializer
 
 class UserProfileSerializer(serializers.ModelSerializer):
 
@@ -43,10 +44,16 @@ class UserProfileInfoSerializer(serializers.ModelSerializer):
 
     about_me = serializers.CharField(source='profile.get.about_me')
     picture = serializers.SerializerMethodField('get_picture')
+    notifications = NotificationReceiverSerializer(many=True, read_only=True, source='notif')
 
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'username', 'email', 'about_me', 'picture')
+        fields = (
+            'first_name', 'last_name', 
+            'username', 'email', 
+            'about_me', 'picture',
+            'notifications'
+        )
 
     def get_picture(self, obj):
 
