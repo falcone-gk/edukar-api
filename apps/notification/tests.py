@@ -36,12 +36,14 @@ class BaseNotificationTestSetup(TestCase):
         # Creating default notif types
         NotificationTypes.objects.create(
             type_notif='comment',
-            description='comentó en tu post'
+            desc_receiver='comentó en tu post',
+            desc_sender='comentaste'
         )
 
         NotificationTypes.objects.create(
             type_notif='reply',
-            description='respondió a tu comentario'
+            desc_receiver='respondió a tu comentario',
+            desc_sender='respondiste'
         )
 
         self.post = Post.objects.create(
