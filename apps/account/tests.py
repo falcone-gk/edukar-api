@@ -560,4 +560,5 @@ class TestProfileSerializer(TestCase):
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
         res = client.get(reverse('account:user-me'))
-        print(res.content)
+        
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
