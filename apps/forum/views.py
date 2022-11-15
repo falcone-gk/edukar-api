@@ -1,6 +1,6 @@
 from rest_framework import generics, status, viewsets, mixins
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 from forum.models import Post, Comment, Reply, Subsection
 from forum.permissions import IsAuthorOrReadOnly
