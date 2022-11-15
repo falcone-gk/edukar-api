@@ -44,7 +44,6 @@ class UserProfileInfoSerializer(serializers.ModelSerializer):
 
     about_me = serializers.CharField(source='profile.get.about_me')
     picture = serializers.SerializerMethodField('get_picture')
-    notifications = NotificationReceiverSerializer(many=True, read_only=True, source='notif')
 
     class Meta:
         model = User
@@ -52,7 +51,6 @@ class UserProfileInfoSerializer(serializers.ModelSerializer):
             'first_name', 'last_name', 
             'username', 'email', 
             'about_me', 'picture',
-            'notifications'
         )
 
     def get_picture(self, obj):
