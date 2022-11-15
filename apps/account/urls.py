@@ -1,19 +1,28 @@
-from django.urls import path, include
 from account.views import LoginAPIView
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
     TokenVerifyView
 )
 
+from account import views
+
 # from account import views
 
 app_name = 'account'
+
+router = DefaultRouter()
+router.register(r'user-posts', views.OwnerPostAPIView, basename='user-posts')
+
 urlpatterns = [
     path('', include('djoser.urls')),
     path('token/create', LoginAPIView.as_view(), name='token_create'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('token/verify/', TokenVerifyView.as_view(), name='token_verify'),
 ]
+
+urlpatterns += router.urls
 
 ### Explaining 'djoser.urls' Urls
 

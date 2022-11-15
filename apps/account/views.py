@@ -1,6 +1,12 @@
-from rest_framework import generics, status
+from rest_framework import generics, status, viewsets, mixins
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+
+from forum.models import Post
+from forum.paginators import PostCoursePagination
+from forum.permissions import IsAuthorOrReadOnly
+from forum.serializers import PostSerializerResume
 
 from account.serializers import UserProfileSerializer, MyTokenObtainPairSerializer
 
@@ -25,3 +31,18 @@ class CreateUserAPIView(generics.CreateAPIView):
 
 class LoginAPIView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
+
+class OwnerPostAPIView(
+    mixins.ListModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet):
+
+    serializer_class = PostSerializerResume
+    permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly,)
+    pagination_class = PostCoursePagination
+
+    def get_queryset(self):
+
+        current_user = self.request.user
+        return Post.objects.filter(author=current_user).order_by('-date')

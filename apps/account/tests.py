@@ -15,6 +15,7 @@ from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from account.models import Profile
+from forum.models import Post, Section, Subsection
 
 # Create your tests here.
 
@@ -562,3 +563,70 @@ class TestProfileSerializer(TestCase):
         res = client.get(reverse('account:user-me'))
         
         self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+class BaseSetup(TestCase):
+    """Setting up user, section and subsection to test post creation."""
+
+    def setUp(self):
+
+        json_form = {
+            'username': 'testuser',
+            'email': 'testuser@example.com',
+            'first_name': 'testuser',
+            'last_name': 'testuser',
+            'password': 'testpassword',
+            'profile': {
+                'about_me': 'testing about me'
+            }
+        }
+
+        # Creating user and user profile
+        profile = json_form.pop('profile')
+        self.user = User.objects.create_user(**json_form)
+        Profile.objects.create(user=self.user, **profile)
+
+        json_form2 = {
+            'username': 'testuser2',
+            'email': 'testuser2@example.com',
+            'first_name': 'testuser2',
+            'last_name': 'testuser2',
+            'password': 'testpassword',
+        }
+
+        # Creating user
+        user2 = User.objects.create_user(**json_form2)
+        Profile.objects.create(user=user2, **profile)
+
+        # Getting user token
+        refresh = RefreshToken.for_user(self.user)
+        self.access = str(refresh.access_token)
+
+        # Creating section and subsection
+        self.section = Section.objects.create(name='Cursos')
+        self.subsection = Subsection.objects.create(section=self.section, name='Aritmética')
+
+        post_form = {
+            'body': '<p> test text </p>',
+            'title': 'Test title'
+        }
+
+        self.num_owner_posts = 12
+
+        for _ in range(self.num_owner_posts):
+            Post.objects.create(author=self.user, section=self.section, subsection=self.subsection, **post_form)
+            Post.objects.create(author=user2, section=self.section, subsection=self.subsection, **post_form)
+
+class TestProfilePage(BaseSetup):
+
+    def test_profile_home(self):
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        res = client.get(reverse('account:user-me'))
+        res1 = client.get(reverse('account:user-posts-list'))
+
+        res1_json = json.loads(res1.content)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.num_owner_posts, res1_json['count'])
+        self.assertEqual(len(res1_json['results']), 5)
