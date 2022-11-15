@@ -3,6 +3,6 @@ from notification.models import Notification
 
 class NotificationReceiverSerializer(serializers.ModelSerializer):
 
-    class Metas:
+    class Meta:
         model = Notification
-        fields = ('notification_receiver', 'date', 'is_read')
+        fields = ('notification_receiver', 'notification_sender', 'date', 'is_read')
