@@ -1,7 +1,7 @@
 from rest_framework import generics, status, viewsets, mixins
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated
 
 from forum.models import Post
 from forum.paginators import PostCoursePagination
@@ -39,7 +39,7 @@ class OwnerPostAPIView(
     viewsets.GenericViewSet):
 
     serializer_class = PostSerializerResume
-    permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly,)
+    permission_classes = (IsAuthenticated, IsAuthorOrReadOnly,)
     pagination_class = PostCoursePagination
 
     def get_queryset(self):
