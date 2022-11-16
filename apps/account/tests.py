@@ -630,3 +630,15 @@ class TestProfilePage(BaseSetup):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(self.num_owner_posts, res1_json['count'])
         self.assertEqual(len(res1_json['results']), 5)
+
+    def test_profile_home_error_no_user_auth(self):
+
+        client = APIClient()
+        res = client.get(reverse('account:user-me'))
+        res1 = client.get(reverse('account:user-posts-list'))
+
+        res1_json = json.loads(res1.content)
+        msg = {'detail': 'Las credenciales de autenticación no se proveyeron.'}
+
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(res1_json, msg)
