@@ -26,10 +26,14 @@ class PostSerializerResume(serializers.ModelSerializer):
 
     author = AuthorSerializer(read_only=True)
     subsection = serializers.CharField(source='subsection.name')
+    num_comments = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
-        fields = ('title', 'slug', 'time_difference', 'author', 'subsection')
+        fields = ('title', 'slug', 'time_difference', 'author', 'subsection', 'num_comments')
+
+    def get_num_comments(self, obj):
+        return len(obj.comments.all())
 
 ########### Serializer for Course subsection ###########
 class SubsectionSerializer(serializers.ModelSerializer):
