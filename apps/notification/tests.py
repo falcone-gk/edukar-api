@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
@@ -28,6 +30,10 @@ class BaseNotificationTestSetup(TestCase):
         # Creating user and user profile (the one that creates the post)
         self.user_post_owner = User.objects.create_user(**user_form)
         Profile.objects.create(user=self.user_post_owner)
+
+        # Getting user token
+        refresh = RefreshToken.for_user(self.user_post_owner)
+        self.access_post_owner = str(refresh.access_token)
 
         # Creating section and subsection
         section = Section.objects.create(name='Cursos')
@@ -154,3 +160,24 @@ class TestNotificationReplySignals(BaseNotificationTestSetup):
         user_notif = Notification.objects.filter(user=self.user_post_owner.pk)
         self.assertEqual(len(notif), 1)
         self.assertEqual(len(user_notif), 1)
+
+class TestNotificationUsers(BaseNotificationTestSetup):
+
+    def setUp(self):
+        super().setUp()
+
+        self.num_comments = 5
+        for _ in range(self.num_comments):
+            Comment.objects.create(author=self.user, body='text', post=self.post)
+
+    def test_get_notification_received_user(self):
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access_post_owner)
+        res = client.get(
+            reverse('notification:notification-user-list')
+        )
+        json_res = json.loads(res.content)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.num_comments, json_res['count'])

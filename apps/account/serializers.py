@@ -3,7 +3,6 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from account.models import Profile
-from notification.serializers import NotificationReceiverSerializer
 
 class UserProfileSerializer(serializers.ModelSerializer):
 

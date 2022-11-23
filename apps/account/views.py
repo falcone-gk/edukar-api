@@ -41,6 +41,7 @@ class OwnerPostAPIView(
     serializer_class = PostSerializerResume
     permission_classes = (IsAuthenticated, IsAuthorOrReadOnly,)
     pagination_class = PostCoursePagination
+    lookup_field = 'slug'
 
     def get_queryset(self):
 

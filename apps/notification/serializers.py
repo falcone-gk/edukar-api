@@ -5,4 +5,10 @@ class NotificationReceiverSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Notification
-        fields = ('notification_receiver', 'notification_sender', 'date', 'is_read')
+        fields = ('notification_receiver', 'date', 'is_read')
+
+class NotificationSenderSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Notification
+        fields = ('notification_sender', 'date')

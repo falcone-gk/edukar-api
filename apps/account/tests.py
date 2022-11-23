@@ -6,6 +6,7 @@ from PIL import Image
 
 from django.conf import settings
 from django.core import mail
+from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -593,9 +594,11 @@ class BaseSetup(TestCase):
             'password': 'testpassword',
         }
 
-        # Creating user
-        user2 = User.objects.create_user(**json_form2)
-        Profile.objects.create(user=user2, **profile)
+        # Creating user2
+        self.user2 = User.objects.create_user(**json_form2)
+        Profile.objects.create(user=self.user2, **profile)
+        refresh2 = RefreshToken.for_user(self.user2)
+        self.access2 = str(refresh2.access_token)
 
         # Getting user token
         refresh = RefreshToken.for_user(self.user)
@@ -614,7 +617,7 @@ class BaseSetup(TestCase):
 
         for _ in range(self.num_owner_posts):
             Post.objects.create(author=self.user, section=self.section, subsection=self.subsection, **post_form)
-            Post.objects.create(author=user2, section=self.section, subsection=self.subsection, **post_form)
+            Post.objects.create(author=self.user2, section=self.section, subsection=self.subsection, **post_form)
 
 class TestProfilePage(BaseSetup):
 
@@ -642,3 +645,25 @@ class TestProfilePage(BaseSetup):
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(res1_json, msg)
+
+    def test_delete_user_post(self):
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        post = Post.objects.filter(author=self.user)[0]
+        res = client.delete(reverse('account:user-posts-detail', kwargs={'slug': post.slug}))
+
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        with self.assertRaises(ObjectDoesNotExist):
+            # Post deleted shouldn't exist. So error must be raised
+            Post.objects.get(pk=post.pk)
+
+    def test_delete_user_post_error_no_token(self):
+
+        client = APIClient()
+        post = Post.objects.filter(author=self.user)[0]
+        res = client.delete(reverse('account:user-posts-detail', kwargs={'slug': post.slug}))
+        json_res = json.loads(res.content)
+        msg = {"detail":"Las credenciales de autenticación no se proveyeron."}
+
+        self.assertEqual(json_res, msg)
