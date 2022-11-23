@@ -1,6 +1,7 @@
 import json
 
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
 from django.urls import reverse
 
@@ -181,3 +182,18 @@ class TestNotificationUsers(BaseNotificationTestSetup):
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(self.num_comments, json_res['count'])
+
+    def test_deleted_notification_success(self):
+
+        # Get notification
+        notif = Notification.objects.filter(user=self.user_post_owner)[0]
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access_post_owner)
+        res = client.delete(
+            reverse('notification:notification-user-detail', kwargs={'pk': notif.pk})
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        with self.assertRaises(ObjectDoesNotExist):
+            Notification.objects.get(pk=notif.pk)
