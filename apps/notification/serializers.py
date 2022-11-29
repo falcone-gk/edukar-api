@@ -12,3 +12,8 @@ class NotificationSenderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
         fields = ('notification_sender', 'date')
+
+class ArrayOfIdsSerializer(serializers.Serializer):
+
+    id_ = serializers.IntegerField(required=False)
+    selected_notifications = serializers.ListField(child=serializers.IntegerField())

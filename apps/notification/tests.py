@@ -197,3 +197,70 @@ class TestNotificationUsers(BaseNotificationTestSetup):
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
         with self.assertRaises(ObjectDoesNotExist):
             Notification.objects.get(pk=notif.pk)
+
+    def test_delete_notification_error_no_owner(self):
+
+        # Get notification
+        notif = Notification.objects.filter(user=self.user_post_owner)[0]
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.delete(
+            reverse('notification:notification-user-detail', kwargs={'pk': notif.pk})
+        )
+
+        # Make sure that a non-owner cannot delete a notification.
+        try:
+            Notification.objects.get(pk=notif.pk)
+        except ObjectDoesNotExist:
+            self.fail('Function raised ExceptionType unexpectedly!"')
+
+    def test_set_notifcation_as_read_success(self):
+
+        notif = Notification.objects.filter(user=self.user_post_owner)[0]
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access_post_owner)
+        res = client.post(
+            reverse('notification:notification-user-set_read'),
+            {'selected_notifications': [notif.pk]}
+        )
+
+        json_res = json.loads(res.content)
+        msg = {'status': 'Notificaciones marcadas como leídas.'}
+        self.assertEqual(json_res, msg)
+
+        notif_after_request = Notification.objects.get(pk=notif.pk)
+        self.assertTrue(notif_after_request.is_read)
+
+    def test_set_notifcation_as_read_no_identified(self):
+
+        notif = Notification.objects.filter(user=self.user_post_owner)[0]
+        client = APIClient()
+        res = client.post(
+            reverse('notification:notification-user-set_read'),
+            {'selected_notifications': [notif.pk]}
+        )
+
+        json_res = json.loads(res.content)
+        msg = {'detail': 'Las credenciales de autenticación no se proveyeron.'}
+        self.assertEqual(json_res, msg)
+
+        notif_after_request = Notification.objects.get(pk=notif.pk)
+        self.assertFalse(notif_after_request.is_read)
+
+    def test_set_notifcation_as_read_no_owner(self):
+
+        notif = Notification.objects.filter(user=self.user_post_owner)[0]
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        res = client.post(
+            reverse('notification:notification-user-set_read'),
+            {'selected_notifications': [notif.pk]}
+        )
+
+        json_res = json.loads(res.content)
+        msg = {'status': 'Ninguna de las notificaciones te pertenece.'}
+        self.assertEqual(json_res, msg)
+
+        notif_after_request = Notification.objects.get(pk=notif.pk)
+        self.assertFalse(notif_after_request.is_read)
