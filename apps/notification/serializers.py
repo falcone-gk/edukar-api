@@ -3,9 +3,15 @@ from notification.models import Notification
 
 class NotificationReceiverSerializer(serializers.ModelSerializer):
 
+    author = serializers.CharField(source='sender.username')
+    title = serializers.CharField(source='source_id.title')
+    title_slug = serializers.CharField(source='source_id.slug')
+    description = serializers.CharField(source='notif_type.desc_receiver')
+    date = serializers.DateTimeField(format="%d de %B del %Y, a las %H:%M", read_only=True)
+
     class Meta:
         model = Notification
-        fields = ('notification_receiver', 'date', 'is_read')
+        fields = ('id', 'author', 'date', 'description', 'title', 'title_slug', 'is_read')
 
 class NotificationSenderSerializer(serializers.ModelSerializer):
 
