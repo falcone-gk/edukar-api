@@ -44,7 +44,7 @@ class SubsectionAPIView(generics.ListAPIView):
     serializer_class = SubsectionSerializer
     queryset = Subsection.objects.all()
 
-class CreateUpdatePostAPIView(viewsets.ModelViewSet):
+class CreatePostAPIView(viewsets.ModelViewSet):
 
     queryset = Post.objects.all()
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly,)
@@ -61,13 +61,19 @@ class CreateUpdatePostAPIView(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
 
-        response = super(CreateUpdatePostAPIView, self).update(request, *args, **kwargs)
+        response = super(CreatePostAPIView, self).update(request, *args, **kwargs)
 
         if response.status_code == 200:
             msg = {'success': 'Post actualizado correctamente!'}
             return Response(msg, status=status.HTTP_200_OK)
 
         return response
+
+class GetPostAPIView(generics.RetrieveAPIView):
+
+    queryset = Post.objects.all()
+    serializer_class = UpdatePostSerializer
+    lookup_field = 'slug'
 
 class UnsafeCommentsAPI(
     mixins.CreateModelMixin,
