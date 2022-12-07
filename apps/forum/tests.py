@@ -8,7 +8,7 @@ from django.utils.text import slugify
 
 from rest_framework import status
 from rest_framework.test import APIClient
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.authtoken.models import Token
 
 from forum.models import Post, Section, Subsection, Comment, Reply
 from account.models import Profile
@@ -58,8 +58,8 @@ class BaseSetup(TestCase):
         Profile.objects.create(user=self.user, **profile)
 
         # Getting user token
-        refresh = RefreshToken.for_user(self.user)
-        self.access = str(refresh.access_token)
+        token, _ = Token.objects.get_or_create(user=self.user)
+        self.access = token.key
 
         # Creating section and subsection
         self.section = Section.objects.create(name='Cursos')
@@ -77,7 +77,7 @@ class PostCreateTestCase(BaseSetup):
         }
 
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
         response = client.post(
             reverse('forum:posts-list'),
             post_form,
@@ -117,7 +117,7 @@ class PostCreateTestCase(BaseSetup):
         }
 
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
 
         # Removing body field.
         post_form.pop('body')
@@ -182,7 +182,7 @@ class CommentsTestCase(BaseSetup):
             'body': '<p>Commentario</p>'
         }
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
         response = client.post(
             reverse('forum:comments-list'),
             comment_form,
@@ -214,7 +214,7 @@ class CommentsTestCase(BaseSetup):
             'post': self.post.pk,
         }
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
         response = client.post(
             reverse('forum:comments-list'),
             comment_form,
@@ -232,7 +232,7 @@ class CommentsTestCase(BaseSetup):
 
         comment = Comment.objects.create(author=self.user, body='text', post=self.post)
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
         response = client.delete(
             reverse('forum:comments-detail', kwargs={'pk': comment.pk}),
             {'post': self.post.pk},
@@ -248,7 +248,7 @@ class CommentsTestCase(BaseSetup):
 
         comment = Comment.objects.create(author=self.user, body='text', post=self.post)
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
         response = client.delete(
             reverse('forum:comments-detail', kwargs={'pk': comment.pk}),
             format='json'
@@ -272,12 +272,12 @@ class CommentsTestCase(BaseSetup):
         user2 = User.objects.create_user(**json_form)
 
         # Getting user token
-        refresh = RefreshToken.for_user(user2)
-        access2 = str(refresh.access_token)
+        token, _ = Token.objects.get_or_create(user=user2)
+        access2 = token.key
 
         comment = Comment.objects.create(author=self.user, body='text', post=self.post)
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + access2)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + access2)
         response = client.delete(
             reverse('forum:comments-detail', kwargs={'pk': comment.pk}),
             {'post': self.post.pk},
@@ -293,7 +293,7 @@ class CommentsTestCase(BaseSetup):
         comment = Comment.objects.create(author=self.user, body='text', post=self.post)
         new_text = 'updated text'
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
         response = client.put(
             reverse('forum:comments-detail', kwargs={'pk': comment.pk}),
             {'post': self.post.pk, 'body': new_text},
@@ -318,14 +318,14 @@ class CommentsTestCase(BaseSetup):
         user2 = User.objects.create_user(**json_form)
 
         # Getting user token
-        refresh = RefreshToken.for_user(user2)
-        access2 = str(refresh.access_token)
+        token, _ = Token.objects.get_or_create(user=user2)
+        access2 = token.key
 
         comment = Comment.objects.create(author=self.user, body='text', post=self.post)
         new_text = 'updated text'
 
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + access2)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + access2)
         response = client.put(
             reverse('forum:comments-detail', kwargs={'pk': comment.pk}),
             {'post': self.post.pk, 'body': new_text},
@@ -360,7 +360,7 @@ class ReplyTestCase(BaseSetup):
             'body': '<p>Respuesta a comentario</p>'
         }
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
         response = client.post(
             reverse('forum:replies-list'),
             reply_form,
@@ -394,7 +394,7 @@ class ReplyTestCase(BaseSetup):
             'comment': self.comment.pk,
         }
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
         response = client.post(
             reverse('forum:replies-list'),
             reply_form,
@@ -412,7 +412,7 @@ class ReplyTestCase(BaseSetup):
             'body': '<p>Respuesta a comentario</p>'
         }
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
         response = client.post(
             reverse('forum:replies-list'),
             reply_form,
@@ -430,7 +430,7 @@ class ReplyTestCase(BaseSetup):
         reply = Reply.objects.create(comment=self.comment, body='rand reply', author=self.user)
 
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
         response = client.delete(
             reverse('forum:replies-detail', kwargs={'pk': reply.pk}),
             {'post': self.post.pk},
@@ -448,7 +448,7 @@ class ReplyTestCase(BaseSetup):
 
         reply = Reply.objects.create(comment=self.comment, body='rand reply', author=self.user)
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
         response = client.delete(
             reverse('forum:replies-detail', kwargs={'pk': reply.pk}),
             format='json'
@@ -472,12 +472,12 @@ class ReplyTestCase(BaseSetup):
         user2 = User.objects.create_user(**json_form)
 
         # Getting user token
-        refresh = RefreshToken.for_user(user2)
-        access2 = str(refresh.access_token)
+        token, _ = Token.objects.get_or_create(user=user2)
+        access2 = token.key
 
         reply = Reply.objects.create(comment=self.comment, body='rand reply', author=self.user)
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + access2)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + access2)
         response = client.delete(
             reverse('forum:replies-detail', kwargs={'pk': reply.pk}),
             {'post': self.post.pk},
@@ -494,7 +494,7 @@ class ReplyTestCase(BaseSetup):
         new_text = 'updated text'
 
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
         response = client.put(
             reverse('forum:replies-detail', kwargs={'pk': reply.pk}),
             {'post': self.post.pk, 'body': new_text},
@@ -518,14 +518,14 @@ class ReplyTestCase(BaseSetup):
         user2 = User.objects.create_user(**json_form)
 
         # Getting user token
-        refresh = RefreshToken.for_user(user2)
-        access2 = str(refresh.access_token)
+        token, _ = Token.objects.get_or_create(user=user2)
+        access2 = token.key
   
         reply = Reply.objects.create(comment=self.comment, body='rand reply', author=self.user)
         new_text = 'updated text'
 
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + access2)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + access2)
         response = client.put(
             reverse('forum:replies-detail', kwargs={'pk': reply.pk}),
             {'post': self.post.pk, 'body': new_text},
@@ -562,7 +562,7 @@ class PostUpdateTestCase(BaseSetup):
     def test_update_post_success(self):
 
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
 
         response = client.put(
             reverse('forum:posts-detail', kwargs={'slug': self.post.slug}), 
@@ -607,11 +607,11 @@ class PostUpdateTestCase(BaseSetup):
         profile2 = json_form.pop('profile')
         user2 = User.objects.create_user(**json_form)
         Profile.objects.create(user=user2, **profile2)
-        refresh = RefreshToken.for_user(user2)
-        access = str(refresh.access_token)
+        token, _ = Token.objects.get_or_create(user=user2)
+        access = token.key
 
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + access)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + access)
 
         response = client.put(
             reverse('forum:posts-detail', kwargs={'slug': self.post.slug}), 

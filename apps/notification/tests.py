@@ -8,6 +8,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.authtoken.models import Token
 from notification.models import Notification
 
 from notification.models import NotificationTypes
@@ -33,8 +34,8 @@ class BaseNotificationTestSetup(TestCase):
         Profile.objects.create(user=self.user_post_owner)
 
         # Getting user token
-        refresh = RefreshToken.for_user(self.user_post_owner)
-        self.access_post_owner = str(refresh.access_token)
+        token_post_owner, _ = Token.objects.get_or_create(user=self.user_post_owner)
+        self.access_post_owner = token_post_owner.key
 
         # Creating section and subsection
         section = Section.objects.create(name='Cursos')
@@ -75,8 +76,8 @@ class BaseNotificationTestSetup(TestCase):
         Profile.objects.create(user=self.user)
 
         # Getting user token
-        refresh = RefreshToken.for_user(self.user)
-        self.access = str(refresh.access_token)
+        token, _ = Token.objects.get_or_create(user=self.user)
+        self.access = token.key
 
 class TestNotificationCommentSignals(BaseNotificationTestSetup):
 
@@ -87,7 +88,7 @@ class TestNotificationCommentSignals(BaseNotificationTestSetup):
             'body': '<p>Commentario</p>'
         }
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
         client.post(
             reverse('forum:comments-list'),
             comment_form,
@@ -104,7 +105,7 @@ class TestNotificationCommentSignals(BaseNotificationTestSetup):
         comment = Comment.objects.create(author=self.user, body='text', post=self.post)
         new_text = 'updated text'
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
         client.put(
             reverse('forum:comments-detail', kwargs={'pk': comment.pk}),
             {'post': self.post.pk, 'body': new_text},
@@ -131,7 +132,7 @@ class TestNotificationReplySignals(BaseNotificationTestSetup):
             'body': '<p>Respuesta a comentario</p>'
         }
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
         client.post(
             reverse('forum:replies-list'),
             reply_form,
@@ -149,7 +150,7 @@ class TestNotificationReplySignals(BaseNotificationTestSetup):
         new_text = 'updated text'
 
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
         client.put(
             reverse('forum:replies-detail', kwargs={'pk': reply.pk}),
             {'post': self.post.pk, 'body': new_text},
@@ -174,7 +175,7 @@ class TestNotificationUsers(BaseNotificationTestSetup):
     def test_get_notification_received_user(self):
 
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access_post_owner)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access_post_owner)
         res = client.get(
             reverse('notification:notification-user-list')
         )
@@ -189,7 +190,7 @@ class TestNotificationUsers(BaseNotificationTestSetup):
         notif = Notification.objects.filter(user=self.user_post_owner)[0]
 
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access_post_owner)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access_post_owner)
         res = client.delete(
             reverse('notification:notification-user-detail', kwargs={'pk': notif.pk})
         )
@@ -204,7 +205,7 @@ class TestNotificationUsers(BaseNotificationTestSetup):
         notif = Notification.objects.filter(user=self.user_post_owner)[0]
 
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
         client.delete(
             reverse('notification:notification-user-detail', kwargs={'pk': notif.pk})
         )
@@ -219,7 +220,7 @@ class TestNotificationUsers(BaseNotificationTestSetup):
 
         notif = Notification.objects.filter(user=self.user_post_owner)[0]
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access_post_owner)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access_post_owner)
         res = client.post(
             reverse('notification:notification-user-set_read'),
             {'selected_notifications': [notif.pk]}
@@ -252,7 +253,7 @@ class TestNotificationUsers(BaseNotificationTestSetup):
 
         notif = Notification.objects.filter(user=self.user_post_owner)[0]
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
         res = client.post(
             reverse('notification:notification-user-set_read'),
             {'selected_notifications': [notif.pk]}

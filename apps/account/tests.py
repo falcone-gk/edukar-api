@@ -13,7 +13,7 @@ from django.contrib.auth.models import User
 
 from rest_framework import status
 from rest_framework.test import APIClient
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.authtoken.models import Token
 
 from account.models import Profile
 from forum.models import Post, Section, Subsection
@@ -356,28 +356,6 @@ class TokenAuthTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(json.loads(response.content), {"detail":'No active account found with the given credentials'})
 
-    def test_access_token_is_working(self):
-
-        client = APIClient()
-        response = client.post(
-            reverse('account:token_create'), {
-                'username': self.json_form['username'],
-                'password': self.json_form['password']
-            },
-            format='json'
-        )
-
-        access = json.loads(response.content)['access']
-
-        response_verify = client.post(
-            reverse('account:token_verify'), {
-                'token': access
-            },
-            format='json'
-        )
-
-        self.assertEqual(response_verify.status_code, status.HTTP_200_OK)
-
     def test_access_token_is_wrong(self):
 
         client = APIClient()
@@ -554,13 +532,13 @@ class TestProfileSerializer(TestCase):
         Profile.objects.create(user=self.user, **profile)
 
         # Getting user token
-        refresh = RefreshToken.for_user(self.user)
-        self.access = str(refresh.access_token)
+        token, _ = Token.objects.get_or_create(user=self.user)
+        self.access = token.key
 
     def test_get_profile_account_success(self):
 
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
         res = client.get(reverse('account:user-me'))
         
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -597,12 +575,12 @@ class BaseSetup(TestCase):
         # Creating user2
         self.user2 = User.objects.create_user(**json_form2)
         Profile.objects.create(user=self.user2, **profile)
-        refresh2 = RefreshToken.for_user(self.user2)
-        self.access2 = str(refresh2.access_token)
+        token, _ = Token.objects.get_or_create(user=self.user2)
+        self.access2 = token.key
 
         # Getting user token
-        refresh = RefreshToken.for_user(self.user)
-        self.access = str(refresh.access_token)
+        token, _ = Token.objects.get_or_create(user=self.user)
+        self.access = token.key
 
         # Creating section and subsection
         self.section = Section.objects.create(name='Cursos')
@@ -624,7 +602,7 @@ class TestProfilePage(BaseSetup):
     def test_profile_home(self):
 
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
         res = client.get(reverse('account:user-me'))
         res1 = client.get(reverse('account:user-posts-list'))
 
@@ -649,7 +627,7 @@ class TestProfilePage(BaseSetup):
     def test_delete_user_post(self):
 
         client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='JWT ' + self.access)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
         post = Post.objects.filter(author=self.user)[0]
         res = client.delete(reverse('account:user-posts-detail', kwargs={'slug': post.slug}))
 
