@@ -300,7 +300,7 @@ class TokenAuthTests(TestCase):
 
         client = APIClient()
         response = client.post(
-            reverse('account:token_create'), {
+            reverse('account:login'), {
                 'username': self.json_form['username'],
                 'password': self.json_form['password']
             },
@@ -308,7 +308,7 @@ class TokenAuthTests(TestCase):
         )
 
         response_decode = response.content.decode('utf-8')
-        keys_expected = ['access', 'refresh', 'username', 'email']
+        keys_expected = ['token', 'username', 'email', 'picture']
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         for key in keys_expected:
@@ -318,7 +318,7 @@ class TokenAuthTests(TestCase):
 
         client = APIClient()
         response = client.post(
-            reverse('account:token_create'), {
+            reverse('account:login'), {
                 'password': self.json_form['password'],
             },
             format='json'
@@ -331,7 +331,7 @@ class TokenAuthTests(TestCase):
 
         client = APIClient()
         response = client.post(
-            reverse('account:token_create'), {
+            reverse('account:login'), {
                 'username': self.json_form['username']
             },
             format='json'
@@ -344,7 +344,7 @@ class TokenAuthTests(TestCase):
 
         client = APIClient()
         response = client.post(
-            reverse('account:token_create'), {
+            reverse('account:login'), {
                 # Testing error in both field because it doesn't matter which field is wrong
                 # api will give the same error.
                 'username': 'test_wrong_username',
@@ -353,66 +353,9 @@ class TokenAuthTests(TestCase):
             format='json'
         )
 
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(json.loads(response.content), {"detail":'No active account found with the given credentials'})
+        error_msg = {"non_field_errors":["No puede iniciar sesión con las credenciales proporcionadas."]}
 
-    def test_access_token_is_wrong(self):
-
-        client = APIClient()
-        client.post(
-            reverse('account:token_create'), {
-                'username': self.json_form['username'],
-                'password': self.json_form['password']
-            },
-            format='json'
-        )
-
-        response_verify = client.post(
-            reverse('account:token_verify'), {
-                'token': 'wrong_access_token'
-            },
-            format='json'
-        )
-
-        self.assertEqual(response_verify.status_code, status.HTTP_401_UNAUTHORIZED)
-
-    def test_token_refresh_success(self):
-
-        client = APIClient()
-        response = client.post(
-            reverse('account:token_create'), {
-                'username': self.json_form['username'],
-                'password': self.json_form['password']
-            },
-            format='json'
-        )
-        
-        refresh = json.loads(response.content)['refresh']
-
-        response_refresh = client.post(
-            reverse('account:token_refresh'), {
-                'refresh': refresh
-            },
-            format='json'
-        )
-
-        self.assertIn('access', response_refresh.content.decode('utf-8'))
-
-    def test_token_refresh_error(self):
-
-        client = APIClient()
-        refresh = 'wrong_refresh_token'
-
-        response = client.post(
-            reverse('account:token_refresh'), {
-                'refresh': refresh
-            },
-            format='json'
-        )
-
-        error_msg = {"detail":"Token is invalid or expired","code":"token_not_valid"}
-
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), error_msg)
 
 class ResetPasswordTest(TestCase):
@@ -473,7 +416,7 @@ class ResetPasswordTest(TestCase):
         )
 
         response = self.client.post(
-            reverse('account:token_create'),
+            reverse('account:login'),
             {
                 'username': self.json_form['username'],
                 'password': new_password
@@ -481,20 +424,19 @@ class ResetPasswordTest(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('access', response.content.decode('utf-8'))
-        self.assertIn('refresh', response.content.decode('utf-8'))
+        self.assertIn('token', response.content.decode('utf-8'))
 
         response = self.client.post(
-            reverse('account:token_create'),
+            reverse('account:login'),
             {
                 'username': self.json_form['username'],
-                'password': 'wrong_new_password'
+                'password': 'testpassword'
             },
         )
 
         # Test if past password doesn't work
-        error_msg = {"detail":'No active account found with the given credentials'}
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        error_msg = {"non_field_errors":["No puede iniciar sesión con las credenciales proporcionadas."]}
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(error_msg, json.loads(response.content))
     
     def test_refresh_password_no_email_found(self):

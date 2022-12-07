@@ -1,12 +1,9 @@
 from account.views import LoginAPIView
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from rest_framework_simplejwt.views import (
-    TokenRefreshView,
-    TokenVerifyView
-)
 
 from account import views
+from core.models import CustomAuthToken
 
 # from account import views
 
@@ -17,9 +14,7 @@ router.register(r'user-posts', views.OwnerPostAPIView, basename='user-posts')
 
 urlpatterns = [
     path('', include('djoser.urls')),
-    path('token/create', LoginAPIView.as_view(), name='token_create'),
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+    path('login', CustomAuthToken.as_view(), name='login'),
 ]
 
 urlpatterns += router.urls
