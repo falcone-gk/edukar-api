@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'account',
     'forum',
     'notification',
+    'core',
 
     'django.contrib.admin',
     'django.contrib.auth',
@@ -54,6 +55,7 @@ INSTALLED_APPS = [
 
     # Packages installed
     'rest_framework',
+    'rest_framework.authtoken',
     'djoser',
     'corsheaders',
     'django_cleanup',
@@ -70,17 +72,8 @@ if 'test' in sys.argv :
 # Rest Framework configuration
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
     ],
-}
-
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'ALGORITHM': 'HS256',
-    'AUTH_HEADER_TYPES': ('JWT',),
-    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
-    'BLACKLIST_AFTER_ROTATION': False,
 }
 
 DJOSER = {
