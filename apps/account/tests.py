@@ -101,7 +101,7 @@ class CreateUserTests(TestCase):
             format='json'
         )
 
-        duplicate_user_msg = {"email":["Email already in use"]}
+        duplicate_user_msg = {"email":["Email ya está en uso."]}
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), duplicate_user_msg)
 

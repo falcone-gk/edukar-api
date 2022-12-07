@@ -19,7 +19,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     def validate_email(self, value=None):
 
         if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("Email already in use")
+            raise serializers.ValidationError("Email ya está en uso.")
         return value
 
     def create(self, validated_data):
