@@ -10,7 +10,7 @@ class Command(BaseCommand):
         # Section structure where we define sections that has subsections each.
         sections = [
             {'Cursos': ['Aritmética', 'Algebra', 'Trigonometría', 'Geometría', 'Física', 'Química',
-                'Razonamiento Matemático', 'Razonamiento Verbal']}
+                'Razonamiento Matemático']}
         ]
 
         try:
