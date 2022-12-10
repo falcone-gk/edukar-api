@@ -36,7 +36,7 @@ DEBUG = env('DEBUG') in ('True',)
 
 ALLOWED_HOSTS = env('DJANGO_ALLOWED_HOSTS').split(" ")
 
-CSRF_TRUSTED_ORIGINS = ['http://aedukar.com', 'http://api.aedukar.com','http://127.0.0.1:8001', 'http://localhost:8001']
+CSRF_TRUSTED_ORIGINS = env('DJANGO_CSRF_TRUSTED_ORIGINS').split(" ")
 
 # Application definition
 
