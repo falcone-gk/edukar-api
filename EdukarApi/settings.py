@@ -34,8 +34,9 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG') in ('True',)
 
-ALLOWED_HOSTS = ["64.4.160.140", "aedukar.com", "www.aedukar.com", "127.0.0.1"]
+ALLOWED_HOSTS = env('DJANGO_ALLOWED_HOSTS').split(" ")
 
+CSRF_TRUSTED_ORIGINS = ['http://aedukar.com','http://127.0.0.1:8000']
 
 # Application definition
 
@@ -129,10 +130,10 @@ WSGI_APPLICATION = 'EdukarApi.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': env('DBENGINE'),
-        'NAME': env('DBNAME'),
-        'USER': env('DBUSER'),
-        'PASSWORD': env('DBPASSWORD'),
-        'HOST': 'localhost',
+        'NAME': env('POSTGRES_DB'),
+        'USER': env('POSTGRES_USER'),
+        'PASSWORD': env('POSTGRES_PASSWORD'),
+        'HOST': env('DBHOST'),
         'PORT': '',
     }
 }

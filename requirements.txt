@@ -3,6 +3,7 @@ backports.zoneinfo==0.2.1
 certifi==2022.6.15
 cffi==1.15.1
 charset-normalizer==2.1.0
+cmake==3.25.0
 coreapi==2.3.3
 coreschema==0.0.4
 cryptography==37.0.4
@@ -16,13 +17,14 @@ django-templated-mail==1.1.1
 djangorestframework==3.13.1
 djangorestframework-simplejwt==4.8.0
 djoser==2.1.0
+gunicorn==20.1.0
 idna==3.3
 itypes==1.2.0
 Jinja2==3.1.2
 MarkupSafe==2.1.1
 oauthlib==3.2.0
 Pillow==9.0.1
-psycopg2==2.9.5
+psycopg2-binary==2.9.5
 pycparser==2.21
 PyJWT==2.4.0
 python3-openid==3.2.0
