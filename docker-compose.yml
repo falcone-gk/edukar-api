@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.3'
 
 services:
   web:
@@ -18,7 +18,7 @@ services:
     volumes:
       - static_volume:/home/app/web/staticfiles
     ports:
-      - 80:80
+      - 8001:80
     depends_on:
       - web
   db:
