@@ -80,6 +80,13 @@ REST_FRAMEWORK = {
     )
 }
 
+# Configuración para aplicar el login con email.
+AUTH_AUTHENTICATION_TYPE = 'both'
+
+AUTHENTICATION_BACKENDS = (
+    'core.backends.EmailOrUsernameModelBackend',
+)
+
 DJOSER = {
     'PASSWORD_RESET_CONFIRM_URL': 'account/reset-password/{uid}/{token}',
     'PASSWORD_RESET_SHOW_EMAIL_NOT_FOUND': True, 
