@@ -42,7 +42,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 class UserProfileInfoSerializer(serializers.ModelSerializer):
 
     about_me = serializers.CharField(source='profile.get.about_me')
-    picture = serializers.SerializerMethodField('get_picture')
+    picture = serializers.CharField(source='profile.get.picture.url')
 
     class Meta:
         model = User
@@ -52,11 +52,6 @@ class UserProfileInfoSerializer(serializers.ModelSerializer):
             'about_me', 'picture',
         )
 
-    def get_picture(self, obj):
-
-        request = self.context.get("request")
-        return request.build_absolute_uri(obj.profile.get().picture.url)
-
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     def validate(self, attrs):
@@ -64,5 +59,5 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         data.update({'username': self.user.username})
         data.update({'email': self.user.email})
         request = self.context.get("request")
-        data.update({'picture': request.build_absolute_uri(self.user.profile.get().picture.url)})
+        data.update({'picture': self.user.profile.get().picture.url})
         return data

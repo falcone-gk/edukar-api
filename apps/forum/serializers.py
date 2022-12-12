@@ -10,16 +10,11 @@ from forum.models import (
 
 class AuthorSerializer(serializers.ModelSerializer):
 
-    picture = serializers.SerializerMethodField('get_picture')
+    picture = serializers.CharField(source='profile.get.picture.url')
 
     class Meta:
         model = User
         fields = ('username', 'picture',)
-
-    def get_picture(self, obj):
-
-        request = self.context.get("request")
-        return request.build_absolute_uri(obj.profile.get().picture.url)
 
 ########### Serializers for home page in forum ###########
 class PostSerializerResume(serializers.ModelSerializer):

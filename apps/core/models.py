@@ -14,5 +14,5 @@ class CustomAuthToken(ObtainAuthToken):
             'token': token.key,
             'username': user.username,
             'email': user.email,
-            'picture': request.build_absolute_uri(user.profile.get().picture.url)
+            'picture': user.profile.get().picture.url
         })
