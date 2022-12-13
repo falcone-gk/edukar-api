@@ -8,21 +8,15 @@ class EmailOrUsernameModelBackend(ModelBackend):
 
 	def authenticate(self, request, username=None, password=None):
 
-		auth_type = settings.AUTH_AUTHENTICATION_TYPE
-
-		if auth_type == 'username':
-			return super().authenticate(username, password)
-
 		user_model = get_user_model()
 
 		try:
-			if auth_type == 'both':
-				print('hey!')
-				user = user_model.objects.get(
-					Q(username__iexact=username) | Q(email__iexact=username)
-				)
-			else:
-				user = user_model.objects.get(email__iexact=username)
+			user = user_model.objects.get(
+				Q(username__iexact=username) | Q(email__iexact=username)
+			)
+
+			if not user.is_active:
+				return None
 
 			if user.check_password(password):
 				return user

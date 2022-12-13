@@ -358,6 +358,43 @@ class TokenAuthTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), error_msg)
 
+    def test_login_auth_fail_no_user_active(self):
+
+        json_form2 = {
+            'username': 'testuser2',
+            'email': 'testuser2@example.com',
+            'password': 'testpassword',
+            're_password': 'testpassword',
+        }
+
+        client = APIClient()
+        response = client.post(
+            reverse('account:user-list'),
+            json_form2,
+            format='json'
+        )
+
+        user = User.objects.get(username=json_form2['username'])
+
+        self.assertFalse(user.is_active)
+
+        client = APIClient()
+        response = client.post(
+            reverse('account:login'), {
+                # Testing error in both field because it doesn't matter which field is wrong
+                # api will give the same error.
+                'username': json_form2['username'],
+                'password': json_form2['password'],
+            },
+            format='json'
+        )
+
+        # Error happens because user is not active and cannot login
+        json_res = json.loads(response.content)
+        msg = {"non_field_errors":["No puede iniciar sesión con las credenciales proporcionadas."]}
+
+        self.assertEqual(json_res, msg)
+
 class ResetPasswordTest(TestCase):
 
     def setUp(self):
