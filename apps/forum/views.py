@@ -42,7 +42,7 @@ class ForumHomeAPIView(generics.ListAPIView):
 class SubsectionAPIView(generics.ListAPIView):
 
     serializer_class = SubsectionSerializer
-    queryset = Subsection.objects.all()
+    queryset = Subsection.objects.all().order_by('id')
 
 class CreatePostAPIView(viewsets.ModelViewSet):
 
