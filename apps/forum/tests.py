@@ -1,6 +1,7 @@
 import json
 
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 from django.test import TestCase
 from django.urls import reverse
@@ -162,6 +163,56 @@ class PostCreateTestCase(BaseSetup):
         client = APIClient()
         response = client.get(reverse('forum:posts-detail', kwargs={'slug': post.slug}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+class DeletePostTestCase(BaseSetup):
+
+    def setUp(self):
+        super(DeletePostTestCase, self).setUp()
+
+        post_form = {
+            'body': '<p> test text </p>',
+            'title': 'Test title'
+        }
+
+        self.post = Post.objects.create(author=self.user, section=self.section, subsection=self.subsection, **post_form)
+    
+    def test_delete_post_success(self):
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
+        response = client.delete(reverse('forum:posts-detail', kwargs={'slug': self.post.slug}))
+
+        with self.assertRaises(ObjectDoesNotExist):
+            Post.objects.get(slug=self.post.slug)
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_delete_post_wrong_no_owner(self):
+
+        json_form = {
+            'username': 'testuser2',
+            'email': 'testuser2@example.com',
+            'first_name': 'testuser2',
+            'last_name': 'testuser2',
+            'password': 'testpassword',
+        }
+        # Creating user
+        user2 = User.objects.create_user(**json_form)
+
+        # Getting user token
+        token, _ = Token.objects.get_or_create(user=user2)
+        access2 = token.key
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='Token ' + access2)
+        response = client.delete(reverse('forum:posts-detail', kwargs={'slug': self.post.slug}))
+
+        try:
+            Post.objects.get(slug=self.post.slug)
+        except ObjectDoesNotExist:
+            self.fail('Ocurrió un error de manera inesperada')
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 class CommentsTestCase(BaseSetup):
 
