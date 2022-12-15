@@ -8,11 +8,8 @@ from django.utils.text import slugify
 from notification.models import NotificationTypes, Notification
 from forum.models import Post, Section, Subsection, Comment, Reply
 
-@receiver(post_save, sender=Post)
-def create_post_title_slug(sender, created, instance, **kwargs):
-
-    if not created:
-        return
+@receiver(pre_save, sender=Post)
+def create_post_title_slug(sender, instance, **kwargs):
 
     # Creates a random suffix for slug post title.
     generated_slug = slugify(instance.title)
@@ -24,7 +21,6 @@ def create_post_title_slug(sender, created, instance, **kwargs):
     generated_slug += '-%s' % random_suffix
 
     instance.slug = generated_slug
-    instance.save()
 
 @receiver(pre_save, sender=Section)
 def create_section_slug(sender, instance, **kwargs):
