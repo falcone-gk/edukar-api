@@ -6,6 +6,7 @@ from forum.models import Post, Comment, Reply, Section
 from forum.permissions import IsAuthorOrReadOnly
 from forum.paginators import PostCoursePagination
 from forum.serializers import (
+    SectionResumeSerializer,
     PostSerializerResume,
     SectionSerializer,
     PostSerializer,
@@ -21,9 +22,8 @@ from forum.serializers import (
 
 class ForumHomeAPIView(generics.ListAPIView):
 
-    serializer_class = PostSerializerResume
-    pagination_class = PostCoursePagination
-    queryset = Post.objects.all()
+    serializer_class = SectionResumeSerializer
+    queryset = Section.objects.all()
 
 class SectionPostAPIView(generics.ListAPIView):
 

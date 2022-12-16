@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
 from forum.models import (
@@ -8,6 +9,36 @@ from forum.models import (
     Section,
     Subsection)
 
+class PostResumeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Post
+        fields = ('title', 'slug', 'date', 'author')
+
+class SubsectionResumeSerializer(serializers.ModelSerializer):
+
+    last_post = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Subsection
+        fields = ('id', 'name', 'slug', 'last_post')
+
+    def get_last_post(self, obj):
+
+        try:
+            post = obj.posts.latest('date')
+            serializer = PostResumeSerializer(post)
+            return serializer.data
+        except ObjectDoesNotExist:
+            return {}
+
+class SectionResumeSerializer(serializers.ModelSerializer):
+
+    subsections = SubsectionResumeSerializer(many=True, read_only=True, source='subsection')
+
+    class Meta:
+        model = Section
+        fields = ('id', 'name', 'slug', 'subsections')
 
 class AuthorSerializer(serializers.ModelSerializer):
 
