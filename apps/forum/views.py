@@ -2,12 +2,12 @@ from rest_framework import generics, status, viewsets, mixins
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
-from forum.models import Post, Comment, Reply, Subsection
+from forum.models import Post, Comment, Reply, Section
 from forum.permissions import IsAuthorOrReadOnly
 from forum.paginators import PostCoursePagination
 from forum.serializers import (
     PostSerializerResume,
-    SubsectionSerializer,
+    SectionSerializer,
     PostSerializer,
     CreatePostSerializer,
     UpdatePostSerializer,
@@ -25,24 +25,31 @@ class ForumHomeAPIView(generics.ListAPIView):
     pagination_class = PostCoursePagination
     queryset = Post.objects.all()
 
+class SectionPostAPIView(generics.ListAPIView):
+
+    serializer_class = PostSerializerResume
+    pagination_class = PostCoursePagination
+    lookup_url_kwarg = "slug"
+
     def get_queryset(self):
 
-        course = self.request.query_params.get('course')
+        section = self.kwargs.get(self.lookup_url_kwarg)
+        subsection = self.request.query_params.get('subsection')
         # If '0' is sent then we return all posts.
-        if course == '0':
+        if subsection == '0':
             return Post.objects.all().order_by('-date').order_by('-date')
 
         # Catch error when query param sent is not a number or empty
         try:
-            queryset = Post.objects.filter(subsection=int(course)).order_by('-date')
+            queryset = Post.objects.filter(section__slug=section, subsection=int(subsection)).order_by('-date')
         except (ValueError, TypeError):
             queryset = Post.objects.filter(subsection=None).order_by('-date')
         return queryset
 
-class SubsectionAPIView(generics.ListAPIView):
+class SectionAPIView(generics.ListAPIView):
 
-    serializer_class = SubsectionSerializer
-    queryset = Subsection.objects.all().order_by('id')
+    serializer_class = SectionSerializer
+    queryset = Section.objects.all().order_by('id')
 
 class CreatePostAPIView(viewsets.ModelViewSet):
 

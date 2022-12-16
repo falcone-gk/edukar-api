@@ -10,8 +10,8 @@ router.register(r'replies', views.UnsafeReplyAPIView, basename='replies')
 
 app_name = 'forum'
 urlpatterns = [
-    path('sections/', views.ForumHomeAPIView.as_view(), name='sections-list'),
-    path('subsection-list/', views.SubsectionAPIView.as_view(), name='subsections-list'),
+    path('sections/<slug:slug>/', views.SectionPostAPIView.as_view(), name='sections-post'),
+    path('section-list/', views.SectionAPIView.as_view(), name='sections-list'),
     path('post-data/<slug:slug>/', views.GetPostAPIView.as_view(), name='post-data')
 ]
 

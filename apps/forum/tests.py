@@ -703,21 +703,23 @@ class TestForumHome(BaseSetup):
             Subsection.objects.create(section=self.section, name=subs)
 
         client = APIClient()
-        response = client.get(reverse('forum:subsections-list'))
-        json_data = json.loads(response.content)
+        response = client.get(reverse('forum:sections-list'))
+        json_res = json.loads(response.content)
 
-        # We adding one more subsection because in setup we create one by default.
-        self.assertEqual(len(json_data), num_new_subsections + 1)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_res[0]['subsections']), num_new_subsections + 1)
 
     def test_get_all_post(self):
 
         client = APIClient()
-        url_format = '{0}?course={1}'
-        response = client.get(url_format.format(reverse('forum:sections-list'), '0'))
+        url_format = '{0}?subsection={1}'
+        response = client.get(
+            url_format.format(reverse('forum:sections-post', kwargs={'slug': self.section.slug}),
+            '0'))
         json_data = json.loads(response.content)
 
         self.assertEqual(json_data['count'], self.num_post_create)
-    
+
     def test_get_specific_subsection_posts(self):
 
         # Create new subsection
@@ -733,18 +735,22 @@ class TestForumHome(BaseSetup):
                 **self.post_form)
 
         client = APIClient()
-        url_format = '{0}?course={1}'
-        response = client.get(url_format.format(reverse('forum:sections-list'), subsection.pk))
+        url_format = '{0}?subsection={1}'
+        response = client.get(
+            url_format.format(reverse('forum:sections-post', kwargs={'slug': self.section.slug}),
+            subsection.pk))
         json_data = json.loads(response.content)
         self.assertEqual(len(json_data['results']), new_num_post_create)
 
     def test_no_found_subsection(self):
 
         client = APIClient()
-        url_format = '{0}?course={1}'
+        url_format = '{0}?subsection={1}'
 
         # Adding 'course=-1' will not found a subsection with that value
-        response = client.get(url_format.format(reverse('forum:sections-list'), '-1'))
+        response = client.get(
+            url_format.format(reverse('forum:sections-post', kwargs={'slug': self.section.slug}),
+            '-1'))
         json_data = json.loads(response.content)
 
         # No subsection found, we exepect an empty dictionary
@@ -753,10 +759,12 @@ class TestForumHome(BaseSetup):
     def test_subsection_value_is_not_number(self):
 
         client = APIClient()
-        url_format = '{0}?course={1}'
+        url_format = '{0}?subsection={1}'
 
         # Adding 'course=wrong_value' will trigger an error
-        response = client.get(url_format.format(reverse('forum:sections-list'), 'wrong_value'))
+        response = client.get(
+            url_format.format(reverse('forum:sections-post', kwargs={'slug': self.section.slug}),
+            'wrong_value'))
         json_data = json.loads(response.content)
 
         # No number value in course we expect to return an empty dictionary

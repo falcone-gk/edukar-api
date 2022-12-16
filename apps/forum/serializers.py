@@ -5,6 +5,7 @@ from forum.models import (
     Post,
     Comment,
     Reply,
+    Section,
     Subsection)
 
 
@@ -30,12 +31,20 @@ class PostSerializerResume(serializers.ModelSerializer):
     def get_num_comments(self, obj):
         return len(obj.comments.all())
 
-########### Serializer for Course subsection ###########
+########### Serializer for section and subsection ###########
 class SubsectionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Subsection
         fields = ('id', 'name')
+
+class SectionSerializer(serializers.ModelSerializer):
+
+    subsections = SubsectionSerializer(many=True, read_only=True, source='subsection')
+
+    class Meta:
+        model = Section
+        fields = ('id', 'name', 'slug', 'subsections')
 
 ############ Serializer about Posts ############
 class CreatePostSerializer(serializers.ModelSerializer):
