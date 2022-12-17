@@ -11,6 +11,9 @@ from forum.models import (
 
 class PostResumeSerializer(serializers.ModelSerializer):
 
+    author = serializers.CharField(source='author.username')
+    date = serializers.CharField(source='time_difference')
+
     class Meta:
         model = Post
         fields = ('title', 'slug', 'date', 'author')

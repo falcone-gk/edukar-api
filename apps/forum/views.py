@@ -37,7 +37,7 @@ class SectionPostAPIView(generics.ListAPIView):
         subsection = self.request.query_params.get('subsection')
         # If '0' is sent then we return all posts.
         if subsection == '0':
-            return Post.objects.all().order_by('-date').order_by('-date')
+            return Post.objects.filter(section__slug=section).order_by('-date').order_by('-date')
 
         # Catch error when query param sent is not a number or empty
         try:
