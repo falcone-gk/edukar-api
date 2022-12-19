@@ -57,7 +57,7 @@ class Subsection(models.Model):
 class Post(BaseContentPublication):
 
     section = models.ForeignKey(Section, on_delete=models.CASCADE, related_name='posts')
-    subsection = models.ForeignKey(Subsection, on_delete=models.CASCADE, related_name='posts', null=True, blank=True)
+    subsection = models.ForeignKey(Subsection, on_delete=models.CASCADE, related_name='posts')
     title = models.CharField(max_length=100)
     slug = models.SlugField(max_length=100, null=True, blank=True, unique=True)
 
