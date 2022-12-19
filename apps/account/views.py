@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from forum.models import Post
 from forum.paginators import PostCoursePagination
 from forum.permissions import IsAuthorOrReadOnly
-from forum.serializers import PostSerializerResume
+from forum.serializers import PostResumeSerializer
 
 from account.serializers import UserProfileSerializer, MyTokenObtainPairSerializer
 
@@ -18,7 +18,7 @@ class OwnerPostAPIView(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet):
 
-    serializer_class = PostSerializerResume
+    serializer_class = PostResumeSerializer
     permission_classes = (IsAuthenticated, IsAuthorOrReadOnly,)
     pagination_class = PostCoursePagination
     lookup_field = 'slug'

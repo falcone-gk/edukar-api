@@ -7,7 +7,7 @@ from forum.permissions import IsAuthorOrReadOnly
 from forum.paginators import PostCoursePagination
 from forum.serializers import (
     SectionResumeSerializer,
-    PostSerializerResume,
+    PostResumeSerializer,
     SectionSerializer,
     PostSerializer,
     CreatePostSerializer,
@@ -27,7 +27,7 @@ class ForumHomeAPIView(generics.ListAPIView):
 
 class SectionPostAPIView(generics.ListAPIView):
 
-    serializer_class = PostSerializerResume
+    serializer_class = PostResumeSerializer
     pagination_class = PostCoursePagination
     lookup_url_kwarg = "slug"
 

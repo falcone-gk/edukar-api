@@ -9,7 +9,7 @@ from forum.models import (
     Section,
     Subsection)
 
-class PostResumeSerializer(serializers.ModelSerializer):
+class LastPostResumeSerializer(serializers.ModelSerializer):
 
     author = serializers.CharField(source='author.username')
     date = serializers.CharField(source='time_difference')
@@ -30,7 +30,7 @@ class SubsectionResumeSerializer(serializers.ModelSerializer):
 
         try:
             post = obj.posts.latest('date')
-            serializer = PostResumeSerializer(post)
+            serializer = LastPostResumeSerializer(post)
             return serializer.data
         except ObjectDoesNotExist:
             return {}
@@ -52,7 +52,7 @@ class AuthorSerializer(serializers.ModelSerializer):
         fields = ('username', 'picture',)
 
 ########### Serializers for home page in forum ###########
-class PostSerializerResume(serializers.ModelSerializer):
+class PostResumeSerializer(serializers.ModelSerializer):
 
     author = AuthorSerializer(read_only=True)
     subsection = serializers.CharField(source='subsection.name')
@@ -102,7 +102,7 @@ class UpdatePostSerializer(serializers.ModelSerializer):
     class Meta:
 
         model = Post
-        fields = ('title', 'subsection', 'body',)
+        fields = ('title', 'section', 'subsection', 'body',)
 
 class ReplyCreateSerializer(serializers.ModelSerializer):
 
