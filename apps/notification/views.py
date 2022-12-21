@@ -51,7 +51,7 @@ class NotificationReceivedAPIView(
                 notif.is_read = True
                 notif.save()
 
-            return Response({'status': 'Notificaciones marcadas como leídas.'})
+            return Response({'has_notification': request.user.notif.filter(is_read=False).exists()})
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

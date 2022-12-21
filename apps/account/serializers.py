@@ -51,13 +51,3 @@ class UserProfileInfoSerializer(serializers.ModelSerializer):
             'username', 'email', 
             'about_me', 'picture',
         )
-
-class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-
-    def validate(self, attrs):
-        data = super().validate(attrs)
-        data.update({'username': self.user.username})
-        data.update({'email': self.user.email})
-        request = self.context.get("request")
-        data.update({'picture': self.user.profile.get().picture.url})
-        return data

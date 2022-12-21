@@ -14,5 +14,6 @@ class CustomAuthToken(ObtainAuthToken):
             'token': token.key,
             'username': user.username,
             'email': user.email,
-            'picture': user.profile.get().picture.url
+            'picture': user.profile.get().picture.url,
+            'has_notification': user.notif.filter(is_read=False).exists()
         })

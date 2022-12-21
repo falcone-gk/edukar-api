@@ -227,8 +227,7 @@ class TestNotificationUsers(BaseNotificationTestSetup):
         )
 
         json_res = json.loads(res.content)
-        msg = {'status': 'Notificaciones marcadas como leídas.'}
-        self.assertEqual(json_res, msg)
+        self.assertTrue(json_res['has_notification'])
 
         notif_after_request = Notification.objects.get(pk=notif.pk)
         self.assertTrue(notif_after_request.is_read)

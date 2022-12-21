@@ -8,8 +8,6 @@ from forum.paginators import PostCoursePagination
 from forum.permissions import IsAuthorOrReadOnly
 from forum.serializers import PostResumeSerializer
 
-from account.serializers import UserProfileSerializer, MyTokenObtainPairSerializer
-
 # Create your views here.
 
 class OwnerPostAPIView(
