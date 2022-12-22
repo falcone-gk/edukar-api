@@ -6,7 +6,7 @@ from django.dispatch import receiver
 from django.utils.text import slugify
 
 from notification.models import NotificationTypes, Notification
-from notification.utils.notify import notify_user
+from notification.tasks import notify_user
 from forum.models import Post, Section, Subsection, Comment, Reply
 
 @receiver(post_save, sender=Post)
@@ -61,8 +61,6 @@ def send_notification(sender, instance, created, **kwargs):
         notif_type=notif_type
     )
 
-    notify_user(sender.id, receiver.id, source.id, notif_type.id)
-
 @receiver(post_save, sender=Reply)
 def send_notification(sender, instance, created, **kwargs):
 
@@ -82,5 +80,3 @@ def send_notification(sender, instance, created, **kwargs):
         source_id=source,
         notif_type=notif_type
     )
-
-    notify_user(sender.id, receiver.id, source.id, notif_type.id)
