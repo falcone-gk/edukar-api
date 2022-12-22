@@ -264,3 +264,58 @@ class TestNotificationUsers(BaseNotificationTestSetup):
 
         notif_after_request = Notification.objects.get(pk=notif.pk)
         self.assertFalse(notif_after_request.is_read)
+
+class TestCheckNotification(BaseNotificationTestSetup):
+
+    def setUp(self):
+        super().setUp()
+        comment_form = {
+            'post': self.post.pk,
+            'body': '<p>Commentario</p>'
+        }
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
+        client.post(
+            reverse('forum:comments-list'),
+            comment_form,
+            format='json'
+        )
+
+    def test_check_notification_success_no_notification(self):
+
+        client = APIClient()
+        res = client.post(
+            reverse('notification:check-notification'),
+            {'key': self.access,}
+        )
+        json_res = json.loads(res.content)
+        self.assertFalse(json_res['has_notification'])
+
+    def test_check_notification_success_has_notification(self):
+
+        client = APIClient()
+        res = client.post(
+            reverse('notification:check-notification'),
+            {'key': self.access_post_owner,}
+        )
+        json_res = json.loads(res.content)
+        self.assertTrue(json_res['has_notification'])
+
+    def test_check_notification_error_wrong_token(self):
+
+        client = APIClient()
+        res = client.post(
+            reverse('notification:check-notification'),
+            {'key': 'wrong token access',}
+        )
+        json_res = json.loads(res.content)
+        self.assertEqual({'token_error': 'El token no existe'}, json_res)
+
+    def test_check_notification_error_no_token_sent(self):
+
+        client = APIClient()
+        res = client.post(
+            reverse('notification:check-notification'),
+        )
+        json_res = json.loads(res.content)
+        self.assertEqual({'key': 'Este campo es requerido'}, json_res)

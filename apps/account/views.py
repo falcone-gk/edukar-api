@@ -1,6 +1,4 @@
-from rest_framework import generics, status, viewsets, mixins
-from rest_framework.response import Response
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework import viewsets, mixins
 from rest_framework.permissions import IsAuthenticated
 
 from forum.models import Post

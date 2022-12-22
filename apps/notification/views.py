@@ -1,8 +1,10 @@
-from django.shortcuts import render
+from rest_framework.views import APIView
 from rest_framework import status, viewsets, mixins
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.authtoken.models import Token
+from django.core.exceptions import ObjectDoesNotExist
 
 from forum.paginators import PostCoursePagination
 from notification.models import Notification
@@ -69,3 +71,16 @@ class NotificationSentAPIView(
 
         current_user = self.request.user
         return Notification.objects.filter(user=current_user).order_by('-date')
+
+class CheckNotificationAPIView(APIView):
+
+    def post(self, request, format=None):
+
+        try:
+            user = Token.objects.get(key=request.data['key']).user
+            has_notification = Notification.objects.filter(user=user).exists()
+            return Response({'has_notification': has_notification}, status=status.HTTP_200_OK)
+        except ObjectDoesNotExist:
+            return Response({'token_error': 'El token no existe'}, status=status.HTTP_400_BAD_REQUEST)
+        except KeyError:
+            return Response({'key': 'Este campo es requerido'}, status=status.HTTP_400_BAD_REQUEST)

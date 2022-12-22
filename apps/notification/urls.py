@@ -8,6 +8,7 @@ router.register(r'notification-user', views.NotificationReceivedAPIView, basenam
 
 app_name = 'notification'
 urlpatterns = [
+    path('check-notification/', views.CheckNotificationAPIView.as_view(), name='check-notification'),
 ]
 
 urlpatterns += router.urls
