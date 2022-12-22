@@ -1,13 +1,13 @@
 import json
 
 from django.contrib.auth.models import User
+#from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
 from django.urls import reverse
 
 from rest_framework import status
 from rest_framework.test import APIClient
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.authtoken.models import Token
 from notification.models import Notification
 
@@ -44,7 +44,7 @@ class BaseNotificationTestSetup(TestCase):
         # Creating default notif types
         NotificationTypes.objects.create(
             type_notif='comment',
-            desc_receiver='comentó en tu post',
+            desc_receiver='comentó tu post',
             desc_sender='comentaste'
         )
 

@@ -1,0 +1,4 @@
+Hola, {{ user_receiver }}:
+
+El usuario {{ user_sender }} {{ descr_receiver }} en "{{ post_title }}".
+Para verlo ir al siguiente link: {{ post_url }}
