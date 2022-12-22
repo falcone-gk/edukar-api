@@ -42,7 +42,7 @@ def create_subsection_slug(sender, instance, **kwargs):
     instance.slug = generated_slug
 
 @receiver(post_save, sender=Comment)
-def send_notification(sender, instance, created, **kwargs):
+def send_notification_comment(sender, instance, created, **kwargs):
 
     sender = instance.author
     receiver = instance.post.author
@@ -62,7 +62,7 @@ def send_notification(sender, instance, created, **kwargs):
     )
 
 @receiver(post_save, sender=Reply)
-def send_notification(sender, instance, created, **kwargs):
+def send_notification_reply(sender, instance, created, **kwargs):
 
     sender = instance.author
     receiver = instance.comment.author
