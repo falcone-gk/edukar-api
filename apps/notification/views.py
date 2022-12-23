@@ -78,7 +78,7 @@ class CheckNotificationAPIView(APIView):
 
         try:
             user = Token.objects.get(key=request.data['key']).user
-            has_notification = Notification.objects.filter(user=user).exists()
+            has_notification = Notification.objects.filter(user=user, is_read=False).exists()
             return Response({'has_notification': has_notification}, status=status.HTTP_200_OK)
         except ObjectDoesNotExist:
             return Response({'token_error': 'El token no existe'}, status=status.HTTP_400_BAD_REQUEST)
