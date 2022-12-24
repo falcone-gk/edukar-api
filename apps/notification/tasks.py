@@ -2,9 +2,12 @@ from django.contrib.auth.models import User
 from django.template.loader import render_to_string
 from django.conf import settings
 
+from huey.contrib.djhuey import task
+
 from forum.models import Post
 from notification.models import NotificationTypes
 
+@task()
 def notify_user(sender_id, receiver_id, post_source_id, notif_type_id):
     # lookup user by id and send them a message
 

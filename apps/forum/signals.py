@@ -61,6 +61,8 @@ def send_notification_comment(sender, instance, created, **kwargs):
         notif_type=notif_type
     )
 
+    notify_user(sender.id, receiver.id, source.id, notif_type.id)
+
 @receiver(post_save, sender=Reply)
 def send_notification_reply(sender, instance, created, **kwargs):
 
@@ -80,3 +82,5 @@ def send_notification_reply(sender, instance, created, **kwargs):
         source_id=source,
         notif_type=notif_type
     )
+
+    notify_user(sender.id, receiver.id, source.id, notif_type.id)

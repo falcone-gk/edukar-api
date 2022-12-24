@@ -13,8 +13,8 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 import environ
 import sys
 import os
-from datetime import timedelta
 from pathlib import Path
+from redis import ConnectionPool
 
 # Importing environment variables from .env file.
 env = environ.Env()
@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'djoser',
     'corsheaders',
+    'huey.contrib.djhuey',
     'django_cleanup',
 ]
 
@@ -163,6 +164,18 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Huey settings
+HUEY = {
+    'huey_class': 'huey.RedisHuey',  # Huey implementation to use.
+    'name': DATABASES['default']['NAME'],  # Use db name for huey.
+    'immediate': DEBUG,  # If DEBUG=True, run synchronously.
+    'connection': {
+        'host': 'localhost',
+        'port': 6379,
+        'db': 0,
+        # huey-specific connection parameters.
+    },
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
