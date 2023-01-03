@@ -627,6 +627,14 @@ class TestProfilePage(BaseSetup):
 
 class TestUpdateUserInfo(BaseSetup):
 
+    def generate_photo_file(self):
+        file = io.BytesIO()
+        image = Image.new('RGBA', size=(100, 100), color=(155, 0, 0))
+        image.save(file, 'png')
+        file.name = 'test.png'
+        file.seek(0)
+        return file
+
     def test_update_success(self):
 
         info_to_update = {
@@ -641,6 +649,23 @@ class TestUpdateUserInfo(BaseSetup):
         current_info = {
             'first_name': user.first_name,
             'last_name': user.last_name
+        }
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(info_to_update, current_info)
+
+    def test_update_one_field_success(self):
+
+        info_to_update = {
+            'first_name': 'new_user',
+        }
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
+        res = client.put(reverse('account:update-user'), info_to_update)
+
+        user = User.objects.get(auth_token__key=self.access)
+        current_info = {
+            'first_name': user.first_name,
         }
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -676,3 +701,44 @@ class TestUpdateUserInfo(BaseSetup):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         # Make sure info is not updated
         self.assertEqual(json_res, current_info)
+
+    def test_update_profile_success(self):
+
+        info_to_update = {
+            'about_me': 'new_about_me',
+            'picture': self.generate_photo_file()
+        }
+
+        old_info = {
+            'about_me': self.user.profile.get().about_me,
+            'picture': self.user.profile.get().picture.name
+        }
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
+        res = client.put(reverse('account:update-profile-user'), info_to_update)
+
+        user = Profile.objects.get(user=self.user.pk)
+        current_info = {
+            'about_me': user.about_me,
+            'picture': user.picture.name
+        }
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertNotEqual(old_info, current_info)
+
+    def test_update_profile_success(self):
+
+        info_to_update = {
+            'about_me': 'new_about_me',
+            'picture': self.generate_photo_file()
+        }
+
+        client = APIClient()
+        res = client.put(reverse('account:update-profile-user'), info_to_update)
+
+        json_res = json.loads(res.content)
+        msg = {"detail":"Las credenciales de autenticación no se proveyeron."}
+
+        self.assertEqual(json_res, msg)
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)

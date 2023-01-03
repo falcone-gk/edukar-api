@@ -3,7 +3,7 @@ from djoser.permissions import CurrentUserOrAdminOrReadOnly
 from rest_framework import generics, viewsets, mixins
 from rest_framework.permissions import IsAuthenticated
 
-from account.serializers import UpdateUserInfoSerializer
+from account.serializers import UpdateUserInfoSerializer, UpdateUserProfileSerializer
 
 from forum.models import Post
 from forum.paginators import PostCoursePagination
@@ -35,6 +35,19 @@ class UpdateUserAPIView(generics.UpdateAPIView):
 
     def get_instance(self):
         return self.request.user
+
+    def update(self, request, *args, **kwargs):
+
+        self.get_object = self.get_instance
+        return super().update(request, *args, **kwargs)
+
+class UpdateUserProfileAPIView(generics.UpdateAPIView):
+
+    serializer_class = UpdateUserProfileSerializer
+    permission_classes = (CurrentUserOrAdminOrReadOnly,)
+
+    def get_instance(self):
+        return self.request.user.profile.get()
 
     def update(self, request, *args, **kwargs):
 

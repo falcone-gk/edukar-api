@@ -15,6 +15,7 @@ urlpatterns = [
     path('', include('djoser.urls')),
     path('login', CustomAuthToken.as_view(), name='login'),
     path('update-user', views.UpdateUserAPIView.as_view(), name='update-user'),
+    path('update-profile-user', views.UpdateUserProfileAPIView.as_view(), name='update-profile-user'),
 ]
 
 urlpatterns += router.urls
