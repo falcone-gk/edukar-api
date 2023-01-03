@@ -14,6 +14,7 @@ router.register(r'user-posts', views.OwnerPostAPIView, basename='user-posts')
 urlpatterns = [
     path('', include('djoser.urls')),
     path('login', CustomAuthToken.as_view(), name='login'),
+    path('update-user', views.UpdateUserAPIView.as_view(), name='update-user'),
 ]
 
 urlpatterns += router.urls

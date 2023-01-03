@@ -50,3 +50,15 @@ class UserProfileInfoSerializer(serializers.ModelSerializer):
             'username', 'email', 
             'about_me', 'picture',
         )
+
+class UpdateUserInfoSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name',)
+
+class UpdateUserProfileSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Profile
+        fields = ('about_me', 'picture',)

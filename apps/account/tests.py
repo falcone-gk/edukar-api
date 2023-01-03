@@ -624,3 +624,55 @@ class TestProfilePage(BaseSetup):
         msg = {"detail":"Las credenciales de autenticación no se proveyeron."}
 
         self.assertEqual(json_res, msg)
+
+class TestUpdateUserInfo(BaseSetup):
+
+    def test_update_success(self):
+
+        info_to_update = {
+            'first_name': 'new_user',
+            'last_name': 'new_last_name'
+        }
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
+        res = client.put(reverse('account:update-user'), info_to_update)
+
+        user = User.objects.get(auth_token__key=self.access)
+        current_info = {
+            'first_name': user.first_name,
+            'last_name': user.last_name
+        }
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(info_to_update, current_info)
+
+    def test_update_failed_no_credentials(self):
+
+        client = APIClient()
+        res = client.put(reverse('account:update-user'), {
+            'first_name': 'new_user',
+            'last_name': 'new_last_name'
+        })
+
+        json_res = json.loads(res.content)
+        msg = {"detail":"Las credenciales de autenticación no se proveyeron."}
+        self.assertEqual(json_res, msg)
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_update_wrong_field(self):
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
+        res = client.put(reverse('account:update-user'), {
+            'wrong_field': 'wrong'
+        })
+
+        json_res = json.loads(res.content)
+        current_info = {
+            'first_name': self.user.first_name,
+            'last_name': self.user.last_name
+        }
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        # Make sure info is not updated
+        self.assertEqual(json_res, current_info)

@@ -1,5 +1,9 @@
-from rest_framework import viewsets, mixins
+from djoser.permissions import CurrentUserOrAdminOrReadOnly
+
+from rest_framework import generics, viewsets, mixins
 from rest_framework.permissions import IsAuthenticated
+
+from account.serializers import UpdateUserInfoSerializer
 
 from forum.models import Post
 from forum.paginators import PostCoursePagination
@@ -23,3 +27,16 @@ class OwnerPostAPIView(
 
         current_user = self.request.user
         return Post.objects.filter(author=current_user).order_by('-date')
+
+class UpdateUserAPIView(generics.UpdateAPIView):
+
+    serializer_class = UpdateUserInfoSerializer
+    permission_classes = (CurrentUserOrAdminOrReadOnly,)
+
+    def get_instance(self):
+        return self.request.user
+
+    def update(self, request, *args, **kwargs):
+
+        self.get_object = self.get_instance
+        return super().update(request, *args, **kwargs)
