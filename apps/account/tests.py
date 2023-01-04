@@ -727,7 +727,7 @@ class TestUpdateUserInfo(BaseSetup):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertNotEqual(old_info, current_info)
 
-    def test_update_profile_success(self):
+    def test_update_profile_error_no_credentials(self):
 
         info_to_update = {
             'about_me': 'new_about_me',

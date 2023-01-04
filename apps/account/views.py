@@ -52,4 +52,9 @@ class UpdateUserProfileAPIView(generics.UpdateAPIView):
     def update(self, request, *args, **kwargs):
 
         self.get_object = self.get_instance
-        return super().update(request, *args, **kwargs)
+        response = super().update(request, *args, **kwargs)
+
+        if response.status_code == 200:
+            response.data['picture'] = request.user.profile.get().picture.url
+
+        return response
