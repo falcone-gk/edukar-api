@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 from forum.models import Post, Comment, Reply, Section
 from forum.permissions import IsAuthorOrReadOnly
-from forum.paginators import PostCoursePagination
+from core.paginators import CustomPagination
 from forum.serializers import (
     SectionResumeSerializer,
     PostResumeSerializer,
@@ -28,7 +28,7 @@ class ForumHomeAPIView(generics.ListAPIView):
 class SectionPostAPIView(generics.ListAPIView):
 
     serializer_class = PostResumeSerializer
-    pagination_class = PostCoursePagination
+    pagination_class = CustomPagination
     lookup_url_kwarg = "slug"
 
     def get_queryset(self):

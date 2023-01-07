@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from account.serializers import UpdateUserInfoSerializer, UpdateUserProfileSerializer
 
 from forum.models import Post
-from forum.paginators import PostCoursePagination
+from core.paginators import CustomPagination
 from forum.permissions import IsAuthorOrReadOnly
 from forum.serializers import PostResumeSerializer
 
@@ -20,7 +20,7 @@ class OwnerPostAPIView(
 
     serializer_class = PostResumeSerializer
     permission_classes = (IsAuthenticated, IsAuthorOrReadOnly,)
-    pagination_class = PostCoursePagination
+    pagination_class = CustomPagination
     lookup_field = 'slug'
 
     def get_queryset(self):

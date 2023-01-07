@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.core.exceptions import ObjectDoesNotExist
 
-from forum.paginators import PostCoursePagination
+from core.paginators import CustomPagination
 from notification.models import Notification
 from notification.serializers import (
     NotificationReceiverSerializer,
@@ -24,7 +24,7 @@ class NotificationReceivedAPIView(
 
     serializer_class = NotificationReceiverSerializer
     permission_classes = (IsAuthenticated, isOwnNotification)
-    pagination_class = PostCoursePagination
+    pagination_class = CustomPagination
 
     def get_queryset(self):
 
@@ -65,7 +65,7 @@ class NotificationSentAPIView(
 
     serializer_class = NotificationSenderSerializer
     permission_classes = (IsAuthenticated, isOwnNotification)
-    pagination_class = PostCoursePagination
+    pagination_class = CustomPagination
 
     def get_queryset(self):
 
