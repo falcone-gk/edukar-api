@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'account',
     'forum',
     'notification',
+    'services',
     'core',
 
     'django.contrib.admin',
