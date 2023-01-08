@@ -11,6 +11,7 @@ class ExamStructureSerializer(serializers.ModelSerializer):
 class ExamsSerializer(serializers.ModelSerializer):
 
     root = serializers.SerializerMethodField()
+    cover = serializers.CharField(source='cover.url')
 
     class Meta:
         model = Exams
