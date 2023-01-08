@@ -130,7 +130,7 @@ dmypy.json
 
 # vscode file
 .vscode
-media/profile/
+media/*/
 
 # Ignore vim swp
 *.swp

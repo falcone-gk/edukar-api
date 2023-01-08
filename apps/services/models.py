@@ -20,4 +20,4 @@ class Exams(models.Model):
     cover = models.ImageField(upload_to='cover/')
     year = models.IntegerField()
     source_exam = models.URLField(max_length=200)
-    source_video_solution = models.URLField(max_length=200)
+    source_video_solution = models.URLField(max_length=200, blank=True)

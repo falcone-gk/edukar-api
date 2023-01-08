@@ -105,3 +105,10 @@ class TestListExams(BaseExamsTestSetup):
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(json_res['count'], 0)
+
+    def test_get_filter_exams_success(self):
+
+        client = APIClient()
+        res = client.get(reverse('services:exams-filters'))
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
