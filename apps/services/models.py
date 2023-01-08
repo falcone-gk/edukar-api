@@ -11,7 +11,9 @@ class UnivExamsStructure(models.Model):
 
     def __str__(self):
 
-        return self.university
+        format_str = '{0}|{1}|{2}'
+
+        return format_str.format(self.siglas, self.exam_type, self.area)
 
 class Exams(models.Model):
 
