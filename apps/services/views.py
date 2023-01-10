@@ -29,7 +29,7 @@ class ExamsAPIView(generics.ListAPIView):
         if (year is not None) and (year != '0'):
             queryset = queryset.filter(year=year)
 
-        return queryset.order_by('-year')
+        return queryset.order_by('-year', '-id')
 
 class GetExamsFilterAPIView(APIView):
 
