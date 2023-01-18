@@ -57,6 +57,13 @@ class CreatePostAPIView(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly,)
     lookup_field = 'slug'
 
+    def get_throttles(self):
+        if self.action == 'create':
+            self.throttle_scope = 'forum'
+        else:
+            self.throttle_scope = ''  # No throttle for other actions
+        return super().get_throttles()
+
     def get_serializer_class(self):
 
         if self.action == 'create':

@@ -164,6 +164,27 @@ class PostCreateTestCase(BaseSetup):
         response = client.get(reverse('forum:posts-detail', kwargs={'slug': post.slug}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_create_post_error_too_many_requests(self):
+
+        post_form = {
+            'body': '<p> test text </p>',
+            'section': self.section.pk,
+            'subsection': self.subsection.pk,
+            'title': 'Test title'
+        }
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
+
+        for _ in range(3):
+            response = client.post(
+                reverse('forum:posts-list'),
+                post_form,
+                format='json'
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+
 class DeletePostTestCase(BaseSetup):
 
     def setUp(self):
