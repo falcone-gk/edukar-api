@@ -170,6 +170,14 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+if not DEBUG:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': 'redis://127.0.0.1:6379',
+        }
+    }
+
 # Huey settings
 HUEY = {
     'huey_class': 'huey.RedisHuey',  # Huey implementation to use.
