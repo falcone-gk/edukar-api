@@ -171,10 +171,14 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 if not DEBUG:
+    # Get Redis cconf environment
+    REDIS_HOST = env('REDIS_HOST')
+    REDIS_PORT = env('REDIS_PORT')
+
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-            'LOCATION': 'redis://127.0.0.1:6379',
+            "LOCATION": "redis://{}:{}".format(REDIS_HOST, REDIS_PORT),
         }
     }
 
