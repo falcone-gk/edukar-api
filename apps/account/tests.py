@@ -643,7 +643,7 @@ class TestUpdateUserInfo(BaseSetup):
         }
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
-        res = client.put(reverse('account:update-user'), info_to_update)
+        res = client.patch(reverse('account:update-user'), info_to_update)
 
         user = User.objects.get(auth_token__key=self.access)
         current_info = {
@@ -661,7 +661,7 @@ class TestUpdateUserInfo(BaseSetup):
         }
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
-        res = client.put(reverse('account:update-user'), info_to_update)
+        res = client.patch(reverse('account:update-user'), info_to_update)
 
         user = User.objects.get(auth_token__key=self.access)
         current_info = {
@@ -674,7 +674,7 @@ class TestUpdateUserInfo(BaseSetup):
     def test_update_failed_no_credentials(self):
 
         client = APIClient()
-        res = client.put(reverse('account:update-user'), {
+        res = client.patch(reverse('account:update-user'), {
             'first_name': 'new_user',
             'last_name': 'new_last_name'
         })
@@ -688,12 +688,13 @@ class TestUpdateUserInfo(BaseSetup):
 
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
-        res = client.put(reverse('account:update-user'), {
+        res = client.patch(reverse('account:update-user'), {
             'wrong_field': 'wrong'
         })
 
         json_res = json.loads(res.content)
         current_info = {
+            'username': self.user.username,
             'first_name': self.user.first_name,
             'last_name': self.user.last_name
         }
@@ -701,6 +702,54 @@ class TestUpdateUserInfo(BaseSetup):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         # Make sure info is not updated
         self.assertEqual(json_res, current_info)
+
+    def test_update_username_success(self):
+
+        new_username = 'new_testuser'
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
+        res = client.patch(reverse('account:update-user'), {
+            'username': new_username
+        })
+
+        json_res = json.loads(res.content)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        # Make sure info is not updated
+        self.assertEqual(json_res['username'], new_username)
+
+    def test_update_username_error_name_already_used(self):
+
+        new_username = 'testuser2'
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
+        res = client.patch(reverse('account:update-user'), {
+            'username': new_username
+        })
+
+        json_res = json.loads(res.content)
+        msg = {'username': ['Ya existe un usuario con este nombre.']}
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(json_res, msg)
+
+    def test_update_username_error_empty_field(self):
+
+        new_username = ''
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
+        res = client.patch(reverse('account:update-user'), {
+            'username': new_username
+        })
+
+        json_res = json.loads(res.content)
+        msg = {'username': ['Este campo no puede estar en blanco.']}
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(json_res, msg)
 
     def test_update_profile_success(self):
 
