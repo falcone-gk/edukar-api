@@ -23,3 +23,4 @@ class Exams(models.Model):
     year = models.IntegerField()
     source_exam = models.URLField(max_length=200)
     source_video_solution = models.URLField(max_length=200, blank=True)
+    source_video_solution_premium = models.URLField(max_length=200, blank=True)
