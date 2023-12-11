@@ -24,3 +24,13 @@ class Exams(models.Model):
     source_exam = models.URLField(max_length=200)
     source_video_solution = models.URLField(max_length=200, blank=True)
     source_video_solution_premium = models.URLField(max_length=200, blank=True)
+
+class Course(models.Model):
+
+    name = models.CharField(max_length=60)
+    image = models.ImageField(upload_to='course/')
+    url = models.URLField(max_length=200)
+
+    def __str__(self):
+
+        return self.name

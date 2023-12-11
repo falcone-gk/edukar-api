@@ -1,6 +1,6 @@
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
-from services.models import Exams, UnivExamsStructure
+from services.models import Course, Exams, UnivExamsStructure
 
 class ExamStructureSerializer(serializers.ModelSerializer):
 
@@ -25,3 +25,12 @@ class ExamsSerializer(serializers.ModelSerializer):
             return serializer.data
         except ObjectDoesNotExist:
             return {}
+
+class CoursesSerializer(serializers.ModelSerializer):
+
+    image = serializers.CharField(source='image.url')
+
+    class Meta:
+        model = Course
+        fields = '__all__'
+

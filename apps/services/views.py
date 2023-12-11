@@ -2,8 +2,8 @@ from core.paginators import CustomPagination
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from services.serializers import ExamsSerializer
-from services.models import Exams, UnivExamsStructure
+from services.serializers import CoursesSerializer, ExamsSerializer
+from services.models import Course, Exams, UnivExamsStructure
 
 # Create your views here.
 
@@ -44,3 +44,20 @@ class GetExamsFilterAPIView(APIView):
         }
 
         return Response(data, status=status.HTTP_200_OK)
+
+class CoursesAPIView(generics.ListAPIView):
+
+    serializer_class = CoursesSerializer
+    pagination_class = CustomPagination
+
+    def get_queryset(self):
+
+        params = self.request.query_params.get('search')
+        if params:
+            queryset = Course.objects.filter(name__in=params)
+
+        else:
+            queryset = Course.objects.all()
+
+        return queryset.order_by('id')
+

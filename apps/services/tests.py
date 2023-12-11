@@ -7,11 +7,11 @@ from django.urls import reverse
 
 from rest_framework import status
 from rest_framework.test import APIClient
-from services.models import Exams, UnivExamsStructure
+from services.models import Course, Exams, UnivExamsStructure
 
 # Create your tests here.
 
-class BaseExamsTestSetup(TestCase):
+class BaseServiceTestCase(TestCase):
 
     def setUp(self):
 
@@ -55,6 +55,13 @@ class BaseExamsTestSetup(TestCase):
 
         self.num_exams = self.num_exams_one + self.num_exams_two
 
+        # Course creation
+        self.course = Course.objects.create(
+            name='Polinomios',
+            image='test.png',
+            url='http//:udemy.com'
+        )
+
     def generate_photo_file(self):
         file = io.BytesIO()
         image = Image.new('RGBA', size=(100, 100), color=(155, 0, 0))
@@ -63,7 +70,7 @@ class BaseExamsTestSetup(TestCase):
         file.seek(0)
         return file
 
-class TestListExams(BaseExamsTestSetup):
+class TestListExams(BaseServiceTestCase):
 
     size_per_page = 8
 
@@ -112,3 +119,13 @@ class TestListExams(BaseExamsTestSetup):
         res = client.get(reverse('services:exams-filters'))
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+
+class TestCoursesList(BaseServiceTestCase):
+
+    def test_success_get_list_courses(self):
+
+        client = APIClient()
+        response = client.get(reverse('services:courses-list'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
