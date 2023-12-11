@@ -10,7 +10,7 @@ class ExamsAdmin(admin.ModelAdmin):
     list_display = ('root', 'title', 'year')
 
 class CoursesAdmin(admin.ModelAdmin):
-    list_display = ('name')
+    list_display = ('name',)
 
 admin.site.register(UnivExamsStructure, UnivExamsStructureAdmin)
 admin.site.register(Exams, ExamsAdmin)
