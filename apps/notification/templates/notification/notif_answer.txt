@@ -1,4 +1,4 @@
 Hola, {{ user_receiver }}:
 
-El usuario {{ user_sender }} {{ descr_receiver }} en "{{ post_title }}".
+El usuario {{ user_sender }} comentó en el post "{{ post_title }}".
 Para verlo ir al siguiente link: {{ post_url }}

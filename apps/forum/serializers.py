@@ -89,7 +89,7 @@ class CreatePostSerializer(serializers.ModelSerializer):
 
         model = Post
         read_only_fields = ('slug',)
-        exclude = ('id', 'date',)
+        exclude = ('id', 'date', 'participants')
         extra_kwargs = {
             'body': {'write_only': True},
             'title': {'write_only': True},
@@ -169,4 +169,4 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        exclude = ('section',)
+        exclude = ('section', 'participants')

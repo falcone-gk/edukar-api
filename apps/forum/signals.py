@@ -10,7 +10,7 @@ from notification.tasks import notify_user
 from forum.models import Post, Section, Subsection, Comment, Reply
 
 @receiver(post_save, sender=Post)
-def create_post_title_slug(sender, created, instance, **kwargs):
+def signal_after_post_create(sender, created, instance, **kwargs):
 
     if not created:
         return
@@ -26,6 +26,9 @@ def create_post_title_slug(sender, created, instance, **kwargs):
 
     instance.slug = generated_slug
     instance.save()
+
+    # Add author in post participants
+    instance.participants.add(instance.author)
 
 @receiver(pre_save, sender=Section)
 def create_section_slug(sender, instance, **kwargs):
@@ -47,6 +50,8 @@ def send_notification_comment(sender, instance, created, **kwargs):
     sender = instance.author
     receiver = instance.post.author
 
+    instance.post.participants.add(sender)
+
     if (not created) or (sender.pk == receiver.pk):
         return
 
@@ -61,13 +66,15 @@ def send_notification_comment(sender, instance, created, **kwargs):
         notif_type=notif_type
     )
 
-    notify_user(sender.id, receiver.id, source.id, notif_type.id)
+    notify_user(sender.id, source.id)
 
 @receiver(post_save, sender=Reply)
 def send_notification_reply(sender, instance, created, **kwargs):
 
     sender = instance.author
     receiver = instance.comment.author
+
+    instance.comment.post.participants.add(sender)
 
     if (not created) or (sender.pk == receiver.pk):
         return
@@ -83,4 +90,4 @@ def send_notification_reply(sender, instance, created, **kwargs):
         notif_type=notif_type
     )
 
-    notify_user(sender.id, receiver.id, source.id, notif_type.id)
+    notify_user(sender.id, source.id)
