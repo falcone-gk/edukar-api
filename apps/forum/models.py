@@ -60,7 +60,7 @@ class Post(BaseContentPublication):
     subsection = models.ForeignKey(Subsection, on_delete=models.CASCADE, related_name='posts')
     title = models.CharField(max_length=100)
     slug = models.SlugField(max_length=100, null=True, blank=True, unique=True)
-    participants = models.ManyToManyField(User, related_name='participants', required=False)
+    participants = models.ManyToManyField(User, related_name='participants')
 
     def __str__(self):
 
