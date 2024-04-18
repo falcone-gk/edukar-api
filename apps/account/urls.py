@@ -1,5 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from rest_framework.authtoken import views
 
 from account import views
 from core.models import CustomAuthToken
@@ -14,6 +15,8 @@ router.register(r'user-posts', views.OwnerPostAPIView, basename='user-posts')
 urlpatterns = [
     path('', include('djoser.urls')),
     path('login', CustomAuthToken.as_view(), name='login'),
+    path('logout', views.LogoutAPIView.as_view(), name='logout'),
+    path('data', views.UserByTokenAPIView.as_view(), name='user-data'),
     path('update-user', views.UpdateUserAPIView.as_view(), name='update-user'),
     path('update-profile-user', views.UpdateUserProfileAPIView.as_view(), name='update-profile-user'),
 ]

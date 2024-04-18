@@ -1,7 +1,9 @@
 from djoser.permissions import CurrentUserOrAdminOrReadOnly
 
-from rest_framework import generics, viewsets, mixins
+from rest_framework import generics, viewsets, mixins, views, status
+from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from account.serializers import UpdateUserInfoSerializer, UpdateUserProfileSerializer
 
@@ -11,6 +13,26 @@ from forum.permissions import IsAuthorOrReadOnly
 from forum.serializers import PostResumeSerializer
 
 # Create your views here.
+class UserByTokenAPIView(views.APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        user = request.user
+        token, _ = Token.objects.get_or_create(user=user)
+        return Response({
+            'token': token.key,
+            'username': user.username,
+            'email': user.email,
+            'picture': user.profile.get().picture.url,
+            'has_notification': user.notif.filter(is_read=False).exists()
+        })
+
+class LogoutAPIView(views.APIView):
+    def post(self, request):
+        if request.user.is_authenticated:
+            request.user.auth_token.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 class OwnerPostAPIView(
     mixins.ListModelMixin,

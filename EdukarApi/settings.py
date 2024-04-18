@@ -188,7 +188,7 @@ HUEY = {
     'name': DATABASES['default']['NAME'],  # Use db name for huey.
     'immediate': DEBUG,  # If DEBUG=True, run synchronously.
     'connection': {
-        'host': 'redis',
+        'host': env("REDIS_HOST"),
         'port': 6379,
         'db': 0,
         # huey-specific connection parameters.
