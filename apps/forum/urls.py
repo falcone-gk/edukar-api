@@ -5,8 +5,8 @@ from forum import views
 
 router = DefaultRouter()
 router.register(r'posts', views.CreatePostAPIView, basename='posts')
-router.register(r'comments', views.UnsafeCommentAPIView, basename='comments')
-router.register(r'replies', views.UnsafeReplyAPIView, basename='replies')
+router.register(r'comments', views.CommentAPIView, basename='comments')
+router.register(r'replies', views.ReplyAPIView, basename='replies')
 
 app_name = 'forum'
 urlpatterns = [

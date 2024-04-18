@@ -310,25 +310,26 @@ class CommentsTestCase(BaseSetup):
             {'post': self.post.pk},
             format='json'
         )
+        num_comments = Comment.objects.filter(post=self.post).count()
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
         # Number of comments equal to '1' because of previous comment created
-        self.assertEqual(len(json.loads(response.content)), 1)
+        self.assertEqual(num_comments, 1)
 
-    def test_delete_comment_failed_no_post_id(self):
-
-        comment = Comment.objects.create(author=self.user, body='text', post=self.post)
-        client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
-        response = client.delete(
-            reverse('forum:comments-detail', kwargs={'pk': comment.pk}),
-            format='json'
-        )
-
-        msg = {'post': ['Este campo es requerido.']}
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(json.loads(response.content), msg)
+    # def test_delete_comment_failed_no_post_id(self):
+    #
+    #     comment = Comment.objects.create(author=self.user, body='text', post=self.post)
+    #     client = APIClient()
+    #     client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
+    #     response = client.delete(
+    #         reverse('forum:comments-detail', kwargs={'pk': comment.pk}),
+    #         format='json'
+    #     )
+    #
+    #     msg = {'post': ['Este campo es requerido.']}
+    #     self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+    #     self.assertEqual(json.loads(response.content), msg)
 
     def test_delete_comment_fail_no_owner(self):
 
@@ -372,7 +373,7 @@ class CommentsTestCase(BaseSetup):
             format='json'
         )
 
-        json_data = json.loads(response.content)[0]
+        json_data = json.loads(response.content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(json_data['body'], new_text)
@@ -427,7 +428,7 @@ class ReplyTestCase(BaseSetup):
     def test_reply_comment_success(self):
 
         reply_form = {
-            'post': self.post.pk,
+            # 'post': self.post.pk,
             'comment': self.comment.pk,
             'body': '<p>Respuesta a comentario</p>'
         }
@@ -477,23 +478,23 @@ class ReplyTestCase(BaseSetup):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), msg)
 
-    def test_reply_comment_fail_empty_post_id(self):
-
-        reply_form = {
-            'comment': self.comment.pk,
-            'body': '<p>Respuesta a comentario</p>'
-        }
-        client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
-        response = client.post(
-            reverse('forum:replies-list'),
-            reply_form,
-            format='json'
-        )
-        msg = {"post":["Este campo es requerido."]}
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(json.loads(response.content), msg)
+    # def test_reply_comment_fail_empty_post_id(self):
+    #
+    #     reply_form = {
+    #         'comment': self.comment.pk,
+    #         'body': '<p>Respuesta a comentario</p>'
+    #     }
+    #     client = APIClient()
+    #     client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
+    #     response = client.post(
+    #         reverse('forum:replies-list'),
+    #         reply_form,
+    #         format='json'
+    #     )
+    #     msg = {"post":["Este campo es requerido."]}
+    #
+    #     self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+    #     self.assertEqual(json.loads(response.content), msg)
 
     def test_delete_reply_success(self):
 
@@ -508,27 +509,26 @@ class ReplyTestCase(BaseSetup):
             {'post': self.post.pk},
             format='json'
         )
+        num_replies = Reply.objects.filter(comment=self.comment).count()
 
-        reply_list = json.loads(response.content)[0]['replies']
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
         # Number of comments equal to '1' because of previous reply created
-        self.assertEqual(len(reply_list), 1)
+        self.assertEqual(num_replies, 1)
 
-    def test_delete_reply_failed_no_post_id(self):
-
-        reply = Reply.objects.create(comment=self.comment, body='rand reply', author=self.user)
-        client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
-        response = client.delete(
-            reverse('forum:replies-detail', kwargs={'pk': reply.pk}),
-            format='json'
-        )
-
-        msg = {'post': ['Este campo es requerido.']}
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(json.loads(response.content), msg)
+    # def test_delete_reply_failed_no_post_id(self):
+    #
+    #     reply = Reply.objects.create(comment=self.comment, body='rand reply', author=self.user)
+    #     client = APIClient()
+    #     client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
+    #     response = client.delete(
+    #         reverse('forum:replies-detail', kwargs={'pk': reply.pk}),
+    #         format='json'
+    #     )
+    #
+    #     msg = {'post': ['Este campo es requerido.']}
+    #     self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+    #     self.assertEqual(json.loads(response.content), msg)
 
     def test_delete_reply_fail_no_owner(self):
 
@@ -573,7 +573,7 @@ class ReplyTestCase(BaseSetup):
             format='json'
         )
 
-        reply_obj = json.loads(response.content)[0]['replies'][0]
+        reply_obj = json.loads(response.content)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(reply_obj['body'], new_text)
 

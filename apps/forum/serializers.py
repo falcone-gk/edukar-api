@@ -107,7 +107,7 @@ class UpdatePostSerializer(serializers.ModelSerializer):
 class ReplyCreateSerializer(serializers.ModelSerializer):
 
     author = serializers.HiddenField(default=serializers.CurrentUserDefault())
-    post = serializers.IntegerField(write_only=True)
+    # post = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = Reply
@@ -116,9 +116,9 @@ class ReplyCreateSerializer(serializers.ModelSerializer):
             'comment': {'write_only': True}
         }
 
-    def create(self, validated_data):
-        validated_data.pop('post', None)
-        return super().create(validated_data)
+    # def create(self, validated_data):
+    #     validated_data.pop('post', None)
+    #     return super().create(validated_data)
 
 class ReplyUpdateSerializer(serializers.ModelSerializer):
 
@@ -133,7 +133,7 @@ class ReplyUpdateSerializer(serializers.ModelSerializer):
         validated_data.pop('post', None)
         return super().create(validated_data)
 
-class CommentCreateSerializer(serializers.ModelSerializer):
+class CommentCreateUpdateSerializer(serializers.ModelSerializer):
 
     author = serializers.HiddenField(default=serializers.CurrentUserDefault())
 

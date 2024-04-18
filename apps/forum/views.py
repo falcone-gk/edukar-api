@@ -1,4 +1,5 @@
 from rest_framework import generics, status, viewsets, mixins
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
@@ -6,13 +7,14 @@ from forum.models import Post, Comment, Reply, Section
 from forum.permissions import IsAuthorOrReadOnly
 from core.paginators import CustomPagination
 from forum.serializers import (
+    ReplySerializer,
     SectionResumeSerializer,
     PostResumeSerializer,
     SectionSerializer,
     PostSerializer,
     CreatePostSerializer,
     UpdatePostSerializer,
-    CommentCreateSerializer,
+    CommentCreateUpdateSerializer,
     CommentSerializer,
     ReplyCreateSerializer,
     ReplyUpdateSerializer
@@ -89,68 +91,111 @@ class GetPostAPIView(generics.RetrieveAPIView):
     serializer_class = UpdatePostSerializer
     lookup_field = 'slug'
 
-class UnsafeCommentsAPI(
-    mixins.CreateModelMixin,
-    mixins.UpdateModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet
-):
-
-    permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly,)
-
-    @staticmethod
-    def comment_serializer(request):
-        post_id = request.data['post']
-        comments = Comment.objects.filter(post_id=post_id)
-        serializer = CommentSerializer(comments, many=True, context={'request': request})
-        return serializer
-
-    def create(self, request, *args, **kwargs):
-        response = super().create(request, *args, **kwargs)
-
-        if response.status_code != 201:
-            return response
-
-        serializer = self.comment_serializer(request)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    def destroy(self, request, *args, **kwargs):
-
-        # Check if post id was sent before deleting comment
-        if not request.data.get('post'):
-            msg = {'post': ['Este campo es requerido.']}
-            return Response(msg, status=status.HTTP_400_BAD_REQUEST)
-
-        response = super().destroy(request, *args, **kwargs)
-        if response.status_code != 204:
-            return response
-
-        serializer = self.comment_serializer(request)
-        # Since it has content we change status code to '200'
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def update(self, request, *args, **kwargs):
-        response = super().update(request, *args, **kwargs)
-
-        if response.status_code != 200:
-            return response
-
-        serializer = self.comment_serializer(request)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-class UnsafeCommentAPIView(UnsafeCommentsAPI):
+class CommentAPIView(viewsets.ModelViewSet):
 
     queryset = Comment.objects.all()
-    serializer_class = CommentCreateSerializer
+    # serializer_class = CommentCreateSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly,)
 
-class UnsafeReplyAPIView(UnsafeCommentsAPI):
+    def get_serializer_class(self):
+        if self.action == 'list' or self.action == 'retrieve':
+            return CommentSerializer
+        else:
+            return CommentCreateUpdateSerializer
+
+    def get_queryset(self):
+        if self.action == 'list':
+            # We return comments from just an specific post
+            post_id = self.request.query_params.get('post', None)
+            if post_id is None:
+                raise ValidationError("post query param not found.")
+
+            if not Post.objects.filter(pk=post_id).exists():
+                raise ValidationError("post id doesn't exists.")
+
+            queryset = self.queryset()
+            return queryset.filter(post_id=post_id)
+
+        return super().get_queryset()
+
+    # @staticmethod
+    # def comment_serializer(request):
+    #     post_id = request.data['post']
+    #     comments = Comment.objects.filter(post_id=post_id)
+    #     serializer = CommentSerializer(comments, many=True, context={'request': request})
+    #     return serializer
+    #
+    # def create(self, request, *args, **kwargs):
+    #     response = super().create(request, *args, **kwargs)
+    #
+    #     if response.status_code != 201:
+    #         return response
+    #
+    #     serializer = self.comment_serializer(request)
+    #     return Response(serializer.data, status=status.HTTP_201_CREATED)
+    #
+    # def destroy(self, request, *args, **kwargs):
+    #
+    #     # Check if post id was sent before deleting comment
+    #     if not request.data.get('post'):
+    #         msg = {'post': ['Este campo es requerido.']}
+    #         return Response(msg, status=status.HTTP_400_BAD_REQUEST)
+    #
+    #     response = super().destroy(request, *args, **kwargs)
+    #     if response.status_code != 204:
+    #         return response
+    #
+    #     serializer = self.comment_serializer(request)
+    #     # Since it has content we change status code to '200'
+    #     return Response(serializer.data, status=status.HTTP_200_OK)
+    #
+    # def update(self, request, *args, **kwargs):
+    #     response = super().update(request, *args, **kwargs)
+    #
+    #     if response.status_code != 200:
+    #         return response
+    #
+    #     serializer = self.comment_serializer(request)
+    #     return Response(serializer.data, status=status.HTTP_200_OK)
+
+# class UnsafeCommentAPIView(viewsets.GenericViewSet):
+#
+#     queryset = Comment.objects.all()
+#     serializer_class = CommentCreateSerializer
+
+class ReplyAPIView(viewsets.ModelViewSet):
 
     queryset = Reply.objects.all()
-    serializer_class = ReplyCreateSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly,)
 
     def get_serializer_class(self):
 
         if (self.action == 'update') | (self.action == 'partial_update'):
             return ReplyUpdateSerializer
-        else:
+        elif self.action == 'create':
             return ReplyCreateSerializer
+        else:
+            return ReplySerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        instance_serializer = ReplySerializer(instance)
+        return Response(instance_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+
+        instance_serializer = ReplySerializer(instance)
+        return Response(instance_serializer.data)
