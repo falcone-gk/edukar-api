@@ -19,9 +19,8 @@ class UserByTokenAPIView(views.APIView):
 
     def post(self, request):
         user = request.user
-        token, _ = Token.objects.get_or_create(user=user)
         return Response({
-            'token': token.key,
+            'token': user.auth_token.key,
             'username': user.username,
             'email': user.email,
             'picture': user.profile.get().picture.url,

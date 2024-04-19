@@ -293,8 +293,8 @@ class TokenAuthTests(TestCase):
         }
 
         profile = self.json_form.pop('profile')
-        user = User.objects.create_user(**self.json_form)
-        Profile.objects.create(user=user, **profile)
+        self.user = User.objects.create_user(**self.json_form)
+        Profile.objects.create(user=self.user, **profile)
 
     def test_token_auth_success(self):
 
@@ -394,6 +394,50 @@ class TokenAuthTests(TestCase):
         msg = {"non_field_errors":["No puede iniciar sesión con las credenciales proporcionadas."]}
 
         self.assertEqual(json_res, msg)
+
+    def test_get_user_by_token(self):
+        client = APIClient()
+        token, _ = Token.objects.get_or_create(user=self.user)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+        response = client.post(reverse('account:user-data'))
+        json_data = json.loads(response.content)
+
+        keys_expected = ['token', 'username', 'email', 'picture', 'has_notification']
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        for key in keys_expected:
+            self.assertIn(key, json_data)
+
+    def test_get_user_by_token_fail_no_auth(self):
+        client = APIClient()
+        response = client.post(reverse('account:user-data'))
+        json_data = json.loads(response.content)
+        error_msg = {'detail': 'Las credenciales de autenticación no se proveyeron.'}
+
+        self.assertEqual(json_data, error_msg)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_user_by_token_fail_wrong_token(self):
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='Token ' + 'wrong_token')
+        response = client.post(reverse('account:user-data'))
+        json_data = json.loads(response.content)
+        error_msg = {'detail': 'Token inválido.'}
+
+        self.assertEqual(json_data, error_msg)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_logout_success(self):
+
+        # First login with credentials
+        client = APIClient()
+        token, _ = Token.objects.get_or_create(user=self.user)
+        client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+        response = client.post(reverse('account:logout'))
+        has_token = Token.objects.filter(user=self.user).exists()
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(has_token)
 
 class ResetPasswordTest(TestCase):
 
