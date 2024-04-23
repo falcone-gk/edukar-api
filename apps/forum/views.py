@@ -1,5 +1,5 @@
+from django.conf import settings
 from rest_framework import generics, status, viewsets, mixins
-from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
@@ -7,6 +7,7 @@ from forum.models import Post, Comment, Reply, Section
 from forum.permissions import IsAuthorOrReadOnly
 from core.paginators import CustomPagination
 from forum.serializers import (
+    CommentSerializer,
     ReplySerializer,
     SectionResumeSerializer,
     PostResumeSerializer,
@@ -15,7 +16,6 @@ from forum.serializers import (
     CreatePostSerializer,
     UpdatePostSerializer,
     CommentCreateUpdateSerializer,
-    CommentSerializer,
     ReplyCreateSerializer,
     ReplyUpdateSerializer
 )
@@ -53,14 +53,14 @@ class SectionAPIView(generics.ListAPIView):
     serializer_class = SectionSerializer
     queryset = Section.objects.all().order_by('id')
 
-class CreatePostAPIView(viewsets.ModelViewSet):
+class PostAPIView(viewsets.ModelViewSet):
 
     queryset = Post.objects.all()
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly,)
     lookup_field = 'slug'
 
     def get_throttles(self):
-        if self.action == 'create':
+        if self.action == 'create' and not settings.DEBUG:
             self.throttle_scope = 'forum'
         else:
             self.throttle_scope = ''  # No throttle for other actions
@@ -75,49 +75,80 @@ class CreatePostAPIView(viewsets.ModelViewSet):
         elif (self.action == 'update') | (self.action == 'partial_update'):
             return UpdatePostSerializer
 
+    def perform_create(self, serializer):
+        return serializer.save()
+
+    def perform_update(self, serializer):
+        return serializer.save()
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        instance_serializer = PostSerializer(instance)
+        return Response(instance_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        new_instance = self.perform_update(serializer)
 
-        response = super(CreatePostAPIView, self).update(request, *args, **kwargs)
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
 
-        if response.status_code == 200:
-            msg = {'success': 'Post actualizado correctamente!'}
-            return Response(msg, status=status.HTTP_200_OK)
+        instance_serializer = PostSerializer(new_instance)
+        return Response(instance_serializer.data)
 
-        return response
+# class GetPostAPIView(generics.RetrieveAPIView):
+#
+#     queryset = Post.objects.all()
+#     serializer_class = UpdatePostSerializer
+#     lookup_field = 'slug'
 
-class GetPostAPIView(generics.RetrieveAPIView):
-
-    queryset = Post.objects.all()
-    serializer_class = UpdatePostSerializer
-    lookup_field = 'slug'
-
-class CommentAPIView(viewsets.ModelViewSet):
+class CommentAPIView(
+    mixins.CreateModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet
+):
 
     queryset = Comment.objects.all()
-    # serializer_class = CommentCreateSerializer
+    serializer_class = CommentCreateUpdateSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly,)
 
-    def get_serializer_class(self):
-        if self.action == 'list' or self.action == 'retrieve':
-            return CommentSerializer
-        else:
-            return CommentCreateUpdateSerializer
+    def perform_create(self, serializer):
+        return serializer.save()
 
-    def get_queryset(self):
-        if self.action == 'list':
-            # We return comments from just an specific post
-            post_id = self.request.query_params.get('post', None)
-            if post_id is None:
-                raise ValidationError("post query param not found.")
+    def perform_update(self, serializer):
+        return serializer.save()
 
-            if not Post.objects.filter(pk=post_id).exists():
-                raise ValidationError("post id doesn't exists.")
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        instance_serializer = CommentSerializer(instance)
+        return Response(instance_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-            queryset = self.queryset()
-            return queryset.filter(post_id=post_id)
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        new_instance = self.perform_update(serializer)
 
-        return super().get_queryset()
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
 
+        instance_serializer = CommentSerializer(new_instance)
+        return Response(instance_serializer.data)
     # @staticmethod
     # def comment_serializer(request):
     #     post_id = request.data['post']
@@ -177,6 +208,12 @@ class ReplyAPIView(viewsets.ModelViewSet):
         else:
             return ReplySerializer
 
+    def perform_create(self, serializer):
+        return serializer.save()
+
+    def perform_update(self, serializer):
+        return serializer.save()
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -190,12 +227,12 @@ class ReplyAPIView(viewsets.ModelViewSet):
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+        new_instance = self.perform_update(serializer)
 
         if getattr(instance, '_prefetched_objects_cache', None):
             # If 'prefetch_related' has been applied to a queryset, we need to
             # forcibly invalidate the prefetch cache on the instance.
             instance._prefetched_objects_cache = {}
 
-        instance_serializer = ReplySerializer(instance)
+        instance_serializer = ReplySerializer(new_instance)
         return Response(instance_serializer.data)

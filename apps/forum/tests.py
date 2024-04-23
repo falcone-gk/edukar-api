@@ -445,7 +445,7 @@ class ReplyTestCase(BaseSetup):
     def test_reply_comment_fail_missing_token(self):
 
         reply_form = {
-            'post': self.post.pk,
+            # 'post': self.post.pk,
             'comment': self.comment.pk,
             'body': '<p>Commentario</p>'
         }
@@ -463,7 +463,7 @@ class ReplyTestCase(BaseSetup):
     def test_reply_comment_fail_missing_body(self):
 
         reply_form = {
-            'post': self.post.pk,
+            # 'post': self.post.pk,
             'comment': self.comment.pk,
         }
         client = APIClient()
@@ -569,7 +569,10 @@ class ReplyTestCase(BaseSetup):
         client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
         response = client.put(
             reverse('forum:replies-detail', kwargs={'pk': reply.pk}),
-            {'post': self.post.pk, 'body': new_text},
+            {
+                # 'post': self.post.pk,
+                'body': new_text
+            },
             format='json'
         )
 
@@ -644,10 +647,10 @@ class PostUpdateTestCase(BaseSetup):
 
         new_post_title = Post.objects.get(pk=self.post.pk).title
 
-        msg = {'success': 'Post actualizado correctamente!'}
+        # msg = {'success': 'Post actualizado correctamente!'}
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(new_post_title, self.update_form['title'])
-        self.assertEqual(json.loads(response.content), msg)
+        # self.assertEqual(json.loads(response.content), msg)
 
     def test_update_post_missing_token(self):
 

@@ -33,7 +33,7 @@ class SubsectionResumeSerializer(serializers.ModelSerializer):
             serializer = LastPostResumeSerializer(post)
             return serializer.data
         except ObjectDoesNotExist:
-            return {}
+            return
 
 class SectionResumeSerializer(serializers.ModelSerializer):
 
@@ -63,7 +63,7 @@ class PostResumeSerializer(serializers.ModelSerializer):
         fields = ('title', 'slug', 'time_difference', 'author', 'subsection', 'num_comments')
 
     def get_num_comments(self, obj):
-        return len(obj.comments.all())
+        return obj.comments.all().count()
 
 ########### Serializer for section and subsection ###########
 class SubsectionSerializer(serializers.ModelSerializer):
@@ -79,6 +79,12 @@ class SectionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Section
         fields = ('id', 'name', 'slug', 'subsections')
+
+class SectionSimplifiedSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Section
+        fields = ('id', 'name', 'slug')
 
 ############ Serializer about Posts ############
 class CreatePostSerializer(serializers.ModelSerializer):
@@ -111,10 +117,11 @@ class ReplyCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Reply
-        exclude = ('id',)
-        extra_kwargs = {
-            'comment': {'write_only': True}
-        }
+        fields = ('body', 'comment', 'author')
+        # exclude = ('id',)
+        # extra_kwargs = {
+        #     'comment': {'write_only': True}
+        # }
 
     # def create(self, validated_data):
     #     validated_data.pop('post', None)
@@ -122,16 +129,17 @@ class ReplyCreateSerializer(serializers.ModelSerializer):
 
 class ReplyUpdateSerializer(serializers.ModelSerializer):
 
-    author = serializers.HiddenField(default=serializers.CurrentUserDefault())
-    post = serializers.IntegerField(write_only=True)
+    # author = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    # post = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = Reply
-        exclude = ('id', 'comment',)
+        fields = ('body',)
+        # exclude = ('id', 'comment',)
 
-    def create(self, validated_data):
-        validated_data.pop('post', None)
-        return super().create(validated_data)
+    # def create(self, validated_data):
+    #     validated_data.pop('post', None)
+    #     return super().create(validated_data)
 
 class CommentCreateUpdateSerializer(serializers.ModelSerializer):
 
@@ -162,11 +170,12 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
 
-    subsection = serializers.CharField(source='subsection.name')
+    section = SectionSimplifiedSerializer(read_only=True)
+    subsection = SubsectionSerializer(read_only=True)
     author = AuthorSerializer(read_only=True)
     date = serializers.DateTimeField(format="%d de %B del %Y, a las %H:%M")
     comments = CommentSerializer(many=True, read_only=True)
 
     class Meta:
         model = Post
-        exclude = ('section', 'participants')
+        exclude = ('participants',)
