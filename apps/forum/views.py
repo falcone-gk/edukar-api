@@ -57,9 +57,19 @@ class SectionAPIView(generics.ListAPIView):
 
 class PostAPIView(viewsets.ModelViewSet):
 
-    queryset = Post.objects.all()
+    # queryset = Post.objects.all()
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly,)
     lookup_field = 'slug'
+    pagination_class = CustomPagination
+
+    def get_queryset(self):
+
+        username = self.request.query_params.get('username')
+        queryset = Post.objects.all()
+        if username:
+            queryset = queryset.filter(author__username=username)
+
+        return queryset
 
     def get_throttles(self):
         if self.action == 'create' and not settings.DEBUG:
@@ -72,7 +82,7 @@ class PostAPIView(viewsets.ModelViewSet):
 
         if self.action == 'create':
             return CreatePostSerializer
-        elif self.action == 'retrieve':
+        elif self.action == 'retrieve' or self.action == 'list':
             return PostSerializer
         elif (self.action == 'update') | (self.action == 'partial_update'):
             return UpdatePostSerializer
