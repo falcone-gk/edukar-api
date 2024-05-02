@@ -189,7 +189,7 @@ class CreateUserTests(TestCase):
         
         user = User.objects.get(username='testuser')
         profile_url = user.profile.all()[0].picture.url
-        self.assertEqual(profile_url, '/media/profile/test.png')
+        self.assertEqual(profile_url, '/media/profile/testuser.png')
 
 class EmailVerificationTests(TestCase):
 
@@ -687,7 +687,8 @@ class TestUpdateUserInfo(BaseSetup):
         }
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
-        res = client.patch(reverse('account:update-user'), info_to_update)
+        # res = client.patch(reverse('account:update-user'), info_to_update)
+        res = client.patch(reverse('account:user-me'), info_to_update)
 
         user = User.objects.get(auth_token__key=self.access)
         current_info = {
@@ -705,7 +706,7 @@ class TestUpdateUserInfo(BaseSetup):
         }
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
-        res = client.patch(reverse('account:update-user'), info_to_update)
+        res = client.patch(reverse('account:user-me'), info_to_update)
 
         user = User.objects.get(auth_token__key=self.access)
         current_info = {
@@ -718,7 +719,7 @@ class TestUpdateUserInfo(BaseSetup):
     def test_update_failed_no_credentials(self):
 
         client = APIClient()
-        res = client.patch(reverse('account:update-user'), {
+        res = client.patch(reverse('account:user-me'), {
             'first_name': 'new_user',
             'last_name': 'new_last_name'
         })
@@ -732,15 +733,18 @@ class TestUpdateUserInfo(BaseSetup):
 
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
-        res = client.patch(reverse('account:update-user'), {
+        res = client.patch(reverse('account:user-me'), {
             'wrong_field': 'wrong'
         })
 
         json_res = json.loads(res.content)
         current_info = {
-            'username': self.user.username,
-            'first_name': self.user.first_name,
-            'last_name': self.user.last_name
+            'username': 'testuser',
+            'email': 'testuser@example.com',
+            'first_name': 'testuser',
+            'last_name': 'testuser',
+            'about_me': 'testing about me',
+            'picture': 'http://testserver/media/default-avatar.jpg'
         }
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -753,7 +757,7 @@ class TestUpdateUserInfo(BaseSetup):
 
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
-        res = client.patch(reverse('account:update-user'), {
+        res = client.patch(reverse('account:user-me'), {
             'username': new_username
         })
 
@@ -763,13 +767,30 @@ class TestUpdateUserInfo(BaseSetup):
         # Make sure info is not updated
         self.assertEqual(json_res['username'], new_username)
 
+    def test_update_email_error(self):
+
+        new_email = 'new_email@test.com'
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
+        res = client.patch(reverse('account:user-me'), {
+            'email': new_email
+        })
+
+        json_res = json.loads(res.content)
+
+        # We don't test status because request will return HTPP 200
+        # self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        # Make sure info is not updated
+        self.assertNotEqual(json_res['email'], new_email)
+
     def test_update_username_error_name_already_used(self):
 
         new_username = 'testuser2'
 
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
-        res = client.patch(reverse('account:update-user'), {
+        res = client.patch(reverse('account:user-me'), {
             'username': new_username
         })
 
@@ -785,7 +806,7 @@ class TestUpdateUserInfo(BaseSetup):
 
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
-        res = client.patch(reverse('account:update-user'), {
+        res = client.patch(reverse('account:user-me'), {
             'username': new_username
         })
 
@@ -809,7 +830,7 @@ class TestUpdateUserInfo(BaseSetup):
 
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
-        res = client.put(reverse('account:update-profile-user'), info_to_update)
+        res = client.patch(reverse('account:user-me'), info_to_update)
 
         user = Profile.objects.get(user=self.user.pk)
         current_info = {
@@ -828,7 +849,7 @@ class TestUpdateUserInfo(BaseSetup):
         }
 
         client = APIClient()
-        res = client.put(reverse('account:update-profile-user'), info_to_update)
+        res = client.put(reverse('account:user-me'), info_to_update)
 
         json_res = json.loads(res.content)
         msg = {"detail":"Las credenciales de autenticación no se proveyeron."}

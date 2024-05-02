@@ -1,9 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.files.storage import default_storage as storage
-from pathlib import Path
 from uuid import uuid4
-from PIL import Image
 
 from utils.image import image_resize
 
@@ -11,12 +9,29 @@ from utils.image import image_resize
 
 class Profile(models.Model):
 
+    def image_upload(self, filename):
+        ext = filename.split('.')[-1]
+        fullname = '{}.{}'.format(self.user.username, ext)
+        return f'profile/{fullname}'
+
     user = models.ForeignKey(User, related_name='profile', on_delete=models.CASCADE)
-    picture = models.ImageField(upload_to='profile/', default='default-avatar.jpg')
+    picture = models.ImageField(upload_to=image_upload, default='default-avatar.jpg')
     about_me = models.TextField(max_length=255, default='No hay información')
 
     def __str__(self):
         return self.user.username
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if self.picture.name != 'default-avatar.jpg':
+            img = image_resize(self.picture)
+            fh = storage.open(self.picture.name, "wb")
+
+            img.save(fh, quality=20)
+            img.close()
+            self.picture.close()
+            fh.close()
 
 class UserImage(models.Model):
 

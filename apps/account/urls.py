@@ -17,8 +17,8 @@ urlpatterns = [
     path('login', CustomAuthToken.as_view(), name='login'),
     path('logout', views.LogoutAPIView.as_view(), name='logout'),
     path('data', views.UserByTokenAPIView.as_view(), name='user-data'),
-    path('update-user', views.UpdateUserAPIView.as_view(), name='update-user'),
-    path('update-profile-user', views.UpdateUserProfileAPIView.as_view(), name='update-profile-user'),
+    # path('update-user', views.UpdateUserAPIView.as_view(), name='update-user'),
+    # path('update-profile-user', views.UpdateUserProfileAPIView.as_view(), name='update-profile-user'),
     path('image/upload', views.UploadUserImageAPIView.as_view(), name='image-upload')
 ]
 

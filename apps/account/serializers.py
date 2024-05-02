@@ -41,7 +41,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
 class UserProfileInfoSerializer(serializers.ModelSerializer):
 
     about_me = serializers.CharField(source='profile.get.about_me')
-    picture = serializers.CharField(source='profile.get.picture.url')
+    picture = serializers.ImageField(source='profile.get.picture')
+    email = serializers.EmailField(read_only=True)
 
     class Meta:
         model = User
@@ -50,6 +51,33 @@ class UserProfileInfoSerializer(serializers.ModelSerializer):
             'username', 'email', 
             'about_me', 'picture',
         )
+        extra_kwargs = {
+            'email': {'read_only': True}
+        }
+
+    def update(self, instance, validated_data):
+        try:
+            profile = validated_data.pop('profile')
+            profile = profile.get('get')
+        except:
+            profile = None
+
+        instance = super().update(instance, validated_data)
+
+        if profile:
+            profile_instance = Profile.objects.get(user=instance)
+            picture = profile.pop('picture', None)
+            about_me = profile.pop('about_me', None)
+
+            if picture:
+                profile_instance.picture = picture
+
+            if about_me:
+                profile_instance.about_me = about_me
+
+            profile_instance.save()
+
+        return instance
 
 class UpdateUserInfoSerializer(serializers.ModelSerializer):
 
