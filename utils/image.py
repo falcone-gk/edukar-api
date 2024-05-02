@@ -1,7 +1,4 @@
-from django.core.files import File
-from pathlib import Path
 from PIL import Image
-from io import BytesIO
 
 image_types = {
     "jpg": "JPEG",
@@ -14,7 +11,7 @@ image_types = {
 
 options = {
     'max_width': 800,
-    'max_height': 600,
+    'max_height': 450,
 }
 
 def calculate_size(image):
