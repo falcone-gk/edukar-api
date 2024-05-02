@@ -369,7 +369,7 @@ class CommentsTestCase(BaseSetup):
         client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
         response = client.put(
             reverse('forum:comments-detail', kwargs={'pk': comment.pk}),
-            {'post': self.post.pk, 'body': new_text},
+            {'body': new_text},
             format='json'
         )
 

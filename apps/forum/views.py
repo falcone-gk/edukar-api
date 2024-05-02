@@ -7,7 +7,9 @@ from forum.models import Post, Comment, Reply, Section
 from forum.permissions import IsAuthorOrReadOnly
 from core.paginators import CustomPagination
 from forum.serializers import (
+    CommentCreateSerializer,
     CommentSerializer,
+    CommentUpdateSerializer,
     ReplySerializer,
     SectionResumeSerializer,
     PostResumeSerializer,
@@ -15,7 +17,7 @@ from forum.serializers import (
     PostSerializer,
     CreatePostSerializer,
     UpdatePostSerializer,
-    CommentCreateUpdateSerializer,
+    #CommentCreateUpdateSerializer,
     ReplyCreateSerializer,
     ReplyUpdateSerializer
 )
@@ -118,8 +120,15 @@ class CommentAPIView(
 ):
 
     queryset = Comment.objects.all()
-    serializer_class = CommentCreateUpdateSerializer
+    #serializer_class = CommentCreateUpdateSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly,)
+
+    def get_serializer_class(self):
+
+        if self.action == 'create':
+            return CommentCreateSerializer
+        elif (self.action == 'update') | (self.action == 'partial_update'):
+            return CommentUpdateSerializer
 
     def perform_create(self, serializer):
         return serializer.save()

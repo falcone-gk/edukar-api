@@ -141,13 +141,19 @@ class ReplyUpdateSerializer(serializers.ModelSerializer):
     #     validated_data.pop('post', None)
     #     return super().create(validated_data)
 
-class CommentCreateUpdateSerializer(serializers.ModelSerializer):
+class CommentCreateSerializer(serializers.ModelSerializer):
 
     author = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     class Meta:
         model = Comment
         fields = '__all__'
+
+class CommentUpdateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Comment
+        fields = ('body',)
 
 class ReplySerializer(serializers.ModelSerializer):
 
