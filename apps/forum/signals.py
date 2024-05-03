@@ -5,7 +5,10 @@ from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.utils.text import slugify
 
-from notification.models import NotificationTypes, Notification
+from helpers.messages import CommentForumNotification, ReplyForumNotification
+from helpers.constants import POST_PATH
+
+from notification.models import Notification
 from notification.tasks import notify_user
 from forum.models import Post, Section, Subsection, Comment, Reply
 
@@ -56,17 +59,20 @@ def send_notification_comment(sender, instance, created, **kwargs):
         return
 
     source = instance.post
-    notif_type = NotificationTypes.objects.get(type_notif='comment')
+    # notif_type = NotificationTypes.objects.get(type_notif='comment')
 
     # Send notification to the post owner
-    Notification.objects.create(
+    notification = Notification.objects.create(
         sender=sender,
         user=receiver,
-        source_id=source,
-        notif_type=notif_type
+        title=CommentForumNotification.TITLE,
+        description=CommentForumNotification.DESCRIPTION.format(sender.username, source.title),
+        source_path=POST_PATH.format(source.section.slug, source.slug)
+        # source_id=source,
+        # notif_type=notif_type
     )
 
-    notify_user(sender.id, source.id)
+    notify_user(notification, source)
 
 @receiver(post_save, sender=Reply)
 def send_notification_reply(sender, instance, created, **kwargs):
@@ -80,14 +86,17 @@ def send_notification_reply(sender, instance, created, **kwargs):
         return
 
     source = instance.comment.post
-    notif_type = NotificationTypes.objects.get(type_notif='reply')
+    # notif_type = NotificationTypes.objects.get(type_notif='reply')
 
     # Send notification to the post owner
-    Notification.objects.create(
+    notification = Notification.objects.create(
         sender=sender,
         user=receiver,
-        source_id=source,
-        notif_type=notif_type
+        title=ReplyForumNotification.TITLE,
+        description=ReplyForumNotification.DESCRIPTION.format(sender.username, source.title),
+        source_path=POST_PATH.format(source.section.slug, source.slug)
+        # source_id=source,
+        # notif_type=notif_type
     )
 
-    notify_user(sender.id, source.id)
+    notify_user(notification, source)
