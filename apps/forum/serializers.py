@@ -181,6 +181,7 @@ class PostSerializer(serializers.ModelSerializer):
     author = AuthorSerializer(read_only=True)
     date = serializers.DateTimeField(format="%d de %B del %Y, a las %H:%M")
     comments = CommentSerializer(many=True, read_only=True)
+    time = serializers.CharField(source='time_difference')
 
     class Meta:
         model = Post
