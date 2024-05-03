@@ -11,7 +11,7 @@ from rest_framework.test import APIClient
 from rest_framework.authtoken.models import Token
 from notification.models import Notification
 
-from notification.models import NotificationTypes
+# from notification.models import NotificationTypes
 from account.models import Profile
 from forum.models import Post, Comment, Reply, Section, Subsection
 
@@ -42,17 +42,17 @@ class BaseNotificationTestSetup(TestCase):
         subsection = Subsection.objects.create(section=section, name='Aritmética')
 
         # Creating default notif types
-        NotificationTypes.objects.create(
-            type_notif='comment',
-            desc_receiver='comentó tu post',
-            desc_sender='comentaste'
-        )
-
-        NotificationTypes.objects.create(
-            type_notif='reply',
-            desc_receiver='respondió a tu comentario',
-            desc_sender='respondiste'
-        )
+        # NotificationTypes.objects.create(
+        #     type_notif='comment',
+        #     desc_receiver='comentó tu post',
+        #     desc_sender='comentaste'
+        # )
+        #
+        # NotificationTypes.objects.create(
+        #     type_notif='reply',
+        #     desc_receiver='respondió a tu comentario',
+        #     desc_sender='respondiste'
+        # )
 
         self.post = Post.objects.create(
             author=self.user_post_owner,
@@ -199,6 +199,38 @@ class TestNotificationUsers(BaseNotificationTestSetup):
         with self.assertRaises(ObjectDoesNotExist):
             Notification.objects.get(pk=notif.pk)
 
+    def test_delete_multiple_notifications_success(self):
+        num_to_delete = 2
+        notifications = list(
+            Notification.objects.all().values_list('id', flat=True)
+        )
+        total_notifications = len(notifications)
+        notifications_to_delete = notifications[:num_to_delete]
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access_post_owner)
+        client.post(
+            reverse('notification:notification-user-delete-notifications'),
+            {"selected_notifications": notifications_to_delete}
+        )
+
+        num_notifications = Notification.objects.all().count()
+        
+        self.assertEqual(total_notifications-num_to_delete, num_notifications)
+
+    def test_delete_notification_fail_no_owner(self):
+
+        notif = Notification.objects.filter(user=self.user_post_owner)[0]
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
+        client.post(
+            reverse('notification:notification-user-delete-notifications'),
+            {'selected_notifications': [notif.pk]}
+        )
+
+        exists = Notification.objects.filter(pk=notif.pk).exists()
+        self.assertTrue(exists)
+
     def test_delete_notification_error_no_owner(self):
 
         # Get notification
@@ -222,7 +254,7 @@ class TestNotificationUsers(BaseNotificationTestSetup):
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION='Token ' + self.access_post_owner)
         res = client.post(
-            reverse('notification:notification-user-set_read'),
+            reverse('notification:notification-user-set-read'),
             {'selected_notifications': [notif.pk]}
         )
 
@@ -237,7 +269,7 @@ class TestNotificationUsers(BaseNotificationTestSetup):
         notif = Notification.objects.filter(user=self.user_post_owner)[0]
         client = APIClient()
         res = client.post(
-            reverse('notification:notification-user-set_read'),
+            reverse('notification:notification-user-set-read'),
             {'selected_notifications': [notif.pk]}
         )
 
@@ -253,14 +285,14 @@ class TestNotificationUsers(BaseNotificationTestSetup):
         notif = Notification.objects.filter(user=self.user_post_owner)[0]
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
-        res = client.post(
-            reverse('notification:notification-user-set_read'),
+        client.post(
+            reverse('notification:notification-user-set-read'),
             {'selected_notifications': [notif.pk]}
         )
 
-        json_res = json.loads(res.content)
-        msg = {'status': 'Ninguna de las notificaciones te pertenece.'}
-        self.assertEqual(json_res, msg)
+        # json_res = json.loads(res.content)
+        # msg = {'status': 'Ninguna de las notificaciones te pertenece.'}
+        # self.assertEqual(json_res, msg)
 
         notif_after_request = Notification.objects.get(pk=notif.pk)
         self.assertFalse(notif_after_request.is_read)

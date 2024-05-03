@@ -9,21 +9,21 @@ from django.core.exceptions import ObjectDoesNotExist
 from core.paginators import CustomPagination
 from notification.models import Notification
 from notification.serializers import (
-    NotificationReceiverSerializer,
-    NotificationSenderSerializer,
+    NotificationSerializer,
+    # NotificationSenderSerializer,
     ArrayOfIdsSerializer
 )
 from notification.permissions import isOwnNotification
 
 # Create your views here.
 
-class NotificationReceivedAPIView(
+class NotificationAPIView(
     mixins.ListModelMixin,
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet):
 
-    serializer_class = NotificationReceiverSerializer
-    permission_classes = (IsAuthenticated, isOwnNotification)
+    serializer_class = NotificationSerializer
+    permission_classes = (IsAuthenticated,) #, isOwnNotification)
     pagination_class = CustomPagination
 
     def get_queryset(self):
@@ -33,44 +33,58 @@ class NotificationReceivedAPIView(
 
     @action(
         detail=False, methods=['post'],
-        url_path='set-read', url_name='set_read'
+        url_path='set-read', url_name='set-read'
     )
     def mark_as_read(self, request, pk=None):
 
         serializer = ArrayOfIdsSerializer(data=request.data)
-        if serializer.is_valid():
+        serializer.is_valid(raise_exception=True)
+        notifications = Notification.objects.filter(
+            pk__in=serializer.data['selected_notifications'],
+            user=request.user
+        )
+        notifications.update(is_read=True)
+        return Response({'has_notification': request.user.notif.filter(is_read=False).exists()})
+        # if serializer.is_valid():
 
-            notif_arr = Notification.objects.filter(
-                pk__in=serializer.data['selected_notifications'],
-                user=request.user
-            )
 
-            if not notif_arr.exists():
-                return Response({'status': 'Ninguna de las notificaciones te pertenece.'})
+            # if not notif_arr.exists():
+            #     return Response({'status': 'Ninguna de las notificaciones te pertenece.'})
 
             # Iterate over all notif selected to mark as read.
-            for notif in notif_arr:
-                notif.is_read = True
-                notif.save()
+            # for notif in notif_arr:
+            #     notif.is_read = True
+            #     notif.save()
+        # else:
+        #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            return Response({'has_notification': request.user.notif.filter(is_read=False).exists()})
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    @action(
+        detail=False, methods=['post'],
+        url_path='delete-notifications', url_name='delete-notifications'
+    )
+    def delete_notifications(self, request, *args, **kwargs):
+        serializer = ArrayOfIdsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        notifications = Notification.objects.filter(
+            pk__in=serializer.data['selected_notifications'],
+            user=request.user
+        )
+        notifications.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
-
-class NotificationSentAPIView(
-    mixins.ListModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet):
-
-    serializer_class = NotificationSenderSerializer
-    permission_classes = (IsAuthenticated, isOwnNotification)
-    pagination_class = CustomPagination
-
-    def get_queryset(self):
-
-        current_user = self.request.user
-        return Notification.objects.filter(user=current_user).order_by('-date')
+# class NotificationSentAPIView(
+#     mixins.ListModelMixin,
+#     mixins.DestroyModelMixin,
+#     viewsets.GenericViewSet):
+#
+#     serializer_class = NotificationSenderSerializer
+#     permission_classes = (IsAuthenticated, isOwnNotification)
+#     pagination_class = CustomPagination
+#
+#     def get_queryset(self):
+#
+#         current_user = self.request.user
+#         return Notification.objects.filter(user=current_user).order_by('-date')
 
 class CheckNotificationAPIView(APIView):
 

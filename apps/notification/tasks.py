@@ -1,20 +1,20 @@
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.core.mail import send_mass_mail
 
 from huey.contrib.djhuey import task
 
-from forum.models import Post
+# from forum.models import Post
 
 @task()
-def notify_user(sender_id, post_source_id):
-    # lookup user by id and send them a message
+def notify_user(notification, post):
 
-    sender = User.objects.get(pk=sender_id)
-    post = Post.objects.get(pk=post_source_id)
-    users_data = post.participants.exclude(pk=sender_id).values("username", "email")
-    post_url = f'http://{settings.DOMAIN}/forum/post/{post.slug}'
+    sender = notification.sender
+    # post = Post.objects.get(pk=post_source_id)
+    users_data = post.participants.exclude(pk=sender.id).values("username", "email")
+    # post_url = f'http://{settings.DOMAIN}/{notification.source_path}'
+    post_url = notification.full_source_path
 
     messages = []
     for user in users_data:

@@ -1,10 +1,9 @@
 from django.contrib import admin
-from notification.models import Notification, NotificationTypes
+from notification.models import Notification
 
 # Register your models here.
 
 class NotificationAdmin(admin.ModelAdmin):
-    list_display = ('user', 'sender', 'notif_type', 'source_id', 'date')
+    list_display = ('user', 'sender', 'date', 'title', 'description', 'is_read')
 
 admin.site.register(Notification, NotificationAdmin)
-admin.site.register(NotificationTypes)

@@ -4,7 +4,7 @@ from rest_framework.routers import DefaultRouter
 from notification import views
 
 router = DefaultRouter()
-router.register(r'notification-user', views.NotificationReceivedAPIView, basename='notification-user')
+router.register(r'notification-user', views.NotificationAPIView, basename='notification-user')
 
 app_name = 'notification'
 urlpatterns = [
