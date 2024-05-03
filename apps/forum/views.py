@@ -64,10 +64,24 @@ class PostAPIView(viewsets.ModelViewSet):
 
     def get_queryset(self):
 
-        username = self.request.query_params.get('username')
         queryset = Post.objects.all()
+
+        q = self.request.query_params.get('q')
+        username = self.request.query_params.get('username')
+        section = self.request.query_params.get('section')
+        subsection = self.request.query_params.get('subsection')
+
+        if q:
+            queryset = queryset.filter(title__icontains=q)
+
         if username:
             queryset = queryset.filter(author__username=username)
+
+        if section:
+            queryset = queryset.filter(section_id=section)
+
+        if subsection:
+            queryset = queryset.filter(subsection_id=subsection)
 
         return queryset
 
