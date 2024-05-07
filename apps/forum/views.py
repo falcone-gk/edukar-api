@@ -66,6 +66,7 @@ class PostAPIView(viewsets.ModelViewSet):
 
         queryset = Post.objects.all()
 
+        # TODO: Add test to check if this works
         q = self.request.query_params.get('q')
         username = self.request.query_params.get('username')
         section = self.request.query_params.get('section')
@@ -83,7 +84,7 @@ class PostAPIView(viewsets.ModelViewSet):
         if subsection:
             queryset = queryset.filter(subsection_id=subsection)
 
-        return queryset
+        return queryset.order_by('-date')
 
     def get_throttles(self):
         if self.action == 'create' and not settings.DEBUG:
