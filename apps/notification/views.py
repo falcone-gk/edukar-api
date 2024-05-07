@@ -13,7 +13,7 @@ from notification.serializers import (
     # NotificationSenderSerializer,
     ArrayOfIdsSerializer
 )
-from notification.permissions import isOwnNotification
+# from notification.permissions import isOwnNotification
 
 # Create your views here.
 
@@ -29,7 +29,14 @@ class NotificationAPIView(
     def get_queryset(self):
 
         current_user = self.request.user
-        return Notification.objects.filter(user=current_user).order_by('-date')
+        queryset = Notification.objects.filter(user=current_user).order_by('-date')
+        is_read = self.request.query_params.get('is_read')
+
+        # TODO: Add test to check this filters works
+        if is_read:
+            queryset = queryset.filter(is_read=is_read)
+
+        return queryset
 
     @action(
         detail=False, methods=['post'],
