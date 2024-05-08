@@ -145,15 +145,15 @@ class CommentAPIView(
 ):
 
     queryset = Comment.objects.all()
-    #serializer_class = CommentCreateUpdateSerializer
+    serializer_class = CommentCreateSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly,)
 
-    def get_serializer_class(self):
-
-        if self.action == 'create':
-            return CommentCreateSerializer
-        elif (self.action == 'update') | (self.action == 'partial_update'):
-            return CommentUpdateSerializer
+    # def get_serializer_class(self):
+    #
+    #     if self.action == 'create':
+    #         return CommentCreateSerializer
+    #     elif (self.action == 'update') | (self.action == 'partial_update'):
+    #         return CommentCreateSerializer
 
     def perform_create(self, serializer):
         return serializer.save()
@@ -235,9 +235,9 @@ class ReplyAPIView(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
 
-        if (self.action == 'update') | (self.action == 'partial_update'):
-            return ReplyUpdateSerializer
-        elif self.action == 'create':
+        # if (self.action == 'update') | (self.action == 'partial_update'):
+        #     return ReplyUpdateSerializer
+        if self.action in ('create', 'update', 'partial_update'):
             return ReplyCreateSerializer
         else:
             return ReplySerializer

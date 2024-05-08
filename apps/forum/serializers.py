@@ -108,24 +108,15 @@ class UpdatePostSerializer(serializers.ModelSerializer):
     class Meta:
 
         model = Post
-        fields = ('title', 'section', 'subsection', 'body',)
+        fields = ('title', 'section', 'subsection', 'body', 'image')
 
 class ReplyCreateSerializer(serializers.ModelSerializer):
 
     author = serializers.HiddenField(default=serializers.CurrentUserDefault())
-    # post = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = Reply
-        fields = ('body', 'comment', 'author')
-        # exclude = ('id',)
-        # extra_kwargs = {
-        #     'comment': {'write_only': True}
-        # }
-
-    # def create(self, validated_data):
-    #     validated_data.pop('post', None)
-    #     return super().create(validated_data)
+        fields = ('body', 'comment', 'author', 'image')
 
 class ReplyUpdateSerializer(serializers.ModelSerializer):
 

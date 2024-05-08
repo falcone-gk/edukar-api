@@ -1,13 +1,24 @@
 from django.contrib.auth.models import User
+from django.core.files.storage import default_storage as storage
 from django.db import models
 from django.utils import timezone
+from uuid import uuid4
+from utils.image import image_resize
 
 # Create your models here.
 
 class BaseContentPublication(models.Model):
 
+    def image_upload(self, filename):
+        ext = filename.split('.')[-1]
+        new_filename = uuid4().hex
+        fullname = '{}.{}'.format(new_filename, ext)
+        return f'images/{self.author.id}/{fullname}'
+
     author = models.ForeignKey(User, on_delete=models.CASCADE)
-    body = models.TextField()
+    # TODO: Add custom validation to handle body and image content
+    body = models.TextField(blank=True)
+    image = models.ImageField(upload_to=image_upload, null=True)
     date = models.DateTimeField(default=timezone.now)
 
     def time_difference(self):
@@ -33,6 +44,18 @@ class BaseContentPublication(models.Model):
             time_difference = self.date.strftime("%d-%m-%Y")
 
         return time_difference
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if self.image:
+            img = image_resize(self.image)
+            fh = storage.open(self.image.name, "wb")
+
+            img.save(fh, quality=50)
+            img.close()
+            self.image.close()
+            fh.close()
 
     class Meta:
         abstract = True

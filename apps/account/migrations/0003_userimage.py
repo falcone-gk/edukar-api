@@ -18,7 +18,9 @@ class Migration(migrations.Migration):
             name='UserImage',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('image', models.ImageField(upload_to=account.models.UserImage.image_upload)),
+                # comment field because it casuses an error
+                # there is no problem since this table will be deleted
+                # ('image', models.ImageField(upload_to=account.models.UserImage.image_upload)),
                 ('created_at', models.DateField(auto_now_add=True)),
                 ('module', models.CharField(max_length=50)),
                 ('is_used', models.BooleanField(default=False)),

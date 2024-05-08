@@ -857,27 +857,27 @@ class TestUpdateUserInfo(BaseSetup):
         self.assertEqual(json_res, msg)
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
-class TestUpdateUserImage(BaseSetup):
-
-    def generate_image(self):
-        file = io.BytesIO()
-        image = Image.new('RGBA', size=(100, 100), color=(155, 0, 0))
-        image.save(file, 'png')
-        file.name = 'test.png'
-        file.seek(0)
-        return file
-
-    def test_upload_image_success(self):
-
-        client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
-        form = {
-            'image': self.generate_image(),
-            'module': 'test_module'
-        }
-        response = client.post(
-            reverse('account:image-upload'),
-            form
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+# class TestUpdateUserImage(BaseSetup):
+#
+#     def generate_image(self):
+#         file = io.BytesIO()
+#         image = Image.new('RGBA', size=(100, 100), color=(155, 0, 0))
+#         image.save(file, 'png')
+#         file.name = 'test.png'
+#         file.seek(0)
+#         return file
+#
+#     def test_upload_image_success(self):
+#
+#         client = APIClient()
+#         client.credentials(HTTP_AUTHORIZATION='Token ' + self.access)
+#         form = {
+#             'image': self.generate_image(),
+#             'module': 'test_module'
+#         }
+#         response = client.post(
+#             reverse('account:image-upload'),
+#             form
+#         )
+#
+#         self.assertEqual(response.status_code, status.HTTP_201_CREATED)

@@ -6,7 +6,7 @@ from rest_framework.authtoken.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from account.serializers import UpdateUserInfoSerializer, UpdateUserProfileSerializer, UploadUserImageSerializer, UrlUserImageSerializer
+from account.serializers import UpdateUserInfoSerializer, UpdateUserProfileSerializer
 
 from forum.models import Post
 from core.paginators import CustomPagination
@@ -81,16 +81,16 @@ class UpdateUserProfileAPIView(generics.UpdateAPIView):
 
         return response
 
-class UploadUserImageAPIView(APIView):
-
-    serializer_class = UploadUserImageSerializer
-    permission_classes = (IsAuthenticated,)
-
-    def post(self, request, *args, **kwargs):
-
-        context = { 'request': request }
-        serializer = UploadUserImageSerializer(data=request.data, context=context)
-        serializer.is_valid(raise_exception=True)
-        new_instance = serializer.save()
-        instance_serializer = UrlUserImageSerializer(new_instance)
-        return Response(instance_serializer.data, status=status.HTTP_201_CREATED)
+# class UploadUserImageAPIView(APIView):
+#
+#     serializer_class = UploadUserImageSerializer
+#     permission_classes = (IsAuthenticated,)
+#
+#     def post(self, request, *args, **kwargs):
+#
+#         context = { 'request': request }
+#         serializer = UploadUserImageSerializer(data=request.data, context=context)
+#         serializer.is_valid(raise_exception=True)
+#         new_instance = serializer.save()
+#         instance_serializer = UrlUserImageSerializer(new_instance)
+#         return Response(instance_serializer.data, status=status.HTTP_201_CREATED)

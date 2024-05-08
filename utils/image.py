@@ -1,3 +1,4 @@
+import io
 from PIL import Image
 
 image_types = {
@@ -11,7 +12,7 @@ image_types = {
 
 options = {
     'max_width': 800,
-    'max_height': 450,
+    'max_height': 400,
 }
 
 def calculate_size(image):
@@ -34,3 +35,12 @@ def image_resize(image):
 
     img = img.resize((int(width), int(height)), Image.ANTIALIAS)
     return img
+
+
+def generate_image():
+    file = io.BytesIO()
+    image = Image.new('RGBA', size=(100, 100), color=(155, 0, 0))
+    image.save(file, 'png')
+    file.name = 'test.png'
+    file.seek(0)
+    return file

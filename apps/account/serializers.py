@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from account.models import Profile, UserImage
+from account.models import Profile
 
 class UserProfileSerializer(serializers.ModelSerializer):
 
@@ -91,18 +91,18 @@ class UpdateUserProfileSerializer(serializers.ModelSerializer):
         model = Profile
         fields = ('about_me', 'picture',)
 
-class UrlUserImageSerializer(serializers.ModelSerializer):
-
-    image = serializers.CharField(source='image.url')
-
-    class Meta:
-        model = UserImage
-        fields = ('id', 'image')
-
-class UploadUserImageSerializer(serializers.ModelSerializer):
-
-    author = serializers.HiddenField(default=serializers.CurrentUserDefault())
-
-    class Meta:
-        model = UserImage
-        fields = '__all__'
+# class UrlUserImageSerializer(serializers.ModelSerializer):
+#
+#     image = serializers.CharField(source='image.url')
+#
+#     class Meta:
+#         model = UserImage
+#         fields = ('id', 'image')
+#
+# class UploadUserImageSerializer(serializers.ModelSerializer):
+#
+#     author = serializers.HiddenField(default=serializers.CurrentUserDefault())
+#
+#     class Meta:
+#         model = UserImage
+#         fields = '__all__'
