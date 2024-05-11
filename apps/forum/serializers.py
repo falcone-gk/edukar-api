@@ -159,11 +159,15 @@ class CommentSerializer(serializers.ModelSerializer):
 
     author = AuthorSerializer(read_only=True)
     date = serializers.DateTimeField(format="%d de %B del %Y, a las %H:%M", read_only=True)
-    replies = ReplySerializer(many=True, read_only=True)
+    replies = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
         exclude = ('post',)
+
+    def get_replies(self, instance):
+        replies = instance.replies.all().order_by('-pk')
+        return ReplySerializer(replies, many=True).data
 
 class PostSerializer(serializers.ModelSerializer):
 
@@ -171,9 +175,13 @@ class PostSerializer(serializers.ModelSerializer):
     subsection = SubsectionSerializer(read_only=True)
     author = AuthorSerializer(read_only=True)
     date = serializers.DateTimeField(format="%d de %B del %Y, a las %H:%M")
-    comments = CommentSerializer(many=True, read_only=True)
+    comments = serializers.SerializerMethodField()
     time = serializers.CharField(source='time_difference')
 
     class Meta:
         model = Post
         exclude = ('participants',)
+
+    def get_comments(self, instance):
+        comments = instance.comments.all().order_by('-pk')
+        return CommentSerializer(comments, many=True).data
