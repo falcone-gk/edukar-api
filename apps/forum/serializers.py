@@ -177,6 +177,7 @@ class PostSerializer(serializers.ModelSerializer):
     date = serializers.DateTimeField(format="%d de %B del %Y, a las %H:%M")
     comments = serializers.SerializerMethodField()
     time = serializers.CharField(source='time_difference')
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
@@ -185,3 +186,9 @@ class PostSerializer(serializers.ModelSerializer):
     def get_comments(self, instance):
         comments = instance.comments.all().order_by('-pk')
         return CommentSerializer(comments, many=True).data
+
+    def get_image(self, instance):
+        image = instance.image
+        if image:
+            return image.url
+        return None
