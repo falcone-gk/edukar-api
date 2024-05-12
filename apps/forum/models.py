@@ -54,7 +54,7 @@ class BaseContentPublication(models.Model):
 
             img.save(fh, quality=50)
             img.close()
-            self.image.close()
+            # self.image.close()
             fh.close()
 
     class Meta:

@@ -30,10 +30,10 @@ def calculate_size(image):
 
 def image_resize(image):
     # Open the image using Pillow
-    img = Image.open(image)
-    width, height = calculate_size(img)
+    with Image.open(image) as img:
+        width, height = calculate_size(img)
+        img = img.resize((int(width), int(height)), Image.ANTIALIAS)
 
-    img = img.resize((int(width), int(height)), Image.ANTIALIAS)
     return img
 
 

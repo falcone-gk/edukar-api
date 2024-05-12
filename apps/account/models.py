@@ -29,7 +29,7 @@ class Profile(models.Model):
 
             img.save(fh, quality=20)
             img.close()
-            self.picture.close()
+            # self.picture.close()
             fh.close()
 
 # class UserImage(models.Model):
