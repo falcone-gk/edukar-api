@@ -1,0 +1,74 @@
+[
+{
+    "model": "forum.subsection",
+    "pk": 1,
+    "fields": {
+        "section": 1,
+        "name": "Aritmética",
+        "slug": "aritmetica"
+    }
+},
+{
+    "model": "forum.subsection",
+    "pk": 2,
+    "fields": {
+        "section": 1,
+        "name": "Álgebra",
+        "slug": "algebra"
+    }
+},
+{
+    "model": "forum.subsection",
+    "pk": 3,
+    "fields": {
+        "section": 1,
+        "name": "Trigonometría",
+        "slug": "trigonometria"
+    }
+},
+{
+    "model": "forum.subsection",
+    "pk": 4,
+    "fields": {
+        "section": 1,
+        "name": "Geometría",
+        "slug": "geometria"
+    }
+},
+{
+    "model": "forum.subsection",
+    "pk": 5,
+    "fields": {
+        "section": 1,
+        "name": "Física",
+        "slug": "fisica"
+    }
+},
+{
+    "model": "forum.subsection",
+    "pk": 6,
+    "fields": {
+        "section": 1,
+        "name": "Química",
+        "slug": "quimica"
+    }
+},
+{
+    "model": "forum.subsection",
+    "pk": 7,
+    "fields": {
+        "section": 1,
+        "name": "Razonamiento Matemático",
+        "slug": "razonamiento-matematico"
+    }
+},
+{
+    "model": "forum.subsection",
+    "pk": 8,
+    "fields": {
+        "section": 2,
+        "name": "Universidades",
+        "slug": "universidades"
+    }
+}
+]

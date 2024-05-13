@@ -1,0 +1,18 @@
+[
+{
+    "model": "forum.section",
+    "pk": 1,
+    "fields": {
+        "name": "Cursos",
+        "slug": "cursos"
+    }
+},
+{
+    "model": "forum.section",
+    "pk": 2,
+    "fields": {
+        "name": "Zona Académica",
+        "slug": "zona-academica"
+    }
+}
+]
