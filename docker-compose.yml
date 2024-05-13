@@ -26,6 +26,8 @@ services:
     image: postgres:13.0-alpine
     volumes:
       - pgdata:/var/lib/postgresql/data/
+    ports:
+      - "5434:5432"
     env_file:
       - ./EdukarApi/.env
   redis:
