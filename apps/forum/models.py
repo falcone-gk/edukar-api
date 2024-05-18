@@ -20,7 +20,7 @@ class BaseContentPublication(models.Model):
     # TODO: Add custom validation to handle body and image content
     body = models.TextField(blank=True)
     image = ResizedImageField(
-        size=[800, 400], quality=50, force_format="WebP",
+        size=[1200, 900], quality=50, force_format="WebP",
         upload_to=image_upload, null=True)
     # image = models.ImageField(upload_to=image_upload, null=True)
     date = models.DateTimeField(default=timezone.now)
