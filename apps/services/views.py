@@ -23,11 +23,18 @@ class ExamsAPIView(generics.ListAPIView):
         # Get query params to filter
         univ = self.request.query_params.get('univ')
         year = self.request.query_params.get('year')
+        video_solution = self.request.query_params.get('video', None)
 
         if (univ is not None) and (univ != ''):
             queryset = queryset.filter(root__siglas=univ)
         if (year is not None) and (year != '0'):
             queryset = queryset.filter(year=year)
+        # TODO add test for this filter
+        if (video_solution is not None):
+            if video_solution == 'free':
+                queryset = queryset.exclude(source_video_solution=u'')
+            elif video_solution == 'premium':
+                queryset = queryset.exclude(source_video_solution_premium=u'')
 
         return queryset.order_by('-year', '-id')
 
