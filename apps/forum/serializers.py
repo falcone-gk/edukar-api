@@ -166,7 +166,7 @@ class CommentSerializer(serializers.ModelSerializer):
         exclude = ('post',)
 
     def get_replies(self, instance):
-        replies = instance.replies.all().order_by('-pk')
+        replies = instance.replies.all().order_by('pk')
         return ReplySerializer(replies, many=True).data
 
 class PostSerializer(serializers.ModelSerializer):
@@ -184,7 +184,7 @@ class PostSerializer(serializers.ModelSerializer):
         exclude = ('participants',)
 
     def get_comments(self, instance):
-        comments = instance.comments.all().order_by('-pk')
+        comments = instance.comments.all().order_by('pk')
         return CommentSerializer(comments, many=True).data
 
     def get_image(self, instance):
