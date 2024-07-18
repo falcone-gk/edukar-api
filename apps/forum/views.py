@@ -2,6 +2,7 @@ from django.conf import settings
 from rest_framework import generics, status, viewsets, mixins
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.exceptions import ValidationError
 
 from forum.models import Post, Comment, Reply, Section
 from forum.permissions import IsAuthorOrReadOnly
@@ -9,7 +10,7 @@ from core.paginators import CustomPagination
 from forum.serializers import (
     CommentCreateSerializer,
     CommentSerializer,
-    CommentUpdateSerializer,
+    # CommentUpdateSerializer,
     ReplySerializer,
     SectionResumeSerializer,
     PostResumeSerializer,
@@ -17,17 +18,22 @@ from forum.serializers import (
     PostSerializer,
     CreatePostSerializer,
     UpdatePostSerializer,
-    #CommentCreateUpdateSerializer,
     ReplyCreateSerializer,
-    ReplyUpdateSerializer
+    # ReplyUpdateSerializer
 )
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 # Create your views here.
+
 
 class ForumHomeAPIView(generics.ListAPIView):
 
     serializer_class = SectionResumeSerializer
     queryset = Section.objects.all()
+
 
 class SectionPostAPIView(generics.ListAPIView):
 
@@ -41,19 +47,25 @@ class SectionPostAPIView(generics.ListAPIView):
         subsection = self.request.query_params.get('subsection')
         # If '0' is sent then we return all posts.
         if subsection == '0':
-            return Post.objects.filter(section__slug=section).order_by('-date').order_by('-date')
+            return Post.objects.filter(
+                section__slug=section
+            ).order_by('-date').order_by('-date')
 
         # Catch error when query param sent is not a number or empty
         try:
-            queryset = Post.objects.filter(section__slug=section, subsection=int(subsection)).order_by('-date')
+            queryset = Post.objects.filter(
+                section__slug=section, subsection=int(subsection)
+            ).order_by('-date')
         except (ValueError, TypeError):
             queryset = Post.objects.filter(subsection=None).order_by('-date')
         return queryset
+
 
 class SectionAPIView(generics.ListAPIView):
 
     serializer_class = SectionSerializer
     queryset = Section.objects.all().order_by('id')
+
 
 class PostAPIView(viewsets.ModelViewSet):
 
@@ -110,16 +122,29 @@ class PostAPIView(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        instance = self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        instance_serializer = PostSerializer(instance)
-        return Response(instance_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        if serializer.is_valid():
+            instance = self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            instance_serializer = PostSerializer(instance)
+            serializer_data = instance_serializer.data
+            logger.info(
+                f"Forum Post create user_id {request.user.pk}"
+                f" title {serializer_data.get('title')}"
+            )
+            return Response(
+                serializer_data,
+                status=status.HTTP_201_CREATED,
+                headers=headers
+            )
+        else:
+            logger.error(f"Error al crear post del user_id {request.user.pk}")
+            raise ValidationError(serializer.errors)
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer = self.get_serializer(
+            instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         new_instance = self.perform_update(serializer)
 
@@ -131,11 +156,6 @@ class PostAPIView(viewsets.ModelViewSet):
         instance_serializer = PostSerializer(new_instance)
         return Response(instance_serializer.data)
 
-# class GetPostAPIView(generics.RetrieveAPIView):
-#
-#     queryset = Post.objects.all()
-#     serializer_class = UpdatePostSerializer
-#     lookup_field = 'slug'
 
 class CommentAPIView(
     mixins.CreateModelMixin,
@@ -167,12 +187,17 @@ class CommentAPIView(
         instance = self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         instance_serializer = CommentSerializer(instance)
-        return Response(instance_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(
+            instance_serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=headers
+        )
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer = self.get_serializer(
+            instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         new_instance = self.perform_update(serializer)
 
@@ -183,50 +208,7 @@ class CommentAPIView(
 
         instance_serializer = CommentSerializer(new_instance)
         return Response(instance_serializer.data)
-    # @staticmethod
-    # def comment_serializer(request):
-    #     post_id = request.data['post']
-    #     comments = Comment.objects.filter(post_id=post_id)
-    #     serializer = CommentSerializer(comments, many=True, context={'request': request})
-    #     return serializer
-    #
-    # def create(self, request, *args, **kwargs):
-    #     response = super().create(request, *args, **kwargs)
-    #
-    #     if response.status_code != 201:
-    #         return response
-    #
-    #     serializer = self.comment_serializer(request)
-    #     return Response(serializer.data, status=status.HTTP_201_CREATED)
-    #
-    # def destroy(self, request, *args, **kwargs):
-    #
-    #     # Check if post id was sent before deleting comment
-    #     if not request.data.get('post'):
-    #         msg = {'post': ['Este campo es requerido.']}
-    #         return Response(msg, status=status.HTTP_400_BAD_REQUEST)
-    #
-    #     response = super().destroy(request, *args, **kwargs)
-    #     if response.status_code != 204:
-    #         return response
-    #
-    #     serializer = self.comment_serializer(request)
-    #     # Since it has content we change status code to '200'
-    #     return Response(serializer.data, status=status.HTTP_200_OK)
-    #
-    # def update(self, request, *args, **kwargs):
-    #     response = super().update(request, *args, **kwargs)
-    #
-    #     if response.status_code != 200:
-    #         return response
-    #
-    #     serializer = self.comment_serializer(request)
-    #     return Response(serializer.data, status=status.HTTP_200_OK)
 
-# class UnsafeCommentAPIView(viewsets.GenericViewSet):
-#
-#     queryset = Comment.objects.all()
-#     serializer_class = CommentCreateSerializer
 
 class ReplyAPIView(viewsets.ModelViewSet):
 
@@ -254,12 +236,17 @@ class ReplyAPIView(viewsets.ModelViewSet):
         instance = self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         instance_serializer = ReplySerializer(instance)
-        return Response(instance_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(
+            instance_serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=headers
+        )
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer = self.get_serializer(
+            instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         new_instance = self.perform_update(serializer)
 

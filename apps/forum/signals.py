@@ -9,8 +9,9 @@ from helpers.messages import CommentForumNotification, ReplyForumNotification
 from helpers.constants import POST_PATH
 
 from notification.models import Notification
-from notification.tasks import notify_user
+from notification.tasks import notify_users
 from forum.models import Post, Section, Subsection, Comment, Reply
+
 
 @receiver(post_save, sender=Post)
 def signal_after_post_create(sender, created, instance, **kwargs):
@@ -33,6 +34,7 @@ def signal_after_post_create(sender, created, instance, **kwargs):
     # Add author in post participants
     instance.participants.add(instance.author)
 
+
 @receiver(pre_save, sender=Section)
 def create_section_slug(sender, instance, **kwargs):
 
@@ -40,12 +42,14 @@ def create_section_slug(sender, instance, **kwargs):
 
     instance.slug = generated_slug
 
+
 @receiver(pre_save, sender=Subsection)
 def create_subsection_slug(sender, instance, **kwargs):
 
     generated_slug = slugify(instance.name)
 
     instance.slug = generated_slug
+
 
 @receiver(post_save, sender=Comment)
 def send_notification_comment(sender, instance, created, **kwargs):
@@ -66,13 +70,15 @@ def send_notification_comment(sender, instance, created, **kwargs):
         sender=sender,
         user=receiver,
         title=CommentForumNotification.TITLE,
-        description=CommentForumNotification.DESCRIPTION.format(sender.username, source.title),
+        description=CommentForumNotification.DESCRIPTION.format(
+            sender.username, source.title),
         source_path=POST_PATH.format(source.section.slug, source.slug)
         # source_id=source,
         # notif_type=notif_type
     )
 
-    notify_user(notification, source)
+    notify_users(notification, source)
+
 
 @receiver(post_save, sender=Reply)
 def send_notification_reply(sender, instance, created, **kwargs):
@@ -93,10 +99,11 @@ def send_notification_reply(sender, instance, created, **kwargs):
         sender=sender,
         user=receiver,
         title=ReplyForumNotification.TITLE,
-        description=ReplyForumNotification.DESCRIPTION.format(sender.username, source.title),
+        description=ReplyForumNotification.DESCRIPTION.format(
+            sender.username, source.title),
         source_path=POST_PATH.format(source.section.slug, source.slug)
         # source_id=source,
         # notif_type=notif_type
     )
 
-    notify_user(notification, source)
+    notify_users(notification, source)

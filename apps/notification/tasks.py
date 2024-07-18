@@ -1,19 +1,18 @@
-# from django.contrib.auth.models import User
 from django.template.loader import render_to_string
-from django.conf import settings
 from django.core.mail import send_mass_mail
 
 from huey.contrib.djhuey import task
+import logging
 
-# from forum.models import Post
+logger = logging.getLogger(__name__)
+
 
 @task()
-def notify_user(notification, post):
+def notify_users(notification, post):
 
     sender = notification.sender
-    # post = Post.objects.get(pk=post_source_id)
-    users_data = post.participants.exclude(pk=sender.id).values("username", "email")
-    # post_url = f'http://{settings.DOMAIN}/{notification.source_path}'
+    users_data = post.participants.exclude(
+        pk=sender.id).values("username", "email")
     post_url = notification.full_source_path
 
     messages = []
@@ -35,4 +34,8 @@ def notify_user(notification, post):
         ]
         messages.append(email_message)
 
+    logger.info(
+        "Notification notify_users Enviando emails masivos de user_id "
+        f"{sender.pk} con descripcion {notification.description}"
+    )
     send_mass_mail(messages, fail_silently=False)
