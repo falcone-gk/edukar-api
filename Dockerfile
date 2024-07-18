@@ -19,6 +19,7 @@ ENV APP_HOME=/home/app/web
 RUN mkdir $APP_HOME
 RUN mkdir $APP_HOME/staticfiles
 RUN mkdir $APP_HOME/media
+RUN mkdir $APP_HOME/logs
 WORKDIR $APP_HOME
 
 # set environment variables
