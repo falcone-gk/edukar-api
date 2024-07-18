@@ -65,7 +65,7 @@ INSTALLED_APPS = [
 
 # Change defualt storage when running test
 # Avoid storing image in media file when running tests.
-if 'test' in sys.argv :
+if 'test' in sys.argv:
     # store files in memory, no cleanup after tests are finished
     DEFAULT_FILE_STORAGE = 'inmemorystorage.InMemoryStorage'
     # much faster password hashing, default one is super slow (on purpose)
@@ -96,7 +96,7 @@ AUTHENTICATION_BACKENDS = (
 
 DJOSER = {
     'PASSWORD_RESET_CONFIRM_URL': 'account/reset-password/{uid}/{token}',
-    'PASSWORD_RESET_SHOW_EMAIL_NOT_FOUND': True, 
+    'PASSWORD_RESET_SHOW_EMAIL_NOT_FOUND': True,
     'USERNAME_RESET_CONFIRM_URL': 'username/reset/confirm/{uid}/{token}',
     'ACTIVATION_URL': 'account/activate/{uid}/{token}',
     'SEND_ACTIVATION_EMAIL': True,
@@ -195,6 +195,41 @@ HUEY = {
     },
 }
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'formatter': 'verbose',
+            'filename': BASE_DIR / 'logs/logs.log',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight',
+            'interval': 1,
+            'backupCount': 7,  # keep this number of rotated files
+            'encoding': 'utf-8',  # ensure file is written with utf-8 encoding
+            'delay': True,  # open file only when needed
+        },
+    },
+    'loggers': {
+        '': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': True
+        },
+    },
+}
+
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
 
@@ -224,8 +259,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Frontend values
-DOMAIN=env('DOMAIN')
-SITE_NAME=env('SITE_NAME')
+DOMAIN = env('DOMAIN')
+SITE_NAME = env('SITE_NAME')
 
 # For Django Email Backend
 EMAIL_BACKEND = env('EMAIL_BACKEND')
