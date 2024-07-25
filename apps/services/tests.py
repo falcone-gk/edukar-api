@@ -11,6 +11,7 @@ from services.models import Course, Exams, UnivExamsStructure
 
 # Create your tests here.
 
+
 class BaseServiceTestCase(TestCase):
 
     def setUp(self):
@@ -44,13 +45,15 @@ class BaseServiceTestCase(TestCase):
         self.num_exams_one = 20
         self.list_years_one = [2012 + i for i in range(self.num_exams_one)]
 
-        for year in self.list_years_one:
+        for i, year in enumerate(self.list_years_one):
+            exam_data['title'] = exam_data.get('title') + '-' + str(i)
             Exams.objects.create(root=un_obj, year=year, **exam_data)
 
         self.num_exams_two = 4
         self.list_years_two = [2012 + i for i in range(self.num_exams_two)]
 
-        for year in self.list_years_two:
+        for i, year in enumerate(self.list_years_two):
+            exam_data['title'] = exam_data.get('title') + '-' + str(i)
             Exams.objects.create(root=unm_obj, year=year, **exam_data)
 
         self.num_exams = self.num_exams_one + self.num_exams_two
@@ -70,6 +73,7 @@ class BaseServiceTestCase(TestCase):
         file.seek(0)
         return file
 
+
 class TestListExams(BaseServiceTestCase):
 
     size_per_page = 8
@@ -78,7 +82,8 @@ class TestListExams(BaseServiceTestCase):
 
         client = APIClient()
         res = client.get(
-            reverse('services:exams-list') + '?size={}'.format(self.size_per_page)
+            reverse('services:exams-list') +
+            '?size={}'.format(self.size_per_page)
         )
 
         json_res = json.loads(res.content)
@@ -91,7 +96,7 @@ class TestListExams(BaseServiceTestCase):
 
         client = APIClient()
         res = client.get(
-            reverse('services:exams-list') + \
+            reverse('services:exams-list') +
             '?size={0}&univ={1}'.format(self.size_per_page, 'UNM')
         )
 
@@ -104,7 +109,7 @@ class TestListExams(BaseServiceTestCase):
 
         client = APIClient()
         res = client.get(
-            reverse('services:exams-list') + \
+            reverse('services:exams-list') +
             '?size={0}&univ={1}'.format(self.size_per_page, 'wrong_name')
         )
 
@@ -118,6 +123,18 @@ class TestListExams(BaseServiceTestCase):
         client = APIClient()
         res = client.get(reverse('services:exams-filters'))
 
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+
+class TestRetrieveExam(BaseServiceTestCase):
+
+    def test_success_get_exam_by_slug(self):
+
+        exam = Exams.objects.all().latest('pk')
+        client = APIClient()
+        res = client.get(
+            reverse('services:exam-retrieve', kwargs={'slug': exam.slug})
+        )
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
 

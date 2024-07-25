@@ -7,16 +7,13 @@ from services.models import Course, Exams, UnivExamsStructure
 
 # Create your views here.
 
+
 class ExamsAPIView(generics.ListAPIView):
 
     serializer_class = ExamsSerializer
     pagination_class = CustomPagination
 
     def get_queryset(self):
-        # This apiview will receive three query params to filter in
-        # 
-        # univ: this is 'siglas' field
-        # year: this is 'year' field in examns
 
         queryset = Exams.objects.all()
 
@@ -38,12 +35,22 @@ class ExamsAPIView(generics.ListAPIView):
 
         return queryset.order_by('-year', '-id')
 
+
+class RetrieveExamsAPIView(generics.RetrieveAPIView):
+
+    queryset = Exams.objects.all()
+    serializer_class = ExamsSerializer
+    lookup_field = 'slug'
+
+
 class GetExamsFilterAPIView(APIView):
 
     def get(self, request, format=None, *args, **kwargs):
 
-        universities = UnivExamsStructure.objects.order_by().values('university', 'siglas').distinct()
-        years = Exams.objects.order_by('year').values_list('year', flat=True).distinct()
+        universities = UnivExamsStructure.objects.order_by().values(
+            'university', 'siglas').distinct()
+        years = Exams.objects.order_by('year').values_list(
+            'year', flat=True).distinct()
 
         data = {
             'universities': universities,
@@ -51,6 +58,7 @@ class GetExamsFilterAPIView(APIView):
         }
 
         return Response(data, status=status.HTTP_200_OK)
+
 
 class CoursesAPIView(generics.ListAPIView):
 
@@ -67,4 +75,3 @@ class CoursesAPIView(generics.ListAPIView):
             queryset = Course.objects.all()
 
         return queryset.order_by('id')
-
