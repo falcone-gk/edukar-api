@@ -212,7 +212,7 @@ LOGGING = {
         'file': {
             'level': 'INFO',
             'formatter': 'verbose',
-            'filename': BASE_DIR / 'logs/logs.log',
+            'filename': os.path.join(BASE_DIR, 'logs', 'logs.log'),
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'when': 'midnight',
             'interval': 1,

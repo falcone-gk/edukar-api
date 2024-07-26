@@ -5,6 +5,7 @@ services:
     volumes:
       - static_volume:/home/app/web/staticfiles
       - media_volume:/home/app/web/media
+      - logs_volume:/home/app/web/logs
     expose:
       - 8000
     env_file:
@@ -42,3 +43,4 @@ volumes:
   pgdata:
   static_volume:
   media_volume:
+  logs_volume:
