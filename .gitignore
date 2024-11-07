@@ -141,3 +141,6 @@ staticfiles/
 
 # Ignore redis dump file
 dump.rdb
+
+# Pyright
+pyrightconfig.json
