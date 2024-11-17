@@ -24,7 +24,7 @@ class ExamsAPIView(generics.ListAPIView):
     pagination_class = CustomPagination
 
     def get_queryset(self):
-        queryset = Exams.objects.all()
+        queryset = Exams.objects.filter(is_delete=False)
 
         # Get query params to filter
         univ = self.request.query_params.get("univ")
@@ -46,7 +46,7 @@ class ExamsAPIView(generics.ListAPIView):
 
 
 class RetrieveExamsAPIView(generics.RetrieveAPIView):
-    queryset = Exams.objects.all()
+    queryset = Exams.objects.filter(is_delete=False)
     serializer_class = ExamsSerializer
     lookup_field = "slug"
 

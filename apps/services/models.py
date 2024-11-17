@@ -50,6 +50,7 @@ class Exams(models.Model):
     source_exam = models.CharField(max_length=200)
     source_video_solution = models.URLField(max_length=200, blank=True)
     source_video_solution_premium = models.URLField(max_length=200, blank=True)
+    is_delete = models.BooleanField(null=False, default=False)
 
     def save(self, *args, **kwargs):
         # Perform validation
