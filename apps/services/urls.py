@@ -1,5 +1,4 @@
 from django.urls import path
-
 from services import views
 
 app_name = "services"
@@ -14,6 +13,11 @@ urlpatterns = [
         "exams/download/<slug:slug>/",
         views.DownloadExamAPIView.as_view(),
         name="exam-download",
+    ),
+    path(
+        "exams/upload",
+        views.UploadExamAPIView.as_view(),
+        name="exam-upload",
     ),
     path(
         "exams-filters/",

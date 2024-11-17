@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class CloudflarePublicExams:
-    def __init__(self, user) -> None:
+    def __init__(self, user=None):
         # Get what user wants access to exam
         self.user = user
 
@@ -42,3 +42,14 @@ class CloudflarePublicExams:
             raise error
 
         return response["Body"]
+
+    def put_exam(self, file, name):
+        logger.info(f"Se va a subir el examen {name}")
+        try:
+            self.s3_client.put_object(
+                Body=file, Bucket=self.bucket_name, Key=name
+            )
+            logger.info(f"Se va a subió exitosamente el examen {name}")
+        except botocore.exceptions.ClientError as error:
+            logger.warn(f"Hubo un error al subir el examen '{name}'")
+            raise error

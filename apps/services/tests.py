@@ -4,13 +4,15 @@ from io import BytesIO
 from unittest.mock import patch
 
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
+from django.utils.text import slugify
 from PIL import Image
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
-from services.models import Course, Exams, UnivExamsStructure
+from services.models import Course, Exams, University
 
 # Create your tests here.
 
@@ -18,44 +20,61 @@ from services.models import Course, Exams, UnivExamsStructure
 class BaseServiceTestCase(TestCase):
     def setUp(self):
         structure_exam = {
-            "university": "Universidad Nacional",
+            "name": "Universidad Nacional",
             "siglas": "UN",
-            "exam_type": "Examen de Admisión",
-            "area": "Sociales",
+            "exam_types": ["Ordinario", "CEPRE"],
+            "exam_areas": ["Social", "Medicina"],
         }
 
-        un_obj = UnivExamsStructure.objects.create(**structure_exam)
+        self.un_obj = University.objects.create(**structure_exam)
 
         structure_exam = {
-            "university": "Universidad Nacional Mayor",
+            "name": "Universidad Nacional Mayor",
             "siglas": "UNM",
-            "exam_type": "Examen de Admisión",
-            "area": "Ingeniería",
+            "exam_types": ["Ordinario", "CEPRE San Marco"],
+            "exam_areas": ["Letras", "Ingeniería", "Medicina"],
         }
 
-        unm_obj = UnivExamsStructure.objects.create(**structure_exam)
+        unm_obj = University.objects.create(**structure_exam)
 
         self.generate_photo_file()
         exam_data = {
-            "title": "UNSA Examen de Admisión Fase II",
+            # "title": "UNSA Examen de Admisión Fase II",
             "cover": "test.png",
             "source_exam": "http//:example.com",
             "source_video_solution": "http//:video.example.com",
         }
+        title = "UNSA Examen de Admisión Fase II"
 
         self.num_exams_one = 20
         self.list_years_one = [2012 + i for i in range(self.num_exams_one)]
 
         for i, year in enumerate(self.list_years_one):
-            exam_data["title"] = exam_data.get("title") + "-" + str(i)
-            Exams.objects.create(root=un_obj, year=year, **exam_data)
+            current_title = title + "-" + str(i)
+            Exams.objects.create(
+                university=self.un_obj,
+                type="Ordinario",
+                area="Social",
+                year=year,
+                title=current_title,
+                slug=slugify(current_title),
+                **exam_data,
+            )
 
         self.num_exams_two = 4
         self.list_years_two = [2012 + i for i in range(self.num_exams_two)]
 
         for i, year in enumerate(self.list_years_two):
-            exam_data["title"] = exam_data.get("title") + "-" + str(i)
-            Exams.objects.create(root=unm_obj, year=year, **exam_data)
+            current_title = title + "-" + str(i) + "part 2"
+            Exams.objects.create(
+                university=unm_obj,
+                title=current_title,
+                type="Ordinario",
+                area="Letras",
+                year=year,
+                slug=slugify(current_title),
+                **exam_data,
+            )
 
         self.num_exams = self.num_exams_one + self.num_exams_two
 
@@ -71,6 +90,55 @@ class BaseServiceTestCase(TestCase):
         file.name = "test.png"
         file.seek(0)
         return file
+
+
+class TestCreateExams(BaseServiceTestCase):
+    def setUp(self):
+        self.exam_data = {
+            "title": "UNSA Examen de Admisión Fase II",
+            "cover": "test.png",
+            "source_exam": "http//:example.com",
+            "source_video_solution": "http//:video.example.com",
+        }
+        return super().setUp()
+
+    def test_success_create_exam_with_area_and_type(self):
+        exam = Exams.objects.create(
+            university=self.un_obj,
+            type="Ordinario",
+            area="Social",
+            year=2024,
+            **self.exam_data,
+        )
+        self.assertIsInstance(exam, Exams)
+
+    def test_success_create_exam_with_no_area(self):
+        exam = Exams.objects.create(
+            university=self.un_obj,
+            type="Ordinario",
+            year=2024,
+            **self.exam_data,
+        )
+        self.assertIsInstance(exam, Exams)
+
+    def test_error_create_exam_wrong_type(self):
+        with self.assertRaises(ValidationError):
+            Exams.objects.create(
+                university=self.un_obj,
+                type="wrong_type",  # Invalid type
+                year=2024,
+                **self.exam_data,
+            )
+
+    def test_error_create_exam_wrong_area(self):
+        with self.assertRaises(ValidationError):
+            Exams.objects.create(
+                university=self.un_obj,
+                type="Ordinario",
+                area="wrong_area",  # Invalid area
+                year=2024,
+                **self.exam_data,
+            )
 
 
 class TestListExams(BaseServiceTestCase):
