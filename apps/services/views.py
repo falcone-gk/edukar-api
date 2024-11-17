@@ -8,7 +8,6 @@ from rest_framework.views import APIView
 from services.models import Course, Exams, University
 from services.serializers import (
     CoursesSerializer,
-    ExamFileSerializer,
     ExamsSerializer,
     UploadExamSerializer,
 )
@@ -98,19 +97,20 @@ class UploadExamAPIView(APIView):
     permission_classes = (IsAdminUser,)
 
     # TODO: Add test for this endpoint
+    # TODO: Check nginx send file max size (Send exams files)
     def post(self, request, format=None):
-        serializer_file = ExamFileSerializer(data=request.data)
-        serializer_file.is_valid(raise_exception=True)
+        # serializer_file = ExamFileSerializer(data=request.data)
+        # serializer_file.is_valid(raise_exception=True)
 
         serializer = UploadExamSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        file = request.data["exam_file"]
-        cf = CloudflarePublicExams()
+        # file = request.data["exam_file"]
+        # cf = CloudflarePublicExams()
         try:
             with transaction.atomic():
                 serializer.save()
-                cf.put_exam(file, serializer.data["source_exam"])
+                # cf.put_exam(file, serializer.data["source_exam"])
         except Exception as error:
             error_msg = {
                 "message": "Hubo error al subir examen a CF o a la BD",
