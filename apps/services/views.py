@@ -1,4 +1,5 @@
 from core.paginators import CustomPagination
+from dashboard.models import DownloadExams
 from django.db import transaction
 from django.http import Http404
 from rest_framework import generics, status
@@ -80,12 +81,16 @@ class DownloadExamAPIView(APIView):
         exam = self.get_object(slug)
         exam_key = exam.source_exam
         cf = CloudflarePublicExams(user)
+        download = DownloadExams.objects.create(exam=exam, user=user)
 
         try:
             file_stream = cf.get_exam(exam_key)
+            download.save()
             # Return the file as a downloadable response
             return get_streaming_response(file_stream, slug, "pdf")
         except Exception as error:
+            download.download_successful = False
+            download.save()
             error_msg = {
                 "message": "No se pudo descargar el examen. Avisar a soporte sobre el problema",
                 "error": str(error),
@@ -96,7 +101,6 @@ class DownloadExamAPIView(APIView):
 class UploadExamAPIView(APIView):
     permission_classes = (IsAdminUser,)
 
-    # TODO: Add test for this endpoint
     # TODO: Check nginx send file max size (Send exams files)
     def post(self, request, format=None):
         # serializer_file = ExamFileSerializer(data=request.data)

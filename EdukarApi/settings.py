@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     "notification",
     "services",
     "core",
+    "dashboard",
+
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
