@@ -26,20 +26,27 @@ class ExamsAPIView(generics.ListAPIView):
         queryset = Exams.objects.filter(is_delete=False)
 
         # Get query params to filter
-        univ = self.request.query_params.get("univ")
-        year = self.request.query_params.get("year")
-        video_solution = self.request.query_params.get("video", None)
+        univ = self.request.query_params.get("univ", None)
+        year = self.request.query_params.get("year", None)
+        _type = self.request.query_params.get("type", None)
+        area = self.request.query_params.get("area", None)
+        # video_solution = self.request.query_params.get("video", None)
 
         if (univ is not None) and (univ != ""):
             queryset = queryset.filter(university__siglas=univ)
         if (year is not None) and (year != "0"):
             queryset = queryset.filter(year=year)
+        if _type is not None:
+            queryset = queryset.filter(type=_type)
+        if area is not None:
+            queryset = queryset.filter(area=area)
+
         # TODO add test for this filter
-        if video_solution is not None:
-            if video_solution == "free":
-                queryset = queryset.exclude(source_video_solution="")
-            elif video_solution == "premium":
-                queryset = queryset.exclude(source_video_solution_premium="")
+        # if video_solution is not None:
+        #     if video_solution == "free":
+        #         queryset = queryset.exclude(source_video_solution="")
+        #     elif video_solution == "premium":
+        #         queryset = queryset.exclude(source_video_solution_premium="")
 
         return queryset.order_by("-year", "-id")
 
@@ -52,11 +59,12 @@ class RetrieveExamsAPIView(generics.RetrieveAPIView):
 
 class GetExamsFilterAPIView(APIView):
     def get(self, request, format=None, *args, **kwargs):
-        universities = (
-            University.objects.order_by().values("name", "siglas").distinct()
+        universities = University.objects.order_by().values(
+            "name", "siglas", "exam_types", "exam_areas"
         )
         years = (
-            Exams.objects.order_by("year")
+            Exams.objects.filter(is_delete=False)
+            .order_by("year")
             .values_list("year", flat=True)
             .distinct()
         )
