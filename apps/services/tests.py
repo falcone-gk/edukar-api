@@ -3,6 +3,7 @@ import json
 from io import BytesIO
 from unittest.mock import patch
 
+from account.models import Profile
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -12,7 +13,7 @@ from PIL import Image
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
-from services.models import Course, Exams, University
+from services.models import Course, Exams, Package, Product, Sell, University
 
 # Create your tests here.
 
@@ -250,6 +251,141 @@ class TestRetrieveExam(BaseServiceTestCase):
 
         # Assertions
         self.assertEqual(response.status_code, 401)
+
+
+class TestSellProducts(BaseServiceTestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.json_form = {
+            "username": "testuser",
+            "email": "testuser@example.com",
+            "first_name": "testuser",
+            "last_name": "testuser",
+            "password": "testpassword",
+            "profile": {"about_me": "testing about me"},
+        }
+
+        profile = self.json_form.pop("profile")
+        self.user = User.objects.create_user(**self.json_form)
+        Profile.objects.create(user=self.user, **profile)
+
+        token, _ = Token.objects.get_or_create(user=self.user)
+        self.access = token.key
+
+        prod_data = {
+            "type": 1,
+            "name": "Producto 1",
+            "description": "Descripcion 1",
+            "price": "10.00",
+            "source": "https://test.com/file/file.pdf/",
+        }
+        self.product_1 = Product.objects.create(**prod_data)
+
+        prod2_data = {
+            "type": 2,
+            "name": "Producto 2",
+            "description": "Descripcion 2",
+            "price": "30.00",
+            "source": "https://test.com/file/file.pdf/",
+        }
+        self.product_2 = Product.objects.create(**prod2_data)
+
+        package_data = {
+            "name": "Package 1",
+            "description": "Descripcion 1 package",
+            "price": "35.00",
+        }
+        self.package_1 = Package.objects.create(**package_data)
+        self.package_1.products.add(self.product_1, self.product_2)
+
+    def test_success_add_product_to_cart(self):
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION="Token " + self.access)
+        res = client.post(
+            reverse("services:add-item-cart"),
+            {"product": self.product_1.id},
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_success_add_package_to_cart(self):
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION="Token " + self.access)
+        res = client.post(
+            reverse("services:add-item-cart"),
+            {"package": self.package_1.id},
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_error_product_already_in_cart(self):
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION="Token " + self.access)
+        client.post(
+            reverse("services:add-item-cart"),
+            {"product": self.product_1.id},
+        )
+
+        res = client.post(
+            reverse("services:add-item-cart"),
+            {"product": self.product_1.id},
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_error_package_has_one_purchase_product_already_in_cart(self):
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION="Token " + self.access)
+        client.post(
+            reverse("services:add-item-cart"),
+            {"product": self.product_1.id},
+        )
+
+        res = client.post(
+            reverse("services:add-item-cart"),
+            {"package": self.package_1.id},
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_success_remove_product_from_user_cart(self):
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION="Token " + self.access)
+        client.post(
+            reverse("services:add-item-cart"),
+            {"product": self.product_1.id},
+        )
+
+        res = client.post(
+            reverse("services:remove-item-cart"),
+            {"product": self.product_1.id},
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        user_cart, _ = Sell.get_user_cart(user=self.user)
+        item_in_cart = user_cart.products.filter(id=self.product_1.id).exists()
+        self.assertFalse(item_in_cart)
+
+    def test_success_remove_package_from_user_cart(self):
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION="Token " + self.access)
+        client.post(
+            reverse("services:add-item-cart"),
+            {"package": self.package_1.id},
+        )
+
+        res = client.post(
+            reverse("services:remove-item-cart"),
+            {"package": self.package_1.id},
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        user_cart, _ = Sell.get_user_cart(user=self.user)
+        item_in_cart = user_cart.packages.filter(id=self.package_1.id).exists()
+        self.assertFalse(item_in_cart)
 
 
 class TestCoursesList(BaseServiceTestCase):

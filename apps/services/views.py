@@ -1,15 +1,21 @@
+from datetime import datetime
+
 from core.paginators import CustomPagination
 from django.db import transaction
 from django.http import Http404
+from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from services.models import Course, Exams, University
+from services.models import Course, Exams, Sell, University
 from services.serializers import (
+    AddCartValidationSerializer,
+    CartSerializer,
     CoursesSerializer,
     ExamsSerializer,
     UploadExamSerializer,
+    UserProductBulkCreateSerializer,
 )
 
 from helpers.responses import get_streaming_response
@@ -128,6 +134,82 @@ class UploadExamAPIView(APIView):
 
         return Response(
             {"message": "Examen fue creado exitosamente"},
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class AddItemCartView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddCartValidationSerializer(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        data = serializer.data
+        product = data.get("product", None)
+        package = data.get("package", None)
+
+        user = self.request.user
+        user_cart, _ = Sell.get_user_cart(user=user)
+        user_cart.on_cart_at = datetime.now(tz=timezone.utc)
+        if product is not None:
+            user_cart.products.add(product)
+
+        if package is not None:
+            user_cart.packages.add(package)
+
+        user_cart.update_total_cost()
+        user_cart.save()
+
+        cart_serializer = CartSerializer(user_cart)
+        # Aquí puedes añadir lógica para guardar el carrito si es necesario
+        return Response(
+            cart_serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+
+class RemoveItemCartAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get_cart(self):
+        user = self.request.user
+        user_cart, _ = Sell.get_user_cart(user=user)
+        return user_cart
+
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        product = data.get("product", None)
+        package = data.get("package", None)
+        user_cart = self.get_cart()
+
+        if product is not None:
+            user_cart.products.remove(product)
+
+        if package is not None:
+            user_cart.products.remove(package)
+
+        cart_serializer = CartSerializer(user_cart)
+
+        return Response(
+            cart_serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+
+class UserProductBulkCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = UserProductBulkCreateSerializer(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        msg = "Tus productos fueron añadidos exitosamente."
+        return Response(
+            {"message": msg},
             status=status.HTTP_201_CREATED,
         )
 
