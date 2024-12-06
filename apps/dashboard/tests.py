@@ -2,6 +2,7 @@ from account.models import Profile
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
+from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 
@@ -36,4 +37,5 @@ class TestDashboard(TestCase):
         res = client.get(
             reverse("dashboard:dashboard-info"),
         )
-        print(res.content)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
