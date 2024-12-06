@@ -3,6 +3,7 @@ import json
 from io import BytesIO
 from unittest.mock import patch
 
+from dashboard.models import DownloadExams
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -229,7 +230,9 @@ class TestRetrieveExam(BaseServiceTestCase):
             reverse("services:exam-download", kwargs={"slug": exam.slug})
         )
 
+        download = DownloadExams.objects.latest("id")
         # Assertions
+        self.assertEqual(download.exam.id, exam.id)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "application/pdf")
         self.assertIn("attachment; filename=", response["Content-Disposition"])
@@ -250,6 +253,23 @@ class TestRetrieveExam(BaseServiceTestCase):
 
         # Assertions
         self.assertEqual(response.status_code, 401)
+
+    @patch("utils.services.cloudflare.CloudflarePublicExams.get_exam")
+    def test_error_download_r2_bucket_failed(self, mock_get_exam):
+        mock_get_exam.side_effect = ValueError("random error")
+        exam = Exams.objects.all().latest("pk")
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION="Token " + self.access)
+        response = client.get(
+            reverse("services:exam-download", kwargs={"slug": exam.slug})
+        )
+        download = DownloadExams.objects.latest("id")
+        content = json.loads(response.content)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIsInstance(content, dict)
+        self.assertFalse(download.download_successful)
 
 
 class TestCoursesList(BaseServiceTestCase):
