@@ -9,5 +9,5 @@ class SellStatus(models.IntegerChoices):
 
 
 class ProductTypes(models.IntegerChoices):
-    DOCUMENT = 1, _("Documento")
-    VIDEO = 2, _("Video")
+    PRODUCT = 1, _("Producto")
+    PACKAGE = 2, _("Paquete")

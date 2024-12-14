@@ -1,63 +1,9 @@
-import datetime
-import uuid
-from decimal import Decimal
-
-from core.models import StatusModel, TimeStampModel
-from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
 from django_resized import ResizedImageField
-
-from helpers.choices import ProductTypes, SellStatus
+from store.models import Product
 
 # Create your models here.
-
-
-class BaseProduct(TimeStampModel, StatusModel):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255)
-    description = models.TextField(blank=True, null=False)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-
-    class Meta:
-        abstract = True
-
-
-class Product(BaseProduct):
-    def product_upload_to(self, filename):
-        ext = filename.splut(".")[-1]
-        fullname = "{}.{}".format(self.name, ext)
-        return f"images/products/{fullname}"
-
-    type = models.PositiveIntegerField(
-        choices=ProductTypes.choices, null=False, default=ProductTypes.DOCUMENT
-    )
-    source = models.URLField(null=False, blank=True)
-    product_image = ResizedImageField(
-        size=[400, 566],
-        quality=50,
-        force_format="WebP",
-        upload_to=product_upload_to,
-        null=True,
-    )
-
-    @property
-    def is_one_time_purchase(self):
-        if (self.type == ProductTypes.DOCUMENT) or (
-            self.type == ProductTypes.DOCUMENT
-        ):
-            return True
-        return False
-
-    def __str__(self):
-        return self.name
-
-
-class Package(BaseProduct):
-    products = models.ManyToManyField(Product, related_name="packages")
-
-    def __str__(self):
-        return self.name
 
 
 class University(models.Model):
@@ -94,7 +40,6 @@ class Exams(models.Model):
     is_delete = models.BooleanField(null=False, default=False)
 
     products = models.ManyToManyField(Product, related_name="exams")
-    packages = models.ManyToManyField(Package, related_name="exams")
 
     def save(self, *args, **kwargs):
         # Perform validation
@@ -114,51 +59,6 @@ class Exams(models.Model):
 
     def __str__(self):
         return self.title
-
-
-class Sell(models.Model):
-    def product_upload_to(self, filename):
-        # Get the current timestamp and format it as "YYYYMMDD_HHMMSS"
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        # Extract the file extension from the original filename
-        ext = filename.split(".")[-1]
-        # Construct the new filename using the desired format
-        fullname = f"payment_{timestamp}.{ext}"
-        # Return the path to save the file
-        return f"images/products/{self.user.username}/{fullname}"
-
-    user = models.ForeignKey(
-        User, related_name="sells", on_delete=models.CASCADE
-    )
-    products = models.ManyToManyField(Product, related_name="sells")
-    packages = models.ManyToManyField(Package, related_name="sells")
-    status = models.IntegerField(
-        choices=SellStatus.choices, default=SellStatus.ON_CART
-    )
-    payment_image = ResizedImageField(
-        size=[400, 566],
-        quality=50,
-        force_format="WebP",
-        upload_to=product_upload_to,
-        null=True,
-    )
-    total_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True)
-    on_cart_at = models.DateTimeField(null=True)
-    on_pending_at = models.DateTimeField(null=True)
-    paid_at = models.DateTimeField(null=True)
-
-    @classmethod
-    def get_user_cart(cls, user: User):
-        return cls.objects.get_or_create(user=user, status=SellStatus.ON_CART)
-
-    def update_total_cost(self):
-        total_cost = Decimal("0.00")
-        for product in self.products.all():
-            total_cost += product.price
-        for package in self.packages.all():
-            total_cost += package.price
-
-        self.total_cost = total_cost
 
 
 class Course(models.Model):
