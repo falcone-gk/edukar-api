@@ -1,4 +1,5 @@
 import datetime
+import uuid
 from decimal import Decimal
 
 from django.contrib.auth.models import User
@@ -78,6 +79,9 @@ class Product(models.Model):
     # stock = models.PositiveSmallIntegerField(null=True)
 
     items = models.ManyToManyField("self", blank=True)
+    identifier = models.CharField(
+        max_length=12, unique=True, editable=False, null=True, blank=True
+    )
 
     @property
     def is_one_time_purchase(self):
@@ -92,8 +96,16 @@ class Product(models.Model):
     #         return False
     #     return True
 
+    def generate_identifier(self):
+        """Generate a unique identifier."""
+        return uuid.uuid4().hex[:12].upper()
+
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
+
+        if not self.identifier:
+            self.identifier = self.generate_identifier()
+
         return super().save(*args, **kwargs)
 
     def __str__(self):

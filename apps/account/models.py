@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 from django_resized import ResizedImageField
-from services.models import Product
+from store.models import Product
 
 # Create your models here.
 

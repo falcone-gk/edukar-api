@@ -13,6 +13,11 @@ urlpatterns = [
         "cart/add-item", views.AddItemCartView.as_view(), name="add-item-cart"
     ),
     path(
+        "cart/check-product",
+        views.CheckProductPurchaseView.as_view(),
+        name="cart-check-product",
+    ),
+    path(
         "cart/remove-item",
         views.RemoveItemCartAPIView.as_view(),
         name="remove-item-cart",

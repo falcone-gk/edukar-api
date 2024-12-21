@@ -28,6 +28,8 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    items = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
         fields = (
@@ -42,7 +44,16 @@ class ProductSerializer(serializers.ModelSerializer):
             "product_image",
             "is_one_time_purchase",
             "items",
+            "identifier",
         )
+
+    def get_items(self, obj):
+        # This is required to avoid infinite loop
+        # we are letting only packages to return their item list
+        if obj.type != ProductTypes.PACKAGE:
+            return []
+
+        return ProductSerializer(obj.items.all(), many=True).data
 
 
 class AddCartValidationSerializer(serializers.Serializer):
