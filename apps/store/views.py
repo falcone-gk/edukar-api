@@ -16,7 +16,6 @@ from store.serializers import (
     CartSerializer,
     CategorySerializer,
     ProductSerializer,
-    UserProductBulkCreateSerializer,
 )
 
 from helpers.choices import ProductTypes
@@ -207,17 +206,18 @@ class CheckProductPurchaseView(APIView):
         )
 
 
-class UserProductBulkCreateView(APIView):
-    permission_classes = [IsAuthenticated]
+# TODO: Se descomentará cuando se habilite pasarela
+# class UserProductBulkCreateView(APIView):
+#     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        serializer = UserProductBulkCreateSerializer(
-            data=request.data, context={"request": request}
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        msg = "Tus productos fueron añadidos exitosamente."
-        return Response(
-            {"message": msg},
-            status=status.HTTP_201_CREATED,
-        )
+#     def post(self, request, *args, **kwargs):
+#         serializer = UserProductBulkCreateSerializer(
+#             data=request.data, context={"request": request}
+#         )
+#         serializer.is_valid(raise_exception=True)
+#         serializer.save()
+#         msg = "Tus productos fueron añadidos exitosamente."
+#         return Response(
+#             {"message": msg},
+#             status=status.HTTP_201_CREATED,
+#         )
