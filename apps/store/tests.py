@@ -1,5 +1,4 @@
 import json
-from urllib.parse import urlencode
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -114,7 +113,7 @@ class TestSellProducts(BaseServiceTestCase):
         self.access = token.key
 
         product1_data = {
-            "type": 1,
+            "type": ProductTypes.PRODUCT,
             "name": "Producto 1",
             "description": "Descripcion 1",
             "price": "10.00",
@@ -124,7 +123,7 @@ class TestSellProducts(BaseServiceTestCase):
         self.product_1 = Product.objects.create(**product1_data)
 
         product2_data = {
-            "type": 2,
+            "type": ProductTypes.PRODUCT,
             "name": "Producto 2",
             "description": "Descripcion 2",
             "price": "30.00",
@@ -166,9 +165,7 @@ class TestSellProducts(BaseServiceTestCase):
         url = reverse(
             "store:product-detail", kwargs={"slug": self.product_3.slug}
         )
-        query_params = {"type": 3}
-        full_url = f"{url}?{urlencode(query_params)}"
-        res = client.get(full_url)
+        res = client.get(url)
         data = json.loads(res.content)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(data["name"], self.product_3.name)
