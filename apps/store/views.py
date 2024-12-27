@@ -5,6 +5,7 @@ from core.paginators import CustomPagination
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -16,6 +17,7 @@ from store.serializers import (
     CartSerializer,
     CategorySerializer,
     ProductSerializer,
+    UserProductBulkCreateSerializer,
 )
 
 from helpers.choices import ProductTypes
@@ -159,47 +161,21 @@ class CheckProductPurchaseView(APIView):
         user = request.user
         product_identifier = request.data.get("identifier")
 
-        # Validar que se recibió un ID de producto
         if not product_identifier:
             return Response(
                 {"error": "El campo 'identifier' es requerido."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Obtener el producto
         product = get_object_or_404(Product, identifier=product_identifier)
 
-        # Verificar si el producto principal es de compra única
-        if product.is_one_time_purchase:
-            # Comprobar si el usuario ya compró este producto
-            already_purchased = UserProduct.objects.filter(
-                user=user, product=product
-            ).exists()
-            if already_purchased:
-                return Response(
-                    {"message": "El producto ya ha sido comprado."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-        # Filtrar los items que son de compra única
-        one_time_items = product.items.filter(
-            category__is_one_time_purchase=True
-        )
-
-        # Verificar si alguno de los items ya ha sido comprado
-        if one_time_items.exists():
-            purchased_items = UserProduct.objects.filter(
-                user=user, product__in=one_time_items
+        try:
+            UserProduct.validate_product_purchase(user, product)
+        except ValidationError as e:
+            return Response(
+                {"message": str(e)}, status=status.HTTP_400_BAD_REQUEST
             )
-            if purchased_items.exists():
-                return Response(
-                    {
-                        "message": "Ya has comprado uno de los productos del paquete."
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
 
-        # Producto y sus items no comprados, o no son de compra única
         return Response(
             {"message": "El producto puede ser añadido al carrito."},
             status=status.HTTP_200_OK,
@@ -207,17 +183,17 @@ class CheckProductPurchaseView(APIView):
 
 
 # TODO: Se descomentará cuando se habilite pasarela
-# class UserProductBulkCreateView(APIView):
-#     permission_classes = [IsAuthenticated]
+class UserProductBulkCreateView(APIView):
+    permission_classes = [IsAuthenticated]
 
-#     def post(self, request, *args, **kwargs):
-#         serializer = UserProductBulkCreateSerializer(
-#             data=request.data, context={"request": request}
-#         )
-#         serializer.is_valid(raise_exception=True)
-#         serializer.save()
-#         msg = "Tus productos fueron añadidos exitosamente."
-#         return Response(
-#             {"message": msg},
-#             status=status.HTTP_201_CREATED,
-#         )
+    def post(self, request, *args, **kwargs):
+        serializer = UserProductBulkCreateSerializer(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        msg = "Tus productos fueron añadidos exitosamente."
+        return Response(
+            {"message": msg},
+            status=status.HTTP_201_CREATED,
+        )

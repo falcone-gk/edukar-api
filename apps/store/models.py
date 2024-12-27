@@ -24,6 +24,10 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+    @classmethod
+    def get_solutionary_category(cls):
+        return cls.objects.get(name="Solucionario")
+
 
 class Attribute(models.Model):
     name = models.CharField(max_length=100)
@@ -64,7 +68,7 @@ class Product(models.Model):
         on_delete=models.SET_NULL,
     )
     type = models.PositiveIntegerField(
-        choices=ProductTypes.choices, null=False, default=ProductTypes.PRODUCT
+        choices=ProductTypes.choices, null=False, default=ProductTypes.DOCUMENT
     )
     source = models.URLField(null=False, blank=True)
     product_image = ResizedImageField(
@@ -144,9 +148,12 @@ class Sell(models.Model):
         User, related_name="sells", on_delete=models.CASCADE
     )
     products = models.ManyToManyField(Product, related_name="sells")
+    # This field is not necessary? ¿Deberia usar este campo cuando el usuario
+    # agrega elementos a su carrito?
     status = models.IntegerField(
         choices=SellStatus.choices, default=SellStatus.ON_CART
     )
+    # Este campo debe ser eliminado ya que usaremos pasarela
     payment_image = ResizedImageField(
         size=[400, 566],
         quality=50,

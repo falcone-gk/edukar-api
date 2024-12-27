@@ -27,4 +27,5 @@ urlpatterns = [
         views.CategoryFiltersAPIView.as_view(),
         name="category-filters",
     ),
+    path("payment", views.UserProductBulkCreateView.as_view(), name="payment"),
 ]

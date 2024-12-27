@@ -113,7 +113,7 @@ class TestSellProducts(BaseServiceTestCase):
         self.access = token.key
 
         product1_data = {
-            "type": ProductTypes.PRODUCT,
+            "type": ProductTypes.DOCUMENT,
             "name": "Producto 1",
             "description": "Descripcion 1",
             "price": "10.00",
@@ -123,7 +123,7 @@ class TestSellProducts(BaseServiceTestCase):
         self.product_1 = Product.objects.create(**product1_data)
 
         product2_data = {
-            "type": ProductTypes.PRODUCT,
+            "type": ProductTypes.DOCUMENT,
             "name": "Producto 2",
             "description": "Descripcion 2",
             "price": "30.00",

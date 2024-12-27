@@ -1,22 +1,23 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from rest_framework.authtoken import views
-
 from account import views
 from core.views import CustomAuthToken
+from django.urls import include, path
+from rest_framework.routers import DefaultRouter
 
 # from account import views
 
-app_name = 'account'
+app_name = "account"
 
 router = DefaultRouter()
-router.register(r'user-posts', views.OwnerPostAPIView, basename='user-posts')
+router.register(r"user-posts", views.OwnerPostAPIView, basename="user-posts")
 
 urlpatterns = [
-    path('', include('djoser.urls')),
-    path('login', CustomAuthToken.as_view(), name='login'),
-    path('logout', views.LogoutAPIView.as_view(), name='logout'),
-    path('data', views.UserByTokenAPIView.as_view(), name='user-data'),
+    path("", include("djoser.urls")),
+    path("login", CustomAuthToken.as_view(), name="login"),
+    path("logout", views.LogoutAPIView.as_view(), name="logout"),
+    path("data", views.UserByTokenAPIView.as_view(), name="user-data"),
+    path(
+        "user/products/", views.UserProductsView.as_view(), name="user-products"
+    ),
     # path('update-user', views.UpdateUserAPIView.as_view(), name='update-user'),
     # path('update-profile-user', views.UpdateUserProfileAPIView.as_view(), name='update-profile-user'),
     # path('image/upload', views.UploadUserImageAPIView.as_view(), name='image-upload')

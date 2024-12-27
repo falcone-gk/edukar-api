@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 from django_resized import ResizedImageField
+from rest_framework.exceptions import ValidationError
 from store.models import Product
 
 # Create your models here.
@@ -36,3 +37,33 @@ class UserProduct(models.Model):
         Product, related_name="users", on_delete=models.CASCADE
     )
     date = models.DateField(null=False, auto_now_add=True)
+
+    @classmethod
+    def validate_product_purchase(cls, user: User, product: Product):
+        """
+        Validates whether a product can be purchased by the user.
+        Raises a ValidationError if the product or its items have already been purchased.
+        """
+
+        # Check if the main product is a one-time purchase
+        if product.is_one_time_purchase:
+            already_purchased = cls.objects.filter(
+                user=user, product=product
+            ).exists()
+            if already_purchased:
+                raise ValidationError("El producto ya ha sido comprado.")
+
+        # Filter one-time purchase items
+        one_time_items = product.items.filter(
+            category__is_one_time_purchase=True
+        )
+
+        # Check if any of the items have already been purchased
+        if one_time_items.exists():
+            purchased_items = cls.objects.filter(
+                user=user, product__in=one_time_items
+            )
+            if purchased_items.exists():
+                raise ValidationError(
+                    "Ya has comprado uno de los productos del paquete."
+                )

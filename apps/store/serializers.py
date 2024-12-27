@@ -1,4 +1,7 @@
+from datetime import datetime
+
 from account.models import UserProduct
+from django.db import transaction
 from rest_framework import serializers
 from store.models import Attribute, AttributeOption, Category, Product, Sell
 
@@ -28,6 +31,8 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    """Serializer used in store view"""
+
     items = serializers.SerializerMethodField()
 
     class Meta:
@@ -54,6 +59,14 @@ class ProductSerializer(serializers.ModelSerializer):
             return []
 
         return ProductSerializer(obj.items.all(), many=True).data
+
+
+class PrivateProductSerializer(serializers.ModelSerializer):
+    """Serializer to use for user products purchased"""
+
+    class Meta:
+        model = Product
+        fields = ("slug", "name", "description", "source", "type")
 
 
 class AddCartValidationSerializer(serializers.Serializer):
@@ -121,18 +134,45 @@ class UserProductBulkCreateSerializer(serializers.Serializer):
 
     def validate_products(self, products):
         user = self.context["request"].user
-        existing = UserProduct.objects.filter(user=user, product__in=products)
-        if existing.exists():
-            raise serializers.ValidationError(
-                "Algunos productos ya fueron comprados."
-            )
+
+        for product in products:
+            UserProduct.validate_product_purchase(user, product)
 
         return products
 
     def create(self, validated_data):
         user = self.context["request"].user
         products = validated_data["products"]
-        user_products = [
-            UserProduct(user=user, product=product) for product in products
-        ]
-        return UserProduct.objects.bulk_create(user_products)
+        user_products = []
+
+        for product in products:
+            if product.type == ProductTypes.PACKAGE:
+                # If the product is a package, add its items instead
+                package_items = product.items.all()
+                user_products.extend(
+                    [
+                        UserProduct(user=user, product=item)
+                        for item in package_items
+                    ]
+                )
+            else:
+                # Add non-package products directly
+                user_products.append(UserProduct(user=user, product=product))
+
+        try:
+            with transaction.atomic():
+                # Bulk create UserProduct entries
+                instances = UserProduct.objects.bulk_create(user_products)
+
+                # Create Sell instance and link products
+                sell = Sell.objects.create(user=user, paid_at=datetime.now())
+                sell.products.add(*products)
+
+            return instances
+
+        except Exception as error:
+            error_msg = {
+                "message": "Hubo un error al realizar la venta.",
+                "error": str(error),
+            }
+            raise serializers.ValidationError(error_msg)
