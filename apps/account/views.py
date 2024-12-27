@@ -12,8 +12,8 @@ from rest_framework import generics, mixins, status, views, viewsets
 from rest_framework.authtoken.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from store.models import Category
-from store.serializers import PrivateProductSerializer
+from store.models import Category, Sell
+from store.serializers import PrivateProductSerializer, SellSerializer
 
 
 # Create your views here.
@@ -103,6 +103,7 @@ class UpdateUserProfileAPIView(generics.UpdateAPIView):
 #         return Response(instance_serializer.data, status=status.HTTP_201_CREATED)
 
 
+# TODO: Add test for this endpoint
 class UserProductsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -120,5 +121,21 @@ class UserProductsView(APIView):
 
         # Serialize the products
         serializer = PrivateProductSerializer(products, many=True)
+
+        return Response(serializer.data)
+
+
+# TODO: Add test for this endpoint
+class UserPurchasesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Filter the purchases for the authenticated user
+        purchases = Sell.objects.filter(user=request.user).prefetch_related(
+            "products"
+        )
+
+        # Serialize the purchase data
+        serializer = SellSerializer(purchases, many=True)
 
         return Response(serializer.data)

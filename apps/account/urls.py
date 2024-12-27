@@ -18,6 +18,11 @@ urlpatterns = [
     path(
         "user/products/", views.UserProductsView.as_view(), name="user-products"
     ),
+    path(
+        "user/purchases/",
+        views.UserPurchasesView.as_view(),
+        name="user-purchases",
+    ),
     # path('update-user', views.UpdateUserAPIView.as_view(), name='update-user'),
     # path('update-profile-user', views.UpdateUserProfileAPIView.as_view(), name='update-profile-user'),
     # path('image/upload', views.UploadUserImageAPIView.as_view(), name='image-upload')

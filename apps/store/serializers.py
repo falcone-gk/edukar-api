@@ -1,7 +1,8 @@
-from datetime import datetime
+from decimal import Decimal
 
 from account.models import UserProduct
 from django.db import transaction
+from django.utils import timezone
 from rest_framework import serializers
 from store.models import Attribute, AttributeOption, Category, Product, Sell
 
@@ -164,8 +165,15 @@ class UserProductBulkCreateSerializer(serializers.Serializer):
                 # Bulk create UserProduct entries
                 instances = UserProduct.objects.bulk_create(user_products)
 
+                # Obteniendo precio total
+                total_cost = Decimal("0.00")
+                for prod in products:
+                    total_cost += prod.price
+
                 # Create Sell instance and link products
-                sell = Sell.objects.create(user=user, paid_at=datetime.now())
+                sell = Sell.objects.create(
+                    user=user, paid_at=timezone.now(), total_cost=total_cost
+                )
                 sell.products.add(*products)
 
             return instances
@@ -176,3 +184,11 @@ class UserProductBulkCreateSerializer(serializers.Serializer):
                 "error": str(error),
             }
             raise serializers.ValidationError(error_msg)
+
+
+class SellSerializer(serializers.ModelSerializer):
+    products = ProductSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Sell
+        fields = ["products", "total_cost", "paid_at"]
