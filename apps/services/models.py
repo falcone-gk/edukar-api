@@ -1,19 +1,9 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 from django_resized import ResizedImageField
+from store.models import Product
 
 # Create your models here.
-
-
-# class UnivExamsStructure(models.Model):
-#     university = models.CharField(max_length=255)
-#     siglas = models.CharField(max_length=25)
-#     exam_type = models.CharField(max_length=255)
-#     area = models.CharField(max_length=255, blank=True)
-
-#     def __str__(self):
-#         format_str = "{0}|{1}|{2}"
-#         return format_str.format(self.siglas, self.exam_type, self.area)
 
 
 class University(models.Model):
@@ -27,9 +17,6 @@ class University(models.Model):
 
 
 class Exams(models.Model):
-    # root = models.ForeignKey(
-    #     UnivExamsStructure, null=True, on_delete=models.SET_NULL
-    # )
     university = models.ForeignKey(
         University, null=True, on_delete=models.SET_NULL
     )
@@ -51,6 +38,8 @@ class Exams(models.Model):
     source_video_solution = models.URLField(max_length=200, blank=True)
     source_video_solution_premium = models.URLField(max_length=200, blank=True)
     is_delete = models.BooleanField(null=False, default=False)
+
+    products = models.ManyToManyField(Product, related_name="exams")
 
     def save(self, *args, **kwargs):
         # Perform validation

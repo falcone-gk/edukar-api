@@ -4,7 +4,7 @@ from services.models import Course, Exams
 
 
 class ExamsSerializer(serializers.ModelSerializer):
-    cover = serializers.CharField(source="cover.url")
+    # cover = serializers.CharField(source="cover.url")
     university = serializers.SerializerMethodField()
 
     class Meta:
@@ -59,7 +59,7 @@ class UploadExamSerializer(serializers.ModelSerializer):
 
 
 class CoursesSerializer(serializers.ModelSerializer):
-    image = serializers.CharField(source="image.url")
+    # image = serializers.CharField(source="image.url")
 
     class Meta:
         model = Course

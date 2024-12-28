@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "account",
     "forum",
     "notification",
+    "store",
     "services",
     "core",
     "dashboard",
