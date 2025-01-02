@@ -10,7 +10,7 @@ class University(models.Model):
     name = models.CharField(max_length=255)
     siglas = models.CharField(max_length=25)
     exam_types = models.JSONField(null=False, default=list)
-    exam_areas = models.JSONField(null=False, default=list)
+    exam_areas = models.JSONField(null=False, blank=True, default=list)
 
     def __str__(self):
         return self.name
