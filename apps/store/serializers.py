@@ -1,12 +1,18 @@
+import logging
 from decimal import Decimal
 
 from account.models import UserProduct
+from django.core.files.base import ContentFile
 from django.db import transaction
+from django.template.loader import render_to_string
 from django.utils import timezone
 from rest_framework import serializers
 from store.models import Attribute, AttributeOption, Category, Product, Sell
+from weasyprint import HTML
 
 from helpers.choices import ProductTypes
+
+logger = logging.getLogger(__name__)
 
 
 class AttributeOptionSerializer(serializers.ModelSerializer):
@@ -163,7 +169,7 @@ class UserProductBulkCreateSerializer(serializers.Serializer):
         try:
             with transaction.atomic():
                 # Bulk create UserProduct entries
-                instances = UserProduct.objects.bulk_create(user_products)
+                UserProduct.objects.bulk_create(user_products)
 
                 # Obteniendo precio total
                 total_cost = Decimal("0.00")
@@ -176,13 +182,35 @@ class UserProductBulkCreateSerializer(serializers.Serializer):
                 )
                 sell.products.add(*products)
 
-            return instances
+                # generate the pdf for the receipt
+                receipt_data = sell.to_receipt_json
+                html_string = render_to_string(
+                    "store/invoice_template.html", receipt_data
+                )
+                # Generate the PDF
+                html = HTML(string=html_string)
+                pdf_content = html.write_pdf()
+
+                # Save the PDF in the receipt field
+                pdf_filename = (
+                    f"receipt_{timezone.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+                )
+                sell.receipt.save(pdf_filename, ContentFile(pdf_content))
+
+                logger.info(
+                    f"El usuario {user.username} realizó su compra de manera exitosa: ID de compra {sell.id}"
+                )
+
+            return sell
 
         except Exception as error:
             error_msg = {
                 "message": "Hubo un error al realizar la venta.",
                 "error": str(error),
             }
+            logger.error(
+                f"El usuario {user.username} tuvo fallas en su compra a las {timezone.now()}"
+            )
             raise serializers.ValidationError(error_msg)
 
 

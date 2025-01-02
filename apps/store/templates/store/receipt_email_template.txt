@@ -1,0 +1,3 @@
+Hola, {{ user }}:
+
+Tu compra del día {{ date }} ha sido realizada de manera exitosa. Te adjuntamos la boleta de tu compra en este correo.

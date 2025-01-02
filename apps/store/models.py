@@ -1,9 +1,11 @@
 import datetime
+import locale
 import uuid
 from decimal import Decimal
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.utils import timezone
 from django.utils.text import slugify
 from django_resized import ResizedImageField
 
@@ -144,6 +146,14 @@ class Sell(models.Model):
         # Return the path to save the file
         return f"images/products/{self.user.username}/{fullname}"
 
+    def receipt_upload_to(self, filename):
+        # Get the current timestamp and format it as "YYYYMMDD_HHMMSS"
+        timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
+        # Construct the new filename using the desired format
+        fullname = f"receipt_{timestamp}.pdf"
+        # Return the path to save the file
+        return f"receipts/{self.user.username}/{fullname}"
+
     user = models.ForeignKey(
         User, related_name="sells", on_delete=models.CASCADE
     )
@@ -153,6 +163,7 @@ class Sell(models.Model):
     status = models.IntegerField(
         choices=SellStatus.choices, default=SellStatus.ON_CART
     )
+    receipt = models.FileField(upload_to=receipt_upload_to, null=True)
     # Este campo debe ser eliminado ya que usaremos pasarela
     payment_image = ResizedImageField(
         size=[400, 566],
@@ -176,3 +187,46 @@ class Sell(models.Model):
             total_cost += product.price
 
         return total_cost
+
+    @property
+    def to_receipt_json(self):
+        # Set locale to Spanish for date formatting
+        try:
+            locale.setlocale(
+                locale.LC_TIME, "es_ES.UTF-8"
+            )  # For Unix/Linux systems
+        except locale.Error:
+            locale.setlocale(
+                locale.LC_TIME, "es_ES"
+            )  # Fallback for some systems
+
+        # Format the date
+        formatted_date = self.paid_at.strftime("%d de %B de %Y")
+
+        # Generate the product list
+        product_list = [
+            {
+                "id": product.id,
+                "name": product.name,
+                "quantity": 1,  # Assuming each product is added once; adjust as necessary
+                "price": product.price,
+                "total": product.price,
+            }
+            for product in self.products.all()
+        ]
+
+        # Construct the JSON response
+        receipt = {
+            "company_name": "Edukar",
+            "receipt_number": f"EDK-{timezone.now().year}-{str(self.id).zfill(8)}",
+            "customer": {
+                "first_name": self.user.first_name,
+                "last_name": self.user.last_name,
+                "email": self.user.email,
+            },
+            "products": product_list,
+            "total": self.total_cost,
+            "date": formatted_date,
+        }
+
+        return receipt

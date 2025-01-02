@@ -19,6 +19,7 @@ from store.serializers import (
     ProductSerializer,
     UserProductBulkCreateSerializer,
 )
+from store.tasks import send_sell_receipt_to_user_email
 
 from helpers.choices import ProductTypes
 
@@ -191,9 +192,11 @@ class UserProductBulkCreateView(APIView):
             data=request.data, context={"request": request}
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        msg = "Tus productos fueron añadidos exitosamente."
+        sell = serializer.save()
+
+        send_sell_receipt_to_user_email(sell)
+
         return Response(
-            {"message": msg},
+            {"receipt_url": sell.receipt.url},
             status=status.HTTP_201_CREATED,
         )
