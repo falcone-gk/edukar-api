@@ -72,7 +72,7 @@ class Product(models.Model):
     type = models.PositiveIntegerField(
         choices=ProductTypes.choices, null=False, default=ProductTypes.DOCUMENT
     )
-    source = models.URLField(null=False, blank=True)
+    source = models.CharField(max_length=255, null=False, blank=True)
     product_image = ResizedImageField(
         size=[400, 566],
         quality=50,

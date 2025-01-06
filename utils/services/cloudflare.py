@@ -28,17 +28,19 @@ class CloudflarePublicExams:
             config=Config(signature_version="s3v4"),
         )
 
-    def get_exam(self, exam: str):
-        logger.info(f"El usuario '{self.user}' quiere acceder a '{exam}'")
+    def get_document(self, document: str):
+        logger.info(f"El usuario '{self.user}' quiere acceder a '{document}'")
         try:
             response = self.s3_client.get_object(
-                Bucket=self.bucket_name, Key=exam
+                Bucket=self.bucket_name, Key=document
             )
             logger.info(
-                f"El usuario '{self.user}' accedió exitosamente a '{exam}'"
+                f"El usuario '{self.user}' accedió exitosamente a '{document}'"
             )
         except botocore.exceptions.ClientError as error:
-            logger.warn(f"El usuario '{self.user}' falló al descargar '{exam}'")
+            logger.warn(
+                f"El usuario '{self.user}' falló al descargar '{document}'"
+            )
             raise error
 
         return response["Body"]

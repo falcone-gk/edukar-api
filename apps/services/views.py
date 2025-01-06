@@ -90,7 +90,7 @@ class DownloadExamAPIView(APIView):
         cf = CloudflarePublicExams(user)
 
         try:
-            file_stream = cf.get_exam(exam_key)
+            file_stream = cf.get_document(exam_key)
             # Return the file as a downloadable response
             return get_streaming_response(file_stream, slug, "pdf")
         except Exception as error:

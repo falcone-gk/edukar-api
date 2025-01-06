@@ -1,7 +1,9 @@
 from datetime import datetime
 
 from account.models import UserProduct
+from account.permissions import IsProductOwner
 from core.paginators import CustomPagination
+from django.http import Http404
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
@@ -22,6 +24,8 @@ from store.serializers import (
 from store.tasks import send_sell_receipt_to_user_email
 
 from helpers.choices import ProductTypes
+from helpers.responses import get_streaming_response
+from utils.services.cloudflare import CloudflarePublicExams
 
 # Create your views here.
 
@@ -200,3 +204,31 @@ class UserProductBulkCreateView(APIView):
             {"receipt_url": sell.receipt.url},
             status=status.HTTP_201_CREATED,
         )
+
+
+# TODO: Add test for this view
+class DownloadProductDocumentView(APIView):
+    permission_classes = (IsProductOwner,)
+
+    def get_object(self, slug):
+        try:
+            return Product.objects.get(slug=slug)
+        except Product.DoesNotExist:
+            raise Http404
+
+    def get(self, request, slug, format=None):
+        user = self.request.user
+        document = self.get_object(slug)
+        doc_key = document.source
+        cf = CloudflarePublicExams(user)
+
+        try:
+            file_stream = cf.get_document(doc_key)
+            # Return the file as a downloadable response
+            return get_streaming_response(file_stream, slug, "pdf")
+        except Exception as error:
+            error_msg = {
+                "message": "No se pudo descargar el documento. Avisar a soporte sobre el problema",
+                "error": str(error),
+            }
+            return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)

@@ -28,4 +28,9 @@ urlpatterns = [
         name="category-filters",
     ),
     path("payment", views.UserProductBulkCreateView.as_view(), name="payment"),
+    path(
+        "document/download/<slug:slug>",
+        views.DownloadProductDocumentView.as_view(),
+        name="download-document",
+    ),
 ]
