@@ -254,7 +254,7 @@ class TestRetrieveExam(BaseServiceTestCase):
         # Assertions
         self.assertEqual(response.status_code, 401)
 
-    @patch("utils.services.cloudflare.CloudflarePublicExams.get_exam")
+    @patch("utils.services.cloudflare.CloudflarePublicExams.get_document")
     def test_error_download_r2_bucket_failed(self, mock_get_exam):
         mock_get_exam.side_effect = ValueError("random error")
         exam = Exams.objects.all().latest("pk")

@@ -92,7 +92,7 @@ class DownloadExamAPIView(APIView):
         download = DownloadExams.objects.create(exam=exam, user=user)
 
         try:
-            file_stream = cf.get_exam(exam_key)
+            file_stream = cf.get_document(exam_key)
             download.save()
             # Return the file as a downloadable response
             return get_streaming_response(file_stream, slug, "pdf")
