@@ -65,7 +65,9 @@ class ProductSerializer(serializers.ModelSerializer):
         if obj.type != ProductTypes.PACKAGE:
             return []
 
-        return ProductSerializer(obj.items.all(), many=True).data
+        return ProductSerializer(
+            obj.items.all(), many=True, context=self.context
+        ).data
 
 
 class PrivateProductSerializer(serializers.ModelSerializer):

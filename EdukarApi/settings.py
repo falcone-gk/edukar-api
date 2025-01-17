@@ -48,6 +48,8 @@ INSTALLED_APPS = [
     "store",
     "services",
     "core",
+    "dashboard",
+
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",

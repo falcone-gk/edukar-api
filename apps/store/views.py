@@ -43,7 +43,7 @@ class ProductViewSet(ReadOnlyModelViewSet):
     lookup_field = "slug"
 
     def get_queryset(self):
-        queryset = Product.objects.all().order_by("-id")
+        queryset = Product.objects.filter(show=True).order_by("-id")
         query_params = self.request.query_params
         category = query_params.get("category", None)
         attribute_params = {
