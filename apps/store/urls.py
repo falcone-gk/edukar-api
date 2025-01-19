@@ -33,4 +33,7 @@ urlpatterns = [
         views.DownloadProductDocumentView.as_view(),
         name="download-document",
     ),
+    path(
+        "lreclamaciones", views.ClaimCreateView.as_view(), name="lreclamaciones"
+    ),
 ]

@@ -12,3 +12,8 @@ class ProductTypes(models.IntegerChoices):
     DOCUMENT = 1, _("Documento")
     VIDEO = 2, _("Video")
     PACKAGE = 3, _("Paquete")
+
+
+class TypeGoods(models.IntegerChoices):
+    PRODUCT = 1, _("Producto")
+    SERVICE = 2, _("Servicio")

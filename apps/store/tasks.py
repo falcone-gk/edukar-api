@@ -4,7 +4,7 @@ from django.conf import settings
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from huey.contrib.djhuey import task
-from store.models import Sell
+from store.models import Claim, Sell
 
 logger = logging.getLogger(__name__)
 
@@ -33,4 +33,31 @@ def send_sell_receipt_to_user_email(sell: Sell):
 
     logger.info(
         f"Se ha enviado el correo al usuario {user.username}, con ID de compra '{sell.id}'"
+    )
+
+
+@task()
+def send_user_claim(claim: Claim):
+    name = claim.name
+
+    context = {
+        "name": name,
+        "date": claim.date.strftime("%d de %B de %Y"),
+    }
+
+    claim_pdf = claim.claim_file
+
+    message = render_to_string("store/lrecomendaciones.txt", context)
+    email_msg = EmailMessage(
+        "Edukar: Detalle de reclamo",
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        [claim.email],
+    )
+
+    email_msg.attach("Hoja de reclamacion.pdf", claim_pdf.read())
+    email_msg.send(fail_silently=False)
+
+    logger.info(
+        f"Se ha enviado el correo al usuario {claim.name}, con ID de reclamo '{claim.id}'"
     )

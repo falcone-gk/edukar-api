@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 from django_resized import ResizedImageField
 
-from helpers.choices import ProductTypes, SellStatus
+from helpers.choices import ProductTypes, SellStatus, TypeGoods
 
 # Create your models here.
 
@@ -230,3 +230,78 @@ class Sell(models.Model):
         }
 
         return receipt
+
+
+class Claim(models.Model):
+    def claim_upload_to(self, filename):
+        # Get the current timestamp and format it as "YYYYMMDD_HHMMSS"
+        timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
+        # Construct the new filename using the desired format
+        fullname = f"claim_{timestamp}.pdf"
+        # Return the path to save the file
+        return f"claims/{fullname}"
+
+    # General Information
+    date = models.DateField(auto_now_add=True)
+
+    # Consumer Information
+    name = models.CharField(max_length=100)
+    address = models.CharField(max_length=200)
+    dni = models.CharField(max_length=20)  # DNI/CE
+    email = models.EmailField(max_length=100)
+    phone = models.CharField(max_length=50)
+    is_minor = models.BooleanField(default=False)
+
+    # Proxy Information (for minors)
+    proxy_name = models.CharField(max_length=100, blank=True, null=True)
+
+    # Contracted Good
+    type_good = models.IntegerField(choices=TypeGoods.choices, null=False)
+    claim_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    description = models.TextField(blank=True)
+
+    # Claim Details
+    claim_detail = models.TextField()
+    request = models.TextField()
+
+    claim_file = models.FileField(upload_to=claim_upload_to, null=True)
+
+    def __str__(self):
+        return f"Claim {self.id} by {self.name}"
+
+    @property
+    def form_data(self):
+        """Transform the model data to fit the template."""
+        try:
+            locale.setlocale(
+                locale.LC_TIME, "es_ES.UTF-8"
+            )  # For Unix/Linux systems
+        except locale.Error:
+            locale.setlocale(
+                locale.LC_TIME, "es_ES"
+            )  # Fallback for some systems
+
+        # Get the date components
+        day = self.date.day
+        month = self.date.strftime("%B")  # Full month name
+        year = self.date.year
+
+        return {
+            "claim_number": f"{str(self.id).zfill(8)}-{timezone.now().year}",
+            "day": day,
+            "month": month,
+            "year": year,
+            "name": self.name,
+            "address": self.address,
+            "dni": self.dni,
+            "email": self.email,
+            "phone": self.phone,
+            "is_minor": self.is_minor,
+            "proxy_name": self.proxy_name if self.is_minor else "",
+            "product": self.type_good == TypeGoods.PRODUCT,
+            "service": self.type_good == TypeGoods.SERVICE,
+            "claim_amount": f"{self.claim_amount:.2f}",
+            "description": self.description,
+            "claim_detail": self.claim_detail,
+            "request": self.request,
+        }

@@ -7,7 +7,14 @@ from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils import timezone
 from rest_framework import serializers
-from store.models import Attribute, AttributeOption, Category, Product, Sell
+from store.models import (
+    Attribute,
+    AttributeOption,
+    Category,
+    Claim,
+    Product,
+    Sell,
+)
 from weasyprint import HTML
 
 from helpers.choices import ProductTypes
@@ -222,3 +229,56 @@ class SellSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sell
         fields = ["products", "total_cost", "paid_at"]
+
+
+class ClaimSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Claim
+        fields = "__all__"
+        read_only_fields = ["claim_number", "claim_file", "date"]
+
+    def validate(self, data):
+        """Custom validation for claim data."""
+        if data.get("is_minor") and not data.get("proxy_name"):
+            raise serializers.ValidationError(
+                {
+                    "proxy_name": "Proxy name is required if the claimant is a minor."
+                }
+            )
+        return data
+
+    def create(self, validated_data):
+        try:
+            with transaction.atomic():
+                claim = Claim.objects.create(**validated_data)
+
+                # generate the pdf for the receipt
+                claim_data = claim.form_data
+                html_string = render_to_string(
+                    "store/form_lreclamaciones.html", claim_data
+                )
+                # Generate the PDF
+                html = HTML(string=html_string)
+                pdf_content = html.write_pdf()
+
+                # Save the PDF in the receipt field
+                pdf_filename = (
+                    f"claim_{timezone.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+                )
+                claim.claim_file.save(pdf_filename, ContentFile(pdf_content))
+
+                logger.info(
+                    f"El usuario '{claim.name}' realizó realizó su reclamos con ID '{claim.id}'"
+                )
+
+            return claim
+
+        except Exception as error:
+            error_msg = {
+                "message": "Hubo un error al registrar datos en el libro de reclamaciones virtual.",
+                "error": str(error),
+            }
+            logger.error(
+                f"El usuario {validated_data['name']} tuvo fallas en su reclamación a las {timezone.now()}"
+            )
+            raise serializers.ValidationError(error_msg)

@@ -144,3 +144,6 @@ dump.rdb
 
 # Pyright
 pyrightconfig.json
+
+# Zed settings
+.zed/

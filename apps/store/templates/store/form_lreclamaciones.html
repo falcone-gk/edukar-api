@@ -1,0 +1,173 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Libro de Reclamaciones</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        width: 600px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+      }
+      th,
+      td {
+        border: 1px solid black;
+        padding: 5px;
+      }
+      th {
+        background-color: #e0e0e0;
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .form-section {
+        margin-bottom: 15px;
+      }
+      input[type="text"] {
+        width: 95%;
+      }
+      textarea {
+        width: 95%;
+        height: 100px;
+      }
+      .signature-box {
+        border: 1px solid black;
+        height: 80px;
+        margin-top: 10px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <img src="https://aedukar.com/logos/logo.svg" style="width: 100px" />
+      <div style="font-size: 12px; line-height: 2px">
+        <p>Nº de Hoja {{ claim_number }}</p>
+        <p>RUC: 20444444443</p>
+        <p>Razón Social: Edukar</p>
+        <p>Dirección Comercial: Urb. Juan XXIII LT. 10 Mz. B Dpto. C3</p>
+      </div>
+    </div>
+    <div class="header">
+      <h2>HOJA DE RECLAMACIONES</h2>
+      <p>HOJA DE RECLAMACIÓN Nº {{ claim_number }}</p>
+    </div>
+
+    <table>
+      <tr>
+        <td>FECHA:</td>
+        <td>
+          DÍA:
+          <input type="text" size="5" value="{{ day }}" />
+        </td>
+        <td>
+          MES:
+          <input type="text" size="10" value="{{ month }}" />
+        </td>
+        <td>
+          AÑO:
+          <input type="text" size="5" value="{{ year }}" />
+        </td>
+      </tr>
+    </table>
+
+    <div class="form-section">
+      <table>
+        <tr>
+          <th colspan="2">1. IDENTIFICACIÓN DEL CONSUMIDOR RECLAMANTE</th>
+        </tr>
+        <tr>
+          <td>NOMBRE:</td>
+          <td><input type="text" value="{{ name }}" /></td>
+        </tr>
+        <tr>
+          <td>DOMICILIO:</td>
+          <td>
+            <input type="text" value="{{ address }}" />
+          </td>
+        </tr>
+        <tr>
+          <td>DNI / CE:</td>
+          <td><input type="text" value="{{ dni }}" /></td>
+        </tr>
+        <tr>
+          <td>E-MAIL:</td>
+          <td>
+            <input type="text" value="{{ email }}" />
+          </td>
+        </tr>
+        <tr>
+          <td>TELÉFONO:</td>
+          <td>
+            <input type="text" value="{{ phone }}" />
+          </td>
+        </tr>
+      </table>
+    </div>
+    <p>¿Es menor de edad?</p>
+    <p>
+      <input type="checkbox" {% if is_minor %}checked{% endif %} />
+      Si<br />
+      <input type="checkbox" {% if not is_minor %}checked{% endif %} />
+      No
+    </p>
+
+    <div class="form-section">
+      <table>
+        <tr>
+          <th colspan="2">DATOS DEL APODERADO (SOLO SI ERES MENOR DE EDAD)</th>
+        </tr>
+        <tr>
+          <td>NOMBRE:</td>
+          <td><input type="text" value="{{ name }}" /></td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="form-section">
+      <table>
+        <tr>
+          <th colspan="2">2. IDENTIFICACIÓN DEL BIEN CONTRATADO</th>
+        </tr>
+        <tr>
+          <td>
+            <input type="checkbox" {% if product %}checked{% endif %} />
+            PRODUCTO<br />
+            <input type="checkbox" {% if service %}checked{% endif %} />
+            SERVICIO
+          </td>
+          <td>
+            MONTO RECLAMADO:
+            <input type="text" value="{{ claim_amount }}" /><br />
+            DESCRIPCIÓN:
+            <input type="text" value="{{ description }}" />
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="form-section">
+      <table>
+        <tr>
+          <th>3. DETALLE DE LA RECLAMACIÓN</th>
+        </tr>
+        <tr>
+          <td colspan="3">
+            <textarea>{{ claim_detail }}</textarea>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="3">
+            PEDIDO:<br />
+            <textarea>{{ request }}</textarea>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>

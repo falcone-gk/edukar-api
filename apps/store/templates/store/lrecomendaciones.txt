@@ -1,0 +1,3 @@
+Hola, {{ user }}:
+
+Tu reclamo del día {{ date }} ha sido recibido exitosamente. Te adjuntamos el documento del reclamo con los datos que ingresaste en nuestra página web.

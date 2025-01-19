@@ -18,10 +18,11 @@ from store.serializers import (
     AddCartValidationSerializer,
     CartSerializer,
     CategorySerializer,
+    ClaimSerializer,
     ProductSerializer,
     UserProductBulkCreateSerializer,
 )
-from store.tasks import send_sell_receipt_to_user_email
+from store.tasks import send_sell_receipt_to_user_email, send_user_claim
 
 from helpers.choices import ProductTypes
 from helpers.responses import get_streaming_response
@@ -232,3 +233,13 @@ class DownloadProductDocumentView(APIView):
                 "error": str(error),
             }
             return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+
+
+# TODO: Add tests for this endpoint
+class ClaimCreateView(APIView):
+    def post(self, request):
+        serializer = ClaimSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        claim = serializer.save()
+        send_user_claim(claim)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
