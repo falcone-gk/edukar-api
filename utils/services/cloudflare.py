@@ -2,19 +2,21 @@ import logging
 
 import boto3
 import botocore
+import requests
 from botocore.client import Config
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
 
-class CloudflarePublicExams:
+class Cloudflare:
     def __init__(self, user=None):
         # Get what user wants access to exam
         self.user = user
 
         # Env variables to get access to bucket
-        self.account_id = settings.ACCOUNT_ID
+        self.account_id = settings.CF_ACCOUNT_ID
+        self.video_image_token = settings.CF_VIDEO_IMAGE_TOKEN
         self.access_key_id = settings.EXAMS_ACCESS_KEY_ID
         self.secret_access_key = settings.EXAMS_SECRET_ACCESS_KEY
         self.bucket_name = settings.EXAMS_BUCKET_NAME
@@ -55,3 +57,21 @@ class CloudflarePublicExams:
         except botocore.exceptions.ClientError as error:
             logger.warn(f"Hubo un error al subir el examen '{name}'")
             raise error
+
+    def get_video_signed_url(self, video_uid):
+        # The URL for the API request
+        url = f"https://api.cloudflare.com/client/v4/accounts/{self.account_id}/stream/{video_uid}/token"
+
+        # Headers for the request
+        headers = {
+            "Authorization": f"Bearer {self.video_image_token}",
+            "Content-Type": "application/json",
+        }
+
+        # Make the POST request
+        response = requests.post(url, headers=headers)
+        # Print the response
+        if response.status_code != 200:
+            return {"error": "Error al obtener la URL del video "}
+        else:
+            return response.json()

@@ -49,7 +49,6 @@ INSTALLED_APPS = [
     "services",
     "core",
     "dashboard",
-
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -153,7 +152,8 @@ DATABASES = {
 }
 
 # Cloudflare Buckets env
-ACCOUNT_ID = os.environ.get("R2_ACCOUNT_ID")
+CF_ACCOUNT_ID = os.environ.get("CF_ACCOUNT_ID")
+CF_VIDEO_IMAGE_TOKEN = os.environ.get("CF_VIDEO_IMAGE_TOKEN")
 
 # env for public exams
 EXAMS_ACCESS_KEY_ID = os.environ.get("EXAMS_R2_ACCESS_KEY_ID")

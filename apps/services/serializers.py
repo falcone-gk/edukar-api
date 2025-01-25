@@ -1,6 +1,7 @@
 from django.utils.text import slugify
 from rest_framework import serializers
 from services.models import Course, Exams
+from store.models import Product, VideoPart
 
 
 class ExamsSerializer(serializers.ModelSerializer):
@@ -64,3 +65,22 @@ class CoursesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
         fields = "__all__"
+
+
+class VideoPartSerializer(serializers.ModelSerializer):
+    base_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = VideoPart
+        fields = ["part_number", "title", "url", "base_url"]
+
+    def get_base_url(self, obj):
+        return "https://customer-nungur6k5464iwiu.cloudflarestream.com"
+
+
+class ProductVideoPartsSerializer(serializers.ModelSerializer):
+    video_parts = VideoPartSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Product
+        fields = ["id", "name", "description", "video_parts"]

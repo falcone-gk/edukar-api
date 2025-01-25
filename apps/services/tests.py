@@ -218,7 +218,7 @@ class TestRetrieveExam(BaseServiceTestCase):
         )
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
-    @patch("utils.services.cloudflare.CloudflarePublicExams.get_document")
+    @patch("utils.services.cloudflare.Cloudflare.get_document")
     def test_success_download_exam_by_slug(self, mock_get_exam):
         mock_stream = BytesIO(self.exam_content)  # Simulate a stream
         mock_get_exam.return_value = mock_stream
@@ -254,7 +254,7 @@ class TestRetrieveExam(BaseServiceTestCase):
         # Assertions
         self.assertEqual(response.status_code, 401)
 
-    @patch("utils.services.cloudflare.CloudflarePublicExams.get_document")
+    @patch("utils.services.cloudflare.Cloudflare.get_document")
     def test_error_download_r2_bucket_failed(self, mock_get_exam):
         mock_get_exam.side_effect = ValueError("random error")
         exam = Exams.objects.all().latest("pk")

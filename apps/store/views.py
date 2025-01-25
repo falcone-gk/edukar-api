@@ -26,7 +26,7 @@ from store.tasks import send_sell_receipt_to_user_email, send_user_claim
 
 from helpers.choices import ProductTypes
 from helpers.responses import get_streaming_response
-from utils.services.cloudflare import CloudflarePublicExams
+from utils.services.cloudflare import Cloudflare
 
 # Create your views here.
 
@@ -221,7 +221,7 @@ class DownloadProductDocumentView(APIView):
         user = self.request.user
         document = self.get_object(slug)
         doc_key = document.source
-        cf = CloudflarePublicExams(user)
+        cf = Cloudflare(user)
 
         try:
             file_stream = cf.get_document(doc_key)

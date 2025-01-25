@@ -1,8 +1,10 @@
+from account.permissions import IsProductOwner
 from core.paginators import CustomPagination
 from dashboard.models import DownloadExams
 from django.db import transaction
 from django.http import Http404
 from rest_framework import generics, status
+from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -10,11 +12,14 @@ from services.models import Course, Exams, University
 from services.serializers import (
     CoursesSerializer,
     ExamsSerializer,
+    ProductVideoPartsSerializer,
     UploadExamSerializer,
 )
+from store.models import Product, VideoPart
 
+from helpers.choices import ProductTypes
 from helpers.responses import get_streaming_response
-from utils.services.cloudflare import CloudflarePublicExams
+from utils.services.cloudflare import Cloudflare
 
 # Create your views here.
 
@@ -88,7 +93,7 @@ class DownloadExamAPIView(APIView):
         user = self.request.user
         exam = self.get_object(slug)
         exam_key = exam.source_exam
-        cf = CloudflarePublicExams(user)
+        cf = Cloudflare(user)
         download = DownloadExams.objects.create(exam=exam, user=user)
 
         try:
@@ -118,7 +123,7 @@ class UploadExamAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         # file = request.data["exam_file"]
-        # cf = CloudflarePublicExams()
+        # cf = Cloudflare()
         try:
             with transaction.atomic():
                 serializer.save()
@@ -149,3 +154,64 @@ class CoursesAPIView(generics.ListAPIView):
             queryset = Course.objects.all()
 
         return queryset.order_by("id")
+
+
+# TODO: Add tests for this endpoint
+class ProductVideoPartsView(generics.RetrieveAPIView):
+    serializer_class = ProductVideoPartsSerializer
+    permission_classes = (IsProductOwner,)
+
+    def get_object(self):
+        slug = self.kwargs.get("slug")
+        product = Product.objects.filter(
+            slug=slug, type=ProductTypes.VIDEO
+        ).first()
+        if not product:
+            raise NotFound("Product not found or is not a video product.")
+
+        self.check_object_permissions(self.request, product)
+        return product
+
+
+# TODO: Add tests for this endpoint
+class VideoSignedURLView(generics.RetrieveAPIView):
+    permission_classes = [IsProductOwner]  # Add the permission class
+
+    def get_object(self):
+        product_slug = self.kwargs.get("slug")
+        part_number = self.request.query_params.get("part", 1)
+
+        product = Product.objects.filter(
+            slug=product_slug, type=ProductTypes.VIDEO
+        ).first()
+
+        if not product:
+            raise NotFound("Product not found or is not a video product.")
+
+        self.check_object_permissions(self.request, product)
+
+        try:
+            # Get the VideoPart instance based on product slug and part number
+            video_part = VideoPart.objects.get(
+                product__slug=product_slug, part_number=part_number
+            )
+        except VideoPart.DoesNotExist:
+            raise NotFound("Video part not found for this product.")
+
+        return video_part
+
+    def get(self, request, *args, **kwargs):
+        video_part = self.get_object()
+
+        # Initialize the Cloudflare class
+        cloudflare = Cloudflare()
+
+        # Get the signed URL for the video
+        result = cloudflare.get_video_signed_url(video_part.url)
+
+        # Check if there was an error
+        if "error" in result:
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+
+        # Return the signed URL
+        return Response(result, status=status.HTTP_200_OK)

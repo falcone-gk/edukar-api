@@ -27,4 +27,14 @@ urlpatterns = [
         name="exams-filters",
     ),
     path("courses/", views.CoursesAPIView.as_view(), name="courses-list"),
+    path(
+        "products/<slug:slug>/videos/",
+        views.ProductVideoPartsView.as_view(),
+        name="product-video-parts",
+    ),
+    path(
+        "videos/<slug:slug>/signed-url/",
+        views.VideoSignedURLView.as_view(),
+        name="video-signed-url",
+    ),
 ]

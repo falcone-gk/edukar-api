@@ -5,6 +5,7 @@ from store.models import (
     Category,
     Product,
     ProductAttribute,
+    VideoPart,
 )
 
 # Register your models here.
@@ -19,3 +20,4 @@ admin.site.register(Category)
 admin.site.register(Attribute)
 admin.site.register(AttributeOption)
 admin.site.register(ProductAttribute)
+admin.site.register(VideoPart)

@@ -135,6 +135,30 @@ class ProductAttribute(models.Model):
         return f"{self.product.name} - {self.attribute_option.value} ({self.attribute_option.attribute.name})"
 
 
+class VideoPart(models.Model):
+    product = models.ForeignKey(
+        Product,
+        related_name="video_parts",
+        on_delete=models.CASCADE,
+        limit_choices_to={"type": ProductTypes.VIDEO},
+    )
+    slug = models.CharField(max_length=255, null=False, blank=True, unique=True)
+    url = models.CharField(max_length=255)
+    part_number = models.PositiveIntegerField()
+    title = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        ordering = ["part_number"]
+        unique_together = ("product", "part_number")
+
+    def __str__(self):
+        return f"Part {self.part_number} of {self.product.name}"
+
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.title)
+        return super().save(*args, **kwargs)
+
+
 class Sell(models.Model):
     def product_upload_to(self, filename):
         # Get the current timestamp and format it as "YYYYMMDD_HHMMSS"
