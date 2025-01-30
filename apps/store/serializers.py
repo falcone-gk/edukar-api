@@ -18,6 +18,7 @@ from store.models import (
 from weasyprint import HTML
 
 from helpers.choices import ProductTypes
+from utils.services.culqi import Culqi
 
 logger = logging.getLogger(__name__)
 
@@ -147,6 +148,10 @@ class UserProductBulkCreateSerializer(serializers.Serializer):
         ),
         allow_empty=False,
     )
+    first_name = serializers.CharField(max_length=255, allow_blank=False)
+    last_name = serializers.CharField(max_length=255, allow_blank=False)
+    email = serializers.EmailField(max_length=255, allow_blank=False)
+    token_id = serializers.CharField(max_length=25, allow_blank=False)
 
     def validate_products(self, products):
         user = self.context["request"].user
@@ -158,6 +163,11 @@ class UserProductBulkCreateSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         user = self.context["request"].user
+        user_name = validated_data["first_name"]
+        user_last_name = validated_data["last_name"]
+        user_email = validated_data["email"]
+        token_id = validated_data["token_id"]
+
         products = validated_data["products"]
         user_products = []
 
@@ -185,9 +195,20 @@ class UserProductBulkCreateSerializer(serializers.Serializer):
                 for prod in products:
                     total_cost += prod.price
 
+                culqi = Culqi()
+                charge_data = culqi.create_charge(
+                    float(total_cost), user_email, token_id, "PEN"
+                )
                 # Create Sell instance and link products
                 sell = Sell.objects.create(
-                    user=user, paid_at=timezone.now(), total_cost=total_cost
+                    user=user,
+                    paid_at=timezone.now(),
+                    total_cost=total_cost,
+                    user_name=user_name,
+                    user_last_name=user_last_name,
+                    user_email=user_email,
+                    sell_identifier=charge_data["id"],
+                    sell_metadata=charge_data,
                 )
                 sell.products.add(*products)
 

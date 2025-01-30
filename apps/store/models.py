@@ -181,24 +181,19 @@ class Sell(models.Model):
     user = models.ForeignKey(
         User, related_name="sells", on_delete=models.CASCADE
     )
+
+    # Campos para los datos de la persona que paga
+    user_name = models.CharField(max_length=255, null=False, blank=True)
+    user_last_name = models.CharField(max_length=255, null=False, blank=True)
+    user_email = models.EmailField(max_length=255, null=False, blank=True)
+
     products = models.ManyToManyField(Product, related_name="sells")
-    # This field is not necessary? ¿Deberia usar este campo cuando el usuario
-    # agrega elementos a su carrito?
-    status = models.IntegerField(
-        choices=SellStatus.choices, default=SellStatus.ON_CART
-    )
     receipt = models.FileField(upload_to=receipt_upload_to, null=True)
-    # Este campo debe ser eliminado ya que usaremos pasarela
-    payment_image = ResizedImageField(
-        size=[400, 566],
-        quality=50,
-        force_format="WebP",
-        upload_to=product_upload_to,
-        null=True,
-    )
     total_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True)
-    on_cart_at = models.DateTimeField(null=True)
-    on_pending_at = models.DateTimeField(null=True)
+
+    # Campos para rellenar los valores de la transacción
+    sell_identifier = models.CharField(max_length=255, null=False, blank=True)
+    sell_metadata = models.JSONField(null=False, blank=True, default=dict)
     paid_at = models.DateTimeField(null=True)
 
     @classmethod

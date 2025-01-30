@@ -160,6 +160,9 @@ EXAMS_ACCESS_KEY_ID = os.environ.get("EXAMS_R2_ACCESS_KEY_ID")
 EXAMS_SECRET_ACCESS_KEY = os.environ.get("EXAMS_R2_SECRET_ACCESS_KEY")
 EXAMS_BUCKET_NAME = os.environ.get("EXAMS_R2_BUCKET_NAME")
 
+# Culqi token
+CULQI_API_KEY = os.environ.get("CULQI_API_KEY")
+
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
 
