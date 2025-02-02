@@ -188,7 +188,9 @@ class Sell(models.Model):
     user_email = models.EmailField(max_length=255, null=False, blank=True)
 
     products = models.ManyToManyField(Product, related_name="sells")
-    receipt = models.FileField(upload_to=receipt_upload_to, null=True)
+    receipt = models.FileField(
+        upload_to=receipt_upload_to, null=True, blank=True
+    )
     total_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True)
 
     # Campos para rellenar los valores de la transacción
