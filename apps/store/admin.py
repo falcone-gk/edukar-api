@@ -3,8 +3,10 @@ from store.models import (
     Attribute,
     AttributeOption,
     Category,
+    Claim,
     Product,
     ProductAttribute,
+    Sell,
     VideoPart,
 )
 
@@ -21,3 +23,5 @@ admin.site.register(Attribute)
 admin.site.register(AttributeOption)
 admin.site.register(ProductAttribute)
 admin.site.register(VideoPart)
+admin.site.register(Sell)
+admin.site.register(Claim)
