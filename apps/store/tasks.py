@@ -1,5 +1,6 @@
 import logging
 
+from babel.dates import format_date
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
@@ -15,7 +16,9 @@ def send_sell_receipt_to_user_email(sell: Sell):
 
     context = {
         "user": user.username,
-        "date": sell.paid_at.strftime("%d de %B de %Y"),
+        "date": format_date(
+            sell.paid_at, format="dd 'de' MMMM 'de' yyyy", locale="es"
+        ),
     }
 
     receipt_pdf = sell.receipt
@@ -42,7 +45,9 @@ def send_user_claim(claim: Claim):
 
     context = {
         "name": name,
-        "date": claim.date.strftime("%d de %B de %Y"),
+        "date": format_date(
+            claim.date, format="dd 'de' MMMM 'de' yyyy", locale="es"
+        ),
     }
 
     claim_pdf = claim.claim_file

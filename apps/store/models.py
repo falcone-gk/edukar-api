@@ -1,8 +1,8 @@
 import datetime
-import locale
 import uuid
 from decimal import Decimal
 
+from babel.dates import format_date
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
@@ -209,18 +209,10 @@ class Sell(models.Model):
 
     @property
     def to_receipt_json(self):
-        # Set locale to Spanish for date formatting
-        try:
-            locale.setlocale(
-                locale.LC_TIME, "es_ES.UTF-8"
-            )  # For Unix/Linux systems
-        except locale.Error:
-            locale.setlocale(
-                locale.LC_TIME, "es_ES"
-            )  # Fallback for some systems
-
         # Format the date
-        formatted_date = self.paid_at.strftime("%d de %B de %Y")
+        formatted_date = format_date(
+            self.paid_at, format="dd 'de' MMMM 'de' yyyy", locale="es"
+        )
 
         # Generate the product list
         product_list = [
@@ -291,18 +283,9 @@ class Claim(models.Model):
     @property
     def form_data(self):
         """Transform the model data to fit the template."""
-        try:
-            locale.setlocale(
-                locale.LC_TIME, "es_ES.UTF-8"
-            )  # For Unix/Linux systems
-        except locale.Error:
-            locale.setlocale(
-                locale.LC_TIME, "es_ES"
-            )  # Fallback for some systems
-
         # Get the date components
         day = self.date.day
-        month = self.date.strftime("%B")  # Full month name
+        month = format_date(self.date, format="MMMM", locale="es")
         year = self.date.year
 
         return {

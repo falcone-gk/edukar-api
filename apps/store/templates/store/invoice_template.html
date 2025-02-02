@@ -1,174 +1,184 @@
 <!doctype html>
 <html lang="es">
-    <head>
-        <meta charset="UTF-8" />
-        <title>Recibo</title>
-        <style>
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-                font-family: Arial, sans-serif; /* Fallback font for better rendering */
-            }
+  <head>
+    <meta charset="UTF-8" />
+    <title>Recibo</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Arial, sans-serif; /* Fallback font for better rendering */
+      }
 
-            body {
-                padding: 20px;
-                text-align: center;
-            }
+      body {
+        padding: 20px;
+        text-align: center;
+      }
 
-            .receipt {
-                background: white;
-                width: 100%;
-                max-width: 800px;
-                margin: 0 auto;
-                padding: 20px;
-                border: 1px solid #e0e0e0;
-            }
+      .receipt {
+        background: white;
+        width: 100%;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        border: 1px solid #e0e0e0;
+      }
 
-            .header {
-                margin-bottom: 20px;
-                padding-bottom: 10px;
-                border-bottom: 2px solid #e0e0e0;
-                text-align: left;
-            }
+      .header {
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e0e0e0;
+        text-align: left;
+      }
 
-            .logo {
-                display: inline-block;
-                vertical-align: middle;
-            }
+      .logo {
+        display: inline-block;
+        vertical-align: middle;
+      }
 
-            .logo-svg {
-                width: 100px;
-                height: auto;
-            }
+      .logo-svg {
+        width: 100px;
+        height: auto;
+      }
 
-            .receipt-number {
-                float: right;
-                color: #666;
-                font-size: 14px;
-            }
+      .receipt-number {
+        float: right;
+        color: #666;
+        font-size: 14px;
+      }
 
-            .customer-info {
-                margin-bottom: 20px;
-                text-align: left;
-            }
+      .customer-info {
+        margin-bottom: 20px;
+        text-align: left;
+      }
 
-            .info-grid {
-                display: block; /* Simplified to avoid unsupported grid */
-            }
+      .info-grid {
+        display: block; /* Simplified to avoid unsupported grid */
+      }
 
-            .info-item {
-                display: inline-block;
-                width: 49%; /* Two columns */
-                margin-bottom: 10px;
-                vertical-align: top;
-            }
+      .info-item {
+        display: inline-block;
+        width: 49%; /* Two columns */
+        margin-bottom: 10px;
+        vertical-align: top;
+      }
 
-            .info-label {
-                color: #666;
-                font-size: 12px;
-                display: block;
-                margin-bottom: 5px;
-            }
+      .info-label {
+        color: #666;
+        font-size: 12px;
+        display: block;
+        margin-bottom: 5px;
+      }
 
-            .info-value {
-                color: #333;
-                font-weight: bold;
-                display: block;
-            }
+      .info-value {
+        color: #333;
+        font-weight: bold;
+        display: block;
+      }
 
-            .products {
-                margin-bottom: 20px;
-            }
+      .products {
+        margin-bottom: 20px;
+      }
 
-            table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-bottom: 10px;
-            }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+      }
 
-            th,
-            td {
-                padding: 10px;
-                text-align: left;
-                border: 1px solid #e0e0e0;
-            }
+      th,
+      td {
+        padding: 10px;
+        text-align: left;
+        border: 1px solid #e0e0e0;
+      }
 
-            th {
-                background-color: #f8f9fa;
-                font-weight: bold;
-                color: #333;
-            }
+      th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+        color: #333;
+      }
 
-            .total {
-                text-align: right;
-                font-size: 16px;
-                font-weight: bold;
-                padding-top: 10px;
-                border-top: 2px solid #e0e0e0;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="receipt">
-            <!-- Encabezado -->
-            <div class="header">
-                <div class="logo">
-                    <img
-                        src="https://aedukar.com/logos/logo.svg"
-                        alt="Logo de Edukar"
-                        class="logo-svg"
-                    />
-                </div>
-                <div class="receipt-number">Recibo #{{ receipt_number }}</div>
-            </div>
+      .total {
+        text-align: right;
+        font-size: 16px;
+        font-weight: bold;
+        padding-top: 10px;
+        border-top: 2px solid #e0e0e0;
+      }
 
-            <!-- Información del Cliente -->
-            <div class="customer-info">
-                <div class="info-grid">
-                    <div class="info-item">
-                        <div class="info-label">Nombre</div>
-                        <div class="info-value">{{ customer.first_name }}</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label">Apellido</div>
-                        <div class="info-value">{{ customer.last_name }}</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label">Correo Electrónico</div>
-                        <div class="info-value">{{ customer.email }}</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label">Fecha</div>
-                        <div class="info-value">{{ date }}</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Productos -->
-            <div class="products">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Producto</th>
-                            <th>Cantidad</th>
-                            <th>Precio</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for product in products %}
-                        <tr>
-                            <td>{{ product.name }}</td>
-                            <td>1</td>
-                            <td>S/{{ product.price }}</td>
-                            <td>S/{{ product.total }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                <div class="total">Total: S/{{ total }}</div>
-            </div>
+      .note {
+        margin-top: 12px;
+        text-align: left;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="receipt">
+      <!-- Encabezado -->
+      <div class="header">
+        <div class="logo">
+          <img
+            src="https://aedukar.com/logos/logo.svg"
+            alt="Logo de Edukar"
+            class="logo-svg"
+          />
         </div>
-    </body>
+        <div class="receipt-number">Recibo #{{ receipt_number }}</div>
+      </div>
+
+      <!-- Información del Cliente -->
+      <div class="customer-info">
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">Nombre</div>
+            <div class="info-value">{{ customer.first_name }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Apellido</div>
+            <div class="info-value">{{ customer.last_name }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Correo Electrónico</div>
+            <div class="info-value">{{ customer.email }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Fecha</div>
+            <div class="info-value">{{ date }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Productos -->
+      <div class="products">
+        <table>
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Cantidad</th>
+              <th>Precio</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for product in products %}
+            <tr>
+              <td>{{ product.name }}</td>
+              <td>1</td>
+              <td>S/{{ product.price }}</td>
+              <td>S/{{ product.total }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <div class="total">Total: S/{{ total }}</div>
+      </div>
+    </div>
+    <p class="note">
+      Este no es un comprobante oficial. Dentro de las 24 horas se le enviará la
+      boleta electrónica oficial.
+    </p>
+  </body>
 </html>

@@ -195,10 +195,6 @@ class UserProductBulkCreateSerializer(serializers.Serializer):
                 for prod in products:
                     total_cost += prod.price
 
-                culqi = Culqi()
-                charge_data = culqi.create_charge(
-                    float(total_cost), user_email, token_id, "PEN"
-                )
                 # Create Sell instance and link products
                 sell = Sell.objects.create(
                     user=user,
@@ -207,8 +203,6 @@ class UserProductBulkCreateSerializer(serializers.Serializer):
                     user_name=user_name,
                     user_last_name=user_last_name,
                     user_email=user_email,
-                    sell_identifier=charge_data["id"],
-                    sell_metadata=charge_data,
                 )
                 sell.products.add(*products)
 
@@ -227,6 +221,15 @@ class UserProductBulkCreateSerializer(serializers.Serializer):
                 )
                 sell.receipt.save(pdf_filename, ContentFile(pdf_content))
 
+                culqi = Culqi()
+                charge_data = culqi.create_charge(
+                    float(total_cost), user_email, token_id, "PEN"
+                )
+
+                sell.sell_identifier = charge_data["id"]
+                sell.sell_metadata = charge_data
+                sell.save()
+
                 logger.info(
                     f"El usuario {user.username} realizó su compra de manera exitosa: ID de compra {sell.id}"
                 )
@@ -239,7 +242,7 @@ class UserProductBulkCreateSerializer(serializers.Serializer):
                 "error": str(error),
             }
             logger.error(
-                f"El usuario {user.username} tuvo fallas en su compra a las {timezone.now()}"
+                f"El usuario {user.username} tuvo fallas en su compra a las {timezone.now()}. Error: {error}"
             )
             raise serializers.ValidationError(error_msg)
 
