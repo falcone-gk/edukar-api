@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 from django_resized import ResizedImageField
 
+from apps.core.models import StatusModel, TimeStampModel
 from helpers.choices import ProductTypes, SellStatus, TypeGoods
 
 # Create your models here.
@@ -118,6 +119,22 @@ class Product(models.Model):
         return self.name
 
 
+class ProductComment(TimeStampModel, StatusModel):
+    user = models.ForeignKey(
+        User, related_name="product_comments", on_delete=models.CASCADE
+    )
+    product = models.ForeignKey(
+        Product, related_name="comments", on_delete=models.CASCADE
+    )
+    comment = models.TextField()
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.comment}"
+
+
 class ProductAttribute(models.Model):
     product = models.ForeignKey(
         Product, on_delete=models.CASCADE, related_name="product_attributes"
@@ -198,6 +215,8 @@ class Sell(models.Model):
     sell_metadata = models.JSONField(null=False, blank=True, default=dict)
     paid_at = models.DateTimeField(null=True)
 
+    # TODO: Remove this classmethod because it is not used
+    # remove endpoint that use this method too.
     @classmethod
     def get_user_cart(cls, user: User):
         return cls.objects.get_or_create(user=user, status=SellStatus.ON_CART)

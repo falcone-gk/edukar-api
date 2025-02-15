@@ -14,13 +14,14 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
-from store.models import Category, Order, Product, Sell
+from store.models import Category, Order, Product, ProductComment, Sell
 from store.serializers import (
     AddCartValidationSerializer,
     CartSerializer,
     CategorySerializer,
     ClaimSerializer,
     OrderSerializer,
+    ProductCreateCommentSerializer,
     ProductSerializer,
     UserProductBulkCreateSerializer,
 )
@@ -108,6 +109,23 @@ class ProductViewSet(ReadOnlyModelViewSet):
 
         except Product.DoesNotExist:
             return Response({"detail": "Product not found."}, status=404)
+
+    # TODO: Hacer tests de este endpoint
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
+    def comment(self, request, slug=None):
+        """Create a comment for a product identified by slug"""
+        product = get_object_or_404(Product, slug=slug)
+        serializer = ProductCreateCommentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        ProductComment.objects.create(
+            user=request.user,
+            product=product,
+            comment=serializer.validated_data["comment"],
+        )
+        return Response(
+            {"detail": "Comment created successfully"},
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class AddItemCartView(APIView):

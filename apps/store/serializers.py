@@ -2,6 +2,7 @@ import logging
 from decimal import Decimal
 
 from account.models import UserProduct
+from account.serializers import AuthorSerializer
 from django.core.files.base import ContentFile
 from django.db import transaction
 from django.template.loader import render_to_string
@@ -14,6 +15,7 @@ from store.models import (
     Claim,
     Order,
     Product,
+    ProductComment,
     Sell,
 )
 from weasyprint import HTML
@@ -46,10 +48,19 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ["id", "name", "attributes"]
 
 
+class ProductCommentSerializer(serializers.ModelSerializer):
+    user = AuthorSerializer()
+
+    class Meta:
+        model = ProductComment
+        fields = ["user", "comment", "created_at"]
+
+
 class ProductSerializer(serializers.ModelSerializer):
     """Serializer used in store view"""
 
     items = serializers.SerializerMethodField()
+    comments = ProductCommentSerializer(many=True)
 
     class Meta:
         model = Product
@@ -66,6 +77,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "is_one_time_purchase",
             "items",
             "identifier",
+            "comments",
         )
 
     def get_items(self, obj):
@@ -85,6 +97,12 @@ class PrivateProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ("slug", "name", "description", "source", "type")
+
+
+class ProductCreateCommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductComment
+        fields = ["comment"]
 
 
 class AddCartValidationSerializer(serializers.Serializer):
