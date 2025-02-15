@@ -6,6 +6,7 @@ app_name = "store"
 
 router = DefaultRouter()
 router.register(r"products", views.ProductViewSet, basename="product")
+router.register(r"orders", views.OrderViewSet, basename="order")
 
 urlpatterns = [
     path("", include(router.urls)),

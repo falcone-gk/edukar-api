@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 
 from account.models import UserProduct
@@ -5,7 +6,7 @@ from account.permissions import IsProductOwner
 from core.paginators import CustomPagination
 from django.http import Http404
 from django.utils import timezone
-from rest_framework import status
+from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
@@ -13,12 +14,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
-from store.models import Category, Product, Sell
+from store.models import Category, Order, Product, Sell
 from store.serializers import (
     AddCartValidationSerializer,
     CartSerializer,
     CategorySerializer,
     ClaimSerializer,
+    OrderSerializer,
     ProductSerializer,
     UserProductBulkCreateSerializer,
 )
@@ -27,6 +29,7 @@ from store.tasks import send_sell_receipt_to_user_email, send_user_claim
 from helpers.choices import ProductTypes
 from helpers.responses import get_streaming_response
 from utils.services.cloudflare import Cloudflare
+from utils.services.culqi import Culqi
 
 # Create your views here.
 
@@ -233,6 +236,28 @@ class DownloadProductDocumentView(APIView):
                 "error": str(error),
             }
             return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+
+
+class OrderViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy()
+        # 10 minutes into the future
+        data["expiration_date"] = int(time.time()) + 600
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        order = serializer.save()
+
+        culqi = Culqi()
+        result = culqi.create_order(order)
+
+        return Response(
+            result,
+            status=status.HTTP_201_CREATED,
+        )
 
 
 # TODO: Add tests for this endpoint

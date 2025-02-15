@@ -12,6 +12,7 @@ from store.models import (
     AttributeOption,
     Category,
     Claim,
+    Order,
     Product,
     Sell,
 )
@@ -253,6 +254,12 @@ class SellSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sell
         fields = ["products", "total_cost", "paid_at"]
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = "__all__"
 
 
 class ClaimSerializer(serializers.ModelSerializer):

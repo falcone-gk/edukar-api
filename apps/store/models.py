@@ -245,6 +245,17 @@ class Sell(models.Model):
         return receipt
 
 
+class Order(models.Model):
+    amount = models.IntegerField()
+    description = models.TextField()
+    currency_code = models.CharField(max_length=10)
+    expiration_date = models.IntegerField(null=True, blank=True)
+    client_details = models.JSONField(null=True, blank=True, default=dict)
+
+    def __str__(self):
+        return f"Order {self.order_number} - {self.amount} {self.currency_code}"
+
+
 class Claim(models.Model):
     def claim_upload_to(self, filename):
         # Get the current timestamp and format it as "YYYYMMDD_HHMMSS"
