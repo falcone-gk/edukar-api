@@ -1,3 +1,5 @@
+import os
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django_resized import ResizedImageField
@@ -17,6 +19,11 @@ class University(models.Model):
 
 
 class Exams(models.Model):
+    def upload_cover(self, filename):
+        _, ext = os.path.splitext(filename)
+        slug = self.slug
+        return f"cover/{slug}{ext}"
+
     university = models.ForeignKey(
         University, null=True, on_delete=models.SET_NULL
     )
@@ -27,7 +34,7 @@ class Exams(models.Model):
         size=[400, 566],
         quality=50,
         force_format="WebP",
-        upload_to="cover/",
+        upload_to=upload_cover,
         null=True,
     )
     year = models.IntegerField()
@@ -39,22 +46,28 @@ class Exams(models.Model):
     source_video_solution_premium = models.URLField(max_length=200, blank=True)
     is_delete = models.BooleanField(null=False, default=False)
 
-    products = models.ManyToManyField(Product, related_name="exams")
+    products = models.ManyToManyField(Product, related_name="exams", blank=True)
 
-    def save(self, *args, **kwargs):
-        # Perform validation
+    def clean(self):
+        """Validate exam type and area before saving."""
         if self.university:
             if self.type not in self.university.exam_types:
                 raise ValidationError(
-                    f"The type '{self.type}' is not valid for the university '{self.university.name}'. "
-                    f"Allowed types are: {', '.join(self.university.exam_types)}."
+                    {
+                        "type": f"The type '{self.type}' is not valid for the university '{self.university.name}'. "
+                        f"Allowed types: {', '.join(self.university.exam_types)}."
+                    }
                 )
-            if (self.area) and (self.area not in self.university.exam_areas):
+            if self.area and self.area not in self.university.exam_areas:
                 raise ValidationError(
-                    f"The area '{self.area}' is not valid for the university '{self.university.name}'. "
-                    f"Allowed areas are: {', '.join(self.university.exam_areas)}."
+                    {
+                        "area": f"The area '{self.area}' is not valid for the university '{self.university.name}'. "
+                        f"Allowed areas: {', '.join(self.university.exam_areas)}."
+                    }
                 )
 
+    def save(self, *args, **kwargs):
+        self.full_clean()
         super().save(*args, **kwargs)
 
     def __str__(self):
