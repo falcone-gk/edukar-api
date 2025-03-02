@@ -64,6 +64,8 @@ class ExamsAdmin(admin.ModelAdmin):
         ),
     )
 
+    filter_horizontal = ("products",)
+
     def save_model(self, request, obj, form, change):
         """Ensure exam type and area are valid before saving."""
         if obj.university:
