@@ -228,9 +228,7 @@ class Sell(models.Model):
         max_length=25, null=True, blank=True, editable=False
     )
     order_data = models.JSONField(null=True, blank=True)
-    order_number = models.CharField(
-        max_length=50, unique=True, editable=False, blank=True
-    )
+    order_number = models.CharField(max_length=50, editable=False, blank=True)
 
     receipt_number = models.PositiveIntegerField(
         null=True, blank=True, editable=False
