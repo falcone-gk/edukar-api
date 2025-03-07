@@ -99,7 +99,7 @@ class SellAdmin(admin.ModelAdmin):
         "paid_at",
         "order_id",
     )
-    list_filter = ("status", "paid_at", "user")
+    list_filter = ("status", "paid_at")
     search_fields = (
         "user__username",
         "user_name",
