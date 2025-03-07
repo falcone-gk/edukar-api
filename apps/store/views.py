@@ -243,15 +243,28 @@ class StartSellView(mixins.CreateModelMixin, GenericViewSet):
         if status_code == 201:
             sell_data = response.json()
             sell.mark_as_paid(sell_data)
-            # Register user products
-            user_products = [
-                UserProduct(user=sell.user, product=product)
-                for product in sell.products.all()
-            ]
-            UserProduct.objects.bulk_create(
-                user_products, ignore_conflicts=True
-            )
 
+            # Register user products
+            user = sell.user
+            products = sell.products.all()
+            user_products = []
+            for product in products:
+                if product.type == ProductTypes.PACKAGE:
+                    # If the product is a package, add its items instead
+                    package_items = product.items.all()
+                    user_products.extend(
+                        [
+                            UserProduct(user=user, product=item)
+                            for item in package_items
+                        ]
+                    )
+                else:
+                    # Add non-package products directly
+                    user_products.append(
+                        UserProduct(user=user, product=product)
+                    )
+
+            UserProduct.objects.bulk_create(user_products)
             sell.generate_receipt()
             send_sell_receipt_to_user_email(sell)
 
@@ -263,6 +276,10 @@ class StartSellView(mixins.CreateModelMixin, GenericViewSet):
             sell.status = SellStatus.PENDING
             sell.metadata = response.json()
             sell.save()
+            logger.info(
+                f"El usuario {sell.user.username} necesita autentificación con 3DS: "
+                f"ID de compra {sell.id}"
+            )
         else:
             sell.status = SellStatus.FAILED
             sell.metadata = response.json()
