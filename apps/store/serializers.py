@@ -1,4 +1,5 @@
 import logging
+import re
 from decimal import Decimal
 
 from account.models import UserProduct
@@ -7,13 +8,13 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 from store.models import (
     Attribute,
     AttributeOption,
     Category,
     Claim,
-    Order,
     Product,
     ProductComment,
     Sell,
@@ -105,59 +106,59 @@ class ProductCreateCommentSerializer(serializers.ModelSerializer):
         fields = ["comment"]
 
 
-class AddCartValidationSerializer(serializers.Serializer):
-    product = serializers.PrimaryKeyRelatedField(
-        queryset=Product.objects.all(), required=False
-    )
+# class AddCartValidationSerializer(serializers.Serializer):
+#     product = serializers.PrimaryKeyRelatedField(
+#         queryset=Product.objects.all(), required=False
+#     )
 
-    def validate_product(self, product: Product):
-        user = self.context["request"].user
-        if product is None:
-            return product
+#     def validate_product(self, product: Product):
+#         user = self.context["request"].user
+#         if product is None:
+#             return product
 
-        if not product.is_one_time_purchase:
-            return product
+#         if not product.is_one_time_purchase:
+#             return product
 
-        cart, _ = Sell.get_user_cart(user=user)
-        if cart is None:
-            return product
+#         cart, _ = Sell.get_user_cart(user=user)
+#         if cart is None:
+#             return product
 
-        is_owned_by_user = cart.products.filter(id=product.id).exists()
-        if is_owned_by_user:
-            raise serializers.ValidationError(
-                "Ya obtuviste el producto o ya está en tu carrito."
-            )
+#         is_owned_by_user = cart.products.filter(id=product.id).exists()
+#         if is_owned_by_user:
+#             raise serializers.ValidationError(
+#                 "Ya obtuviste el producto o ya está en tu carrito."
+#             )
 
-        if product.type != ProductTypes.PACKAGE:
-            return product
+#         if product.type != ProductTypes.PACKAGE:
+#             return product
 
-        for item in product.items.all():
-            if not item.is_one_time_purchase:
-                continue
+#         for item in product.items.all():
+#             if not item.is_one_time_purchase:
+#                 continue
 
-            is_owned_by_user = cart.products.filter(id=item.id).exists()
-            if is_owned_by_user:
-                raise serializers.ValidationError(
-                    "Tu paquete incluye productos que ya compraste o está en tu carrito."
-                )
+#             is_owned_by_user = cart.products.filter(id=item.id).exists()
+#             if is_owned_by_user:
+#                 raise serializers.ValidationError(
+#                     "Tu paquete incluye productos que ya compraste o está en tu carrito."
+#                 )
 
-        return product
+#         return product
 
 
-class CartSerializer(serializers.ModelSerializer):
-    products = ProductSerializer(many=True, read_only=True)
+# class CartSerializer(serializers.ModelSerializer):
+#     products = ProductSerializer(many=True, read_only=True)
 
-    class Meta:
-        model = Sell
-        fields = (
-            "products",
-            "status",
-            "payment_image",
-            "total_cost",
-            "on_cart_at",
-            "on_pending_at",
-            "paid_at",
-        )
+#     class Meta:
+#         model = Sell
+#         fields = (
+#             "products",
+#             "status",
+#             "payment_image",
+#             "total_cost",
+#             "on_cart_at",
+#             "on_pending_at",
+#             "paid_at",
+#         )
 
 
 class UserProductBulkCreateSerializer(serializers.Serializer):
@@ -246,7 +247,7 @@ class UserProductBulkCreateSerializer(serializers.Serializer):
                 )
 
                 sell.sell_identifier = charge_data["id"]
-                sell.sell_metadata = charge_data
+                sell.metadata = charge_data
                 sell.save()
 
                 logger.info(
@@ -266,6 +267,35 @@ class UserProductBulkCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError(error_msg)
 
 
+class ThreeDSParametersSerializer(serializers.Serializer):
+    eci = serializers.CharField()
+    xid = serializers.CharField()
+    cavv = serializers.CharField()
+    protocolVersion = serializers.CharField()
+    directoryServerTransactionId = serializers.CharField()
+
+
+class ChargePaymentSerializer(serializers.Serializer):
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
+    token = serializers.CharField()
+    email = serializers.EmailField()
+    phone_number = serializers.CharField(min_length=5, max_length=15)
+    device_id = serializers.CharField()
+    parameters_3DS = ThreeDSParametersSerializer(
+        required=False, allow_null=True
+    )
+
+    def validate_phone_number(self, value):
+        if not re.match(r"^\d{5,15}$", value):
+            raise serializers.ValidationError(
+                _(
+                    "Número de teléfono debe contener sólo dígitos y ser entre 5 y 15 caracteres de largo."
+                )
+            )
+        return value
+
+
 class SellSerializer(serializers.ModelSerializer):
     products = ProductSerializer(many=True, read_only=True)
 
@@ -274,10 +304,57 @@ class SellSerializer(serializers.ModelSerializer):
         fields = ["products", "total_cost", "paid_at"]
 
 
-class OrderSerializer(serializers.ModelSerializer):
+class CreateSellSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Order
-        fields = "__all__"
+        model = Sell
+        fields = [
+            "id",
+            "user_name",
+            "user_last_name",
+            "user_email",
+            "user_phone_number",
+            "products",
+            "total_cost",
+            "order_id",
+        ]
+        read_only_fields = ["order_id"]
+
+    def validate_user_phone_number(self, value):
+        if not re.match(r"^\d{5,15}$", value):
+            raise serializers.ValidationError(
+                _(
+                    "Número de teléfono debe contener sólo dígitos y ser entre 5 y 15 caracteres de largo."
+                )
+            )
+        return value
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+        products = validated_data.pop("products", [])
+
+        total_cost = Decimal("0.00")
+        for prod in products:
+            total_cost += prod.price
+
+        sell = Sell.objects.create(
+            user=user, total_cost=total_cost, **validated_data
+        )
+        sell.products.add(*products)
+        sell.save()
+
+        culqi = Culqi()
+        order_data = culqi.create_order(sell)
+        error = order_data.get("error", None)
+        if error:
+            sell.order_data = order_data
+            sell.save()
+            raise serializers.ValidationError(error)
+
+        sell.order_id = order_data.get("id")
+        sell.order_data = order_data
+        sell.save()
+
+        return sell
 
 
 class ClaimSerializer(serializers.ModelSerializer):

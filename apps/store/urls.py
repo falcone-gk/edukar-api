@@ -6,22 +6,14 @@ app_name = "store"
 
 router = DefaultRouter()
 router.register(r"products", views.ProductViewSet, basename="product")
-router.register(r"orders", views.OrderViewSet, basename="order")
+router.register(r"sells", views.StartSellView, basename="sell")
 
 urlpatterns = [
     path("", include(router.urls)),
     path(
-        "cart/add-item", views.AddItemCartView.as_view(), name="add-item-cart"
-    ),
-    path(
         "cart/check-product",
         views.CheckProductPurchaseView.as_view(),
         name="cart-check-product",
-    ),
-    path(
-        "cart/remove-item",
-        views.RemoveItemCartAPIView.as_view(),
-        name="remove-item-cart",
     ),
     path(
         "category/filters",

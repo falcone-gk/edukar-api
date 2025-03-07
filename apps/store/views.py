@@ -1,38 +1,42 @@
-import time
-from datetime import datetime
+import logging
 
 from account.models import UserProduct
 from account.permissions import IsProductOwner
 from core.paginators import CustomPagination
 from django.http import Http404
-from django.utils import timezone
-from rest_framework import mixins, status, viewsets
+from django.utils.translation import gettext as _
+from rest_framework import mixins, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import ReadOnlyModelViewSet
-from store.models import Category, Order, Product, ProductComment, Sell
+from rest_framework.viewsets import (
+    GenericViewSet,
+    ReadOnlyModelViewSet,
+)
+from store.models import Category, Product, ProductComment, Sell
 from store.serializers import (
-    AddCartValidationSerializer,
-    CartSerializer,
     CategorySerializer,
+    ChargePaymentSerializer,
     ClaimSerializer,
-    OrderSerializer,
+    CreateSellSerializer,
     ProductCreateCommentSerializer,
     ProductSerializer,
     UserProductBulkCreateSerializer,
 )
 from store.tasks import send_sell_receipt_to_user_email, send_user_claim
 
-from helpers.choices import ProductTypes
+from helpers.choices import ProductTypes, SellStatus
 from helpers.responses import get_streaming_response
 from utils.services.cloudflare import Cloudflare
 from utils.services.culqi import Culqi
 
 # Create your views here.
+
+
+logger = logging.getLogger(__name__)
 
 
 class CategoryFiltersAPIView(APIView):
@@ -128,56 +132,56 @@ class ProductViewSet(ReadOnlyModelViewSet):
         )
 
 
-class AddItemCartView(APIView):
-    permission_classes = [IsAuthenticated]
+# class AddItemCartView(APIView):
+#     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        serializer = AddCartValidationSerializer(
-            data=request.data, context={"request": request}
-        )
-        serializer.is_valid(raise_exception=True)
-        data = serializer.data
-        product = data.get("product", None)
+#     def post(self, request, *args, **kwargs):
+#         serializer = AddCartValidationSerializer(
+#             data=request.data, context={"request": request}
+#         )
+#         serializer.is_valid(raise_exception=True)
+#         data = serializer.data
+#         product = data.get("product", None)
 
-        user = self.request.user
-        user_cart, _ = Sell.get_user_cart(user=user)
-        user_cart.on_cart_at = datetime.now(tz=timezone.utc)
-        if product is not None:
-            user_cart.products.add(product)
+#         user = self.request.user
+#         user_cart, _ = Sell.get_user_cart(user=user)
+#         user_cart.on_cart_at = datetime.now(tz=timezone.utc)
+#         if product is not None:
+#             user_cart.products.add(product)
 
-        user_cart.total_cost = user_cart.get_total_cost()
-        user_cart.save()
+#         user_cart.total_cost = user_cart.get_total_cost()
+#         user_cart.save()
 
-        cart_serializer = CartSerializer(user_cart)
-        # Aquí puedes añadir lógica para guardar el carrito si es necesario
-        return Response(
-            cart_serializer.data,
-            status=status.HTTP_200_OK,
-        )
+#         cart_serializer = CartSerializer(user_cart)
+#         # Aquí puedes añadir lógica para guardar el carrito si es necesario
+#         return Response(
+#             cart_serializer.data,
+#             status=status.HTTP_200_OK,
+#         )
 
 
-class RemoveItemCartAPIView(APIView):
-    permission_classes = (IsAuthenticated,)
+# class RemoveItemCartAPIView(APIView):
+#     permission_classes = (IsAuthenticated,)
 
-    def get_cart(self):
-        user = self.request.user
-        user_cart, _ = Sell.get_user_cart(user=user)
-        return user_cart
+#     def get_cart(self):
+#         user = self.request.user
+#         user_cart, _ = Sell.get_user_cart(user=user)
+#         return user_cart
 
-    def post(self, request, *args, **kwargs):
-        data = request.data
-        product = data.get("product", None)
-        user_cart = self.get_cart()
+#     def post(self, request, *args, **kwargs):
+#         data = request.data
+#         product = data.get("product", None)
+#         user_cart = self.get_cart()
 
-        if product is not None:
-            user_cart.products.remove(product)
+#         if product is not None:
+#             user_cart.products.remove(product)
 
-        cart_serializer = CartSerializer(user_cart)
+#         cart_serializer = CartSerializer(user_cart)
 
-        return Response(
-            cart_serializer.data,
-            status=status.HTTP_200_OK,
-        )
+#         return Response(
+#             cart_serializer.data,
+#             status=status.HTTP_200_OK,
+#         )
 
 
 class CheckProductPurchaseView(APIView):
@@ -207,6 +211,82 @@ class CheckProductPurchaseView(APIView):
             {"message": "El producto puede ser añadido al carrito."},
             status=status.HTTP_200_OK,
         )
+
+
+class StartSellView(mixins.CreateModelMixin, GenericViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = CreateSellSerializer
+    queryset = Sell.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+    @action(detail=True, methods=["POST"])
+    def pay(self, request, pk=None):
+        sell: Sell = self.get_object()
+
+        if sell.status == SellStatus.FINISHED:
+            return Response(
+                {"error": _("Venta ya finalizada.")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Validate request data with serializer
+        serializer = ChargePaymentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
+
+        culqi = Culqi()
+        response = culqi.create_charge(sell, **validated_data)
+        status_code = response.status_code
+
+        if status_code == 201:
+            sell_data = response.json()
+            sell.mark_as_paid(sell_data)
+            # Register user products
+            user_products = [
+                UserProduct(user=sell.user, product=product)
+                for product in sell.products.all()
+            ]
+            UserProduct.objects.bulk_create(
+                user_products, ignore_conflicts=True
+            )
+
+            sell.generate_receipt()
+            send_sell_receipt_to_user_email(sell)
+
+            logger.info(
+                f"El usuario {sell.user.username} realizó su compra de manera exitosa: "
+                f"ID de compra {sell.id}"
+            )
+        elif status_code == 200:
+            sell.status = SellStatus.PENDING
+            sell.metadata = response.json()
+            sell.save()
+        else:
+            sell.status = SellStatus.FAILED
+            sell.metadata = response.json()
+            sell.save()
+            logger.error(
+                f"El usuario {sell.user.username} falló su compra: "
+                f"Error de compra {sell.id}"
+            )
+
+        return Response(response.json(), status=status_code)
+
+    @action(
+        detail=True,
+        methods=["POST"],
+        url_name="set-error",
+        url_path="set-error",
+    )
+    def set_error(self, request, pk=None):
+        error = request.data
+        sell = self.get_object()
+        sell.status = SellStatus.FAILED
+        sell.metadata = error
+        sell.save()
+        return Response(status=status.HTTP_200_OK)
 
 
 # TODO: Se descomentará cuando se habilite pasarela
@@ -254,28 +334,6 @@ class DownloadProductDocumentView(APIView):
                 "error": str(error),
             }
             return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
-
-
-class OrderViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
-    queryset = Order.objects.all()
-    serializer_class = OrderSerializer
-
-    def create(self, request, *args, **kwargs):
-        data = request.data.copy()
-        # 10 minutes into the future
-        data["expiration_date"] = int(time.time()) + 600
-
-        serializer = self.get_serializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        order = serializer.save()
-
-        culqi = Culqi()
-        result = culqi.create_order(order)
-
-        return Response(
-            result,
-            status=status.HTTP_201_CREATED,
-        )
 
 
 # TODO: Add tests for this endpoint

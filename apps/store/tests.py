@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 from services.models import Exams, University
-from store.models import Attribute, AttributeOption, Category, Product, Sell
+from store.models import Attribute, AttributeOption, Category, Product
 
 from helpers.choices import ProductTypes
 
@@ -220,40 +220,40 @@ class TestSellProducts(BaseServiceTestCase):
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_success_remove_product_from_user_cart(self):
-        client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION="Token " + self.access)
-        client.post(
-            reverse("store:add-item-cart"),
-            {"product": self.product_1.id},
-        )
+    # def test_success_remove_product_from_user_cart(self):
+    #     client = APIClient()
+    #     client.credentials(HTTP_AUTHORIZATION="Token " + self.access)
+    #     client.post(
+    #         reverse("store:add-item-cart"),
+    #         {"product": self.product_1.id},
+    #     )
 
-        res = client.post(
-            reverse("store:remove-item-cart"),
-            {"product": self.product_1.id},
-        )
+    #     res = client.post(
+    #         reverse("store:remove-item-cart"),
+    #         {"product": self.product_1.id},
+    #     )
 
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
+    #     self.assertEqual(res.status_code, status.HTTP_200_OK)
 
-        user_cart, _ = Sell.get_user_cart(user=self.user)
-        item_in_cart = user_cart.products.filter(id=self.product_1.id).exists()
-        self.assertFalse(item_in_cart)
+    #     user_cart, _ = Sell.get_user_cart(user=self.user)
+    #     item_in_cart = user_cart.products.filter(id=self.product_1.id).exists()
+    #     self.assertFalse(item_in_cart)
 
-    def test_success_remove_package_from_user_cart(self):
-        client = APIClient()
-        client.credentials(HTTP_AUTHORIZATION="Token " + self.access)
-        client.post(
-            reverse("store:add-item-cart"),
-            {"package": self.product_3.id},
-        )
+    # def test_success_remove_package_from_user_cart(self):
+    #     client = APIClient()
+    #     client.credentials(HTTP_AUTHORIZATION="Token " + self.access)
+    #     client.post(
+    #         reverse("store:add-item-cart"),
+    #         {"package": self.product_3.id},
+    #     )
 
-        res = client.post(
-            reverse("store:remove-item-cart"),
-            {"package": self.product_3.id},
-        )
+    #     res = client.post(
+    #         reverse("store:remove-item-cart"),
+    #         {"package": self.product_3.id},
+    #     )
 
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
+    #     self.assertEqual(res.status_code, status.HTTP_200_OK)
 
-        user_cart, _ = Sell.get_user_cart(user=self.user)
-        item_in_cart = user_cart.products.filter(id=self.product_3.id).exists()
-        self.assertFalse(item_in_cart)
+    #     user_cart, _ = Sell.get_user_cart(user=self.user)
+    #     item_in_cart = user_cart.products.filter(id=self.product_3.id).exists()
+    #     self.assertFalse(item_in_cart)

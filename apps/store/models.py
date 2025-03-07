@@ -4,10 +4,13 @@ from decimal import Decimal
 
 from babel.dates import format_date
 from django.contrib.auth.models import User
+from django.core.files.base import ContentFile
 from django.db import models
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.text import slugify
 from django_resized import ResizedImageField
+from weasyprint import HTML
 
 from apps.core.models import StatusModel, TimeStampModel
 from helpers.choices import ProductTypes, SellStatus, TypeGoods
@@ -199,10 +202,15 @@ class Sell(models.Model):
         User, related_name="sells", on_delete=models.CASCADE
     )
 
+    status = models.PositiveIntegerField(
+        choices=SellStatus.choices, default=SellStatus.PENDING
+    )
+
     # Campos para los datos de la persona que paga
     user_name = models.CharField(max_length=255, null=False, blank=True)
     user_last_name = models.CharField(max_length=255, null=False, blank=True)
     user_email = models.EmailField(max_length=255, null=False, blank=True)
+    user_phone_number = models.CharField(max_length=255, null=False, blank=True)
 
     products = models.ManyToManyField(Product, related_name="sells")
     receipt = models.FileField(
@@ -212,14 +220,34 @@ class Sell(models.Model):
 
     # Campos para rellenar los valores de la transacción
     sell_identifier = models.CharField(max_length=255, null=False, blank=True)
-    sell_metadata = models.JSONField(null=False, blank=True, default=dict)
+    metadata = models.JSONField(null=False, blank=True, default=dict)
     paid_at = models.DateTimeField(null=True)
 
+    # Campos para el order
+    order_id = models.CharField(
+        max_length=25, null=True, blank=True, editable=False
+    )
+    order_data = models.JSONField(null=True, blank=True)
+    order_number = models.CharField(
+        max_length=50, unique=True, editable=False, blank=True
+    )
+
+    receipt_number = models.PositiveIntegerField(
+        null=True, blank=True, editable=False
+    )
+
     # TODO: Remove this classmethod because it is not used
-    # remove endpoint that use this method too.
-    @classmethod
-    def get_user_cart(cls, user: User):
-        return cls.objects.get_or_create(user=user, status=SellStatus.ON_CART)
+    # Delete this commented classmethod because it is not used anywhere.
+    # @classmethod
+    # def get_user_cart(cls, user: User):
+    #     return cls.objects.get_or_create(user=user, status=SellStatus.ON_CART)
+
+    def save(self, *args, **kwargs):
+        # Generar order_number solo si no existe
+        if not self.order_number:
+            self.order_number = f"ORD-{uuid.uuid4().hex[:10].upper()}"
+
+        super().save(*args, **kwargs)
 
     def get_total_cost(self) -> Decimal:
         total_cost = Decimal("0.00")
@@ -227,6 +255,15 @@ class Sell(models.Model):
             total_cost += product.price
 
         return total_cost
+
+    def mark_as_paid(self, sell_data):
+        """Marca la venta como pagada y asigna el número del comprobante."""
+        self.status = SellStatus.FINISHED
+        last_receipt = Sell.objects.filter(status=SellStatus.FINISHED).count()
+        self.receipt_number = last_receipt + 1
+        self.paid_at = timezone.now()
+        self.metadata = sell_data
+        self.save()
 
     @property
     def to_receipt_json(self):
@@ -250,11 +287,11 @@ class Sell(models.Model):
         # Construct the JSON response
         receipt = {
             "company_name": "Edukar",
-            "receipt_number": f"EDK-{timezone.now().year}-{str(self.id).zfill(8)}",
+            "receipt_number": f"EDK-{timezone.now().year}-{str(self.receipt_number).zfill(8)}",
             "customer": {
-                "first_name": self.user.first_name,
-                "last_name": self.user.last_name,
-                "email": self.user.email,
+                "first_name": self.user_name,
+                "last_name": self.user_last_name,
+                "email": self.user_email,
             },
             "products": product_list,
             "total": self.total_cost,
@@ -263,16 +300,16 @@ class Sell(models.Model):
 
         return receipt
 
+    def generate_receipt(self):
+        receipt = self.to_receipt_json
+        html_string = render_to_string("store/invoice_template.html", receipt)
+        # Generate the PDF
+        html = HTML(string=html_string)
+        pdf_content = html.write_pdf()
 
-class Order(models.Model):
-    amount = models.IntegerField()
-    description = models.TextField()
-    currency_code = models.CharField(max_length=10)
-    expiration_date = models.IntegerField(null=True, blank=True)
-    client_details = models.JSONField(null=True, blank=True, default=dict)
-
-    def __str__(self):
-        return f"Order {self.order_number} - {self.amount} {self.currency_code}"
+        # Save the PDF in the receipt field
+        pdf_filename = f"receipt_{timezone.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        self.receipt.save(pdf_filename, ContentFile(pdf_content))
 
 
 class Claim(models.Model):
