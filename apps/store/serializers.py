@@ -95,9 +95,19 @@ class ProductSerializer(serializers.ModelSerializer):
 class PrivateProductSerializer(serializers.ModelSerializer):
     """Serializer to use for user products purchased"""
 
+    date = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
-        fields = ("slug", "name", "description", "source", "type")
+        fields = ("slug", "name", "description", "source", "date", "type")
+
+    def get_date(self, obj):
+        # obj is a Product instance, so we need to find the corresponding UserProduct
+        user = self.context["request"].user
+        user_product = UserProduct.objects.filter(
+            user=user, product=obj
+        ).first()
+        return user_product.date if user_product else None
 
 
 class ProductCreateCommentSerializer(serializers.ModelSerializer):

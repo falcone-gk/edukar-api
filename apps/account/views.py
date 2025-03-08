@@ -112,15 +112,21 @@ class UserProductsView(APIView):
         category = Category.get_solutionary_category()
 
         # Filter UserProduct by the requesting user and the category
-        user_products = UserProduct.objects.filter(
-            user=request.user, product__category=category
-        ).select_related("product")
+        user_products = (
+            UserProduct.objects.filter(
+                user=request.user, product__category=category
+            )
+            .select_related("product")
+            .order_by("-id")
+        )
 
         # Extract the products
         products = [user_product.product for user_product in user_products]
 
         # Serialize the products
-        serializer = PrivateProductSerializer(products, many=True)
+        serializer = PrivateProductSerializer(
+            products, many=True, context={"request": request}
+        )
 
         return Response(serializer.data)
 
