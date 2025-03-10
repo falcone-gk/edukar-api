@@ -302,14 +302,6 @@ class StartSellView(mixins.CreateModelMixin, GenericViewSet):
 
         current_order_state = data.get("state")
 
-        if current_order_state == "paid":
-            sell.mark_as_paid()
-            assign_product_to_user(sell)
-            logger.info(
-                f"El usuario {sell.user.username} realizó su compra de manera exitosa: "
-                f"ID de compra {sell.id}"
-            )
-
         message = {"state": current_order_state}
         return Response(message, status=status.HTTP_200_OK)
 
