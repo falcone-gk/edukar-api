@@ -27,4 +27,5 @@ urlpatterns = [
     path("dashboard/", include("dashboard.urls")),
     path("store/", include("store.urls")),
     path("services/", include("services.urls")),
+    path("webhooks/", include("webhooks.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

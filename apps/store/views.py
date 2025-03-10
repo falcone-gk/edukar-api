@@ -30,6 +30,7 @@ from store.tasks import send_sell_receipt_to_user_email, send_user_claim
 
 from helpers.choices import ProductTypes, SellStatus
 from helpers.responses import get_streaming_response
+from utils.products import assign_product_to_user
 from utils.services.cloudflare import Cloudflare
 from utils.services.culqi import Culqi
 
@@ -245,28 +246,7 @@ class StartSellView(mixins.CreateModelMixin, GenericViewSet):
             sell.mark_as_paid(sell_data)
 
             # Register user products
-            user = sell.user
-            products = sell.products.all()
-            user_products = []
-            for product in products:
-                if product.type == ProductTypes.PACKAGE:
-                    # If the product is a package, add its items instead
-                    package_items = product.items.all()
-                    user_products.extend(
-                        [
-                            UserProduct(user=user, product=item)
-                            for item in package_items
-                        ]
-                    )
-                else:
-                    # Add non-package products directly
-                    user_products.append(
-                        UserProduct(user=user, product=product)
-                    )
-
-            UserProduct.objects.bulk_create(user_products)
-            sell.generate_receipt()
-            send_sell_receipt_to_user_email(sell)
+            assign_product_to_user(sell)
 
             logger.info(
                 f"El usuario {sell.user.username} realizó su compra de manera exitosa: "
@@ -304,6 +284,34 @@ class StartSellView(mixins.CreateModelMixin, GenericViewSet):
         sell.metadata = error
         sell.save()
         return Response(status=status.HTTP_200_OK)
+
+    @action(
+        detail=True,
+        methods=["GET"],
+        url_name="consult-order",
+        url_path="consult-order",
+    )
+    def consult_order(self, request, pk=None):
+        sell: Sell = self.get_object()
+        culqi = Culqi()
+        data = culqi.consult_order(sell.order_id)
+        error = data.get("error", None)
+
+        if error:
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+
+        current_order_state = data.get("state")
+
+        if current_order_state == "paid":
+            sell.mark_as_paid()
+            assign_product_to_user(sell)
+            logger.info(
+                f"El usuario {sell.user.username} realizó su compra de manera exitosa: "
+                f"ID de compra {sell.id}"
+            )
+
+        message = {"state": current_order_state}
+        return Response(message, status=status.HTTP_200_OK)
 
 
 # TODO: Se descomentará cuando se habilite pasarela

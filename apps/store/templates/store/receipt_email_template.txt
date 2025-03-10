@@ -1,3 +1,5 @@
 Hola, {{ user }}:
 
 Tu compra del día {{ date }} ha sido realizada de manera exitosa. Te adjuntamos la boleta de tu compra en este correo.
+
+Para ver tu historial de compras ingresa a tu perfil en el apartado de "Mis compras". Si has realizado la compra de un solucionario, podrás ver tu(s) producto(s) en tu perfil, en el apartado de "Mis solucionarios".

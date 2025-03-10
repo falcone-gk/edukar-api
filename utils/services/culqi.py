@@ -70,3 +70,22 @@ class Culqi:
         except requests.RequestException as e:
             logger.error(f"Error al crear orden: {str(e)}")
             return {"error": str(e)}
+
+    def consult_order(self, order_id):
+        url = f"{self.base_url}/orders/{order_id}"
+        try:
+            response = requests.get(url, headers=self.headers)
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError:
+            error_data = response.json()
+            merchant_message = error_data.get("merchant_message")
+            logger.error(f"Error al consultar orden: {merchant_message}")
+            return {
+                "error": merchant_message,
+                "status_code": response.status_code,
+                "response_text": error_data.get("user_message"),
+            }
+        except requests.RequestException as e:
+            logger.error(f"Error al consultar orden: {str(e)}")
+            return {"error": str(e)}
