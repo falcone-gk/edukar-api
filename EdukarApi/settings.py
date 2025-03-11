@@ -232,9 +232,18 @@ LOGGING = {
             "encoding": "utf-8",  # ensure file is written with utf-8 encoding
             "delay": True,  # open file only when needed
         },
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
     },
     "loggers": {
-        "": {"handlers": ["file"], "level": "INFO", "propagate": True},
+        "": {
+            "handlers": ["file", "console"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
     },
 }
 
