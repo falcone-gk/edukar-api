@@ -1,6 +1,8 @@
 import json
 import logging
 
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import AllowAny
@@ -14,6 +16,7 @@ from utils.products import assign_product_to_user
 logger = logging.getLogger(__name__)
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class ChangeOrderWebhook(CreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = WebhooksSerializer
@@ -22,7 +25,11 @@ class ChangeOrderWebhook(CreateAPIView):
     def post(self, request):
         payload = request.data.copy()
 
+        # Registra el payload recibido para depuración
+        logger.info(f"Payload recibido: {payload}")
+
         if payload.get("type") != "order.status.changed":
+            logger.error(f"Tipo de webhook no válido: {payload.get('type')}")
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         WebhooksEvent.objects.create(
