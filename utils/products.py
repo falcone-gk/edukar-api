@@ -1,5 +1,6 @@
 from account.models import UserProduct
 from store.models import Sell
+from store.tasks import send_sell_receipt_to_user_email
 
 from helpers.choices import ProductTypes
 
@@ -24,4 +25,4 @@ def assign_product_to_user(sell: Sell):
     UserProduct.objects.bulk_create(user_products)
     sell.generate_receipt()
     sell.save()
-    # send_sell_receipt_to_user_email(sell)
+    send_sell_receipt_to_user_email(sell)
