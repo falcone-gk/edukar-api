@@ -88,21 +88,6 @@ class UpdateUserProfileAPIView(generics.UpdateAPIView):
         return response
 
 
-# class UploadUserImageAPIView(APIView):
-#
-#     serializer_class = UploadUserImageSerializer
-#     permission_classes = (IsAuthenticated,)
-#
-#     def post(self, request, *args, **kwargs):
-#
-#         context = { 'request': request }
-#         serializer = UploadUserImageSerializer(data=request.data, context=context)
-#         serializer.is_valid(raise_exception=True)
-#         new_instance = serializer.save()
-#         instance_serializer = UrlUserImageSerializer(new_instance)
-#         return Response(instance_serializer.data, status=status.HTTP_201_CREATED)
-
-
 # TODO: Add test for this endpoint
 class UserProductsView(APIView):
     permission_classes = [IsAuthenticated]

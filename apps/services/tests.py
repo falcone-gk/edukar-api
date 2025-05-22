@@ -43,7 +43,7 @@ class BaseServiceTestCase(TestCase):
             # "title": "UNSA Examen de Admisión Fase II",
             "cover": "test.png",
             "source_exam": "http//:example.com",
-            "source_video_solution": "http//:video.example.com",
+            "source_video_solution": "http://video.example.com",
         }
         title = "UNSA Examen de Admisión Fase II"
 
@@ -99,7 +99,8 @@ class TestCreateExams(BaseServiceTestCase):
             "title": "UNSA Examen de Admisión Fase II",
             "cover": "test.png",
             "source_exam": "http//:example.com",
-            "source_video_solution": "http//:video.example.com",
+            "source_video_solution": "http://video.example.com",
+            "slug": "unsa-examen-de-admision-fase-ii",
         }
         return super().setUp()
 
@@ -254,9 +255,10 @@ class TestRetrieveExam(BaseServiceTestCase):
         # Assertions
         self.assertEqual(response.status_code, 401)
 
-    @patch("utils.services.cloudflare.Cloudflare.get_document")
-    def test_error_download_r2_bucket_failed(self, mock_get_exam):
-        mock_get_exam.side_effect = ValueError("random error")
+    @patch("utils.services.cloudflare.Cloudflare")
+    def test_error_download_r2_bucket_failed(self, mock_cloudflare):
+        mock_instance = mock_cloudflare.return_value
+        mock_instance.get_document.side_effect = ValueError("random error")
         exam = Exams.objects.all().latest("pk")
 
         client = APIClient()

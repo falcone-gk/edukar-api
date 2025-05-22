@@ -207,45 +207,54 @@ HUEY = {
     },
 }
 
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "verbose": {
-            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
-            "style": "{",
+RUNNING_TESTS = "test" in sys.argv
+
+if RUNNING_TESTS:
+    LOGGING = {
+        "version": 1,
+        "disable_existing_loggers": True,  # Desactiva todos los loggers durante tests
+    }
+
+else:
+    LOGGING = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "verbose": {
+                "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+                "style": "{",
+            },
+            "simple": {
+                "format": "{levelname} {message}",
+                "style": "{",
+            },
         },
-        "simple": {
-            "format": "{levelname} {message}",
-            "style": "{",
+        "handlers": {
+            "file": {
+                "level": "INFO",
+                "formatter": "verbose",
+                "filename": os.path.join(BASE_DIR, "logs", "logs.log"),
+                "class": "logging.handlers.TimedRotatingFileHandler",
+                "when": "midnight",
+                "interval": 1,
+                "backupCount": 7,  # keep this number of rotated files
+                "encoding": "utf-8",  # ensure file is written with utf-8 encoding
+                "delay": True,  # open file only when needed
+            },
+            "console": {
+                "level": "DEBUG",
+                "class": "logging.StreamHandler",
+                "formatter": "simple",
+            },
         },
-    },
-    "handlers": {
-        "file": {
-            "level": "INFO",
-            "formatter": "verbose",
-            "filename": os.path.join(BASE_DIR, "logs", "logs.log"),
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "when": "midnight",
-            "interval": 1,
-            "backupCount": 7,  # keep this number of rotated files
-            "encoding": "utf-8",  # ensure file is written with utf-8 encoding
-            "delay": True,  # open file only when needed
+        "loggers": {
+            "": {
+                "handlers": ["file", "console"],
+                "level": "DEBUG",
+                "propagate": True,
+            },
         },
-        "console": {
-            "level": "DEBUG",
-            "class": "logging.StreamHandler",
-            "formatter": "simple",
-        },
-    },
-    "loggers": {
-        "": {
-            "handlers": ["file", "console"],
-            "level": "DEBUG",
-            "propagate": True,
-        },
-    },
-}
+    }
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/

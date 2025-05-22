@@ -1,5 +1,6 @@
 import json
 
+from account.models import UserProduct
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
@@ -38,7 +39,7 @@ class BaseServiceTestCase(TestCase):
         exam_data = {
             "cover": "test.png",
             "source_exam": "http//:example.com",
-            "source_video_solution": "http//:video.example.com",
+            "source_video_solution": "http://video.example.com",
         }
         title = "UNSA Examen de Admisión Fase II"
 
@@ -174,8 +175,8 @@ class TestSellProducts(BaseServiceTestCase):
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION="Token " + self.access)
         res = client.post(
-            reverse("store:add-item-cart"),
-            {"product": self.product_1.id},
+            reverse("store:cart-check-product"),
+            {"identifier": self.product_1.identifier},
         )
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -184,76 +185,36 @@ class TestSellProducts(BaseServiceTestCase):
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION="Token " + self.access)
         res = client.post(
-            reverse("store:add-item-cart"),
-            {"package": self.product_3.id},
+            reverse("store:cart-check-product"),
+            {"identifier": self.product_3.identifier},
         )
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
-    def test_error_product_already_in_cart(self):
+    def test_error_product_already_bought(self):
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION="Token " + self.access)
-        client.post(
-            reverse("store:add-item-cart"),
-            {"product": self.product_1.id},
-        )
+
+        # Asignamos un producto a un usuario
+        UserProduct.objects.create(user=self.user, product=self.product_1)
 
         res = client.post(
-            reverse("store:add-item-cart"),
-            {"product": self.product_1.id},
+            reverse("store:cart-check-product"),
+            {"identifier": self.product_1.identifier},
         )
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_error_package_has_one_purchase_product_already_in_cart(self):
+    def test_error_package_has_one_purchase_product_already_bought(self):
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION="Token " + self.access)
-        client.post(
-            reverse("store:add-item-cart"),
-            {"product": self.product_1.id},
-        )
+
+        # Asignamos un producto a un usuario
+        UserProduct.objects.create(user=self.user, product=self.product_1)
 
         res = client.post(
-            reverse("store:add-item-cart"),
-            {"product": self.product_3.id},
+            reverse("store:cart-check-product"),
+            {"identifier": self.product_3.identifier},
         )
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-
-    # def test_success_remove_product_from_user_cart(self):
-    #     client = APIClient()
-    #     client.credentials(HTTP_AUTHORIZATION="Token " + self.access)
-    #     client.post(
-    #         reverse("store:add-item-cart"),
-    #         {"product": self.product_1.id},
-    #     )
-
-    #     res = client.post(
-    #         reverse("store:remove-item-cart"),
-    #         {"product": self.product_1.id},
-    #     )
-
-    #     self.assertEqual(res.status_code, status.HTTP_200_OK)
-
-    #     user_cart, _ = Sell.get_user_cart(user=self.user)
-    #     item_in_cart = user_cart.products.filter(id=self.product_1.id).exists()
-    #     self.assertFalse(item_in_cart)
-
-    # def test_success_remove_package_from_user_cart(self):
-    #     client = APIClient()
-    #     client.credentials(HTTP_AUTHORIZATION="Token " + self.access)
-    #     client.post(
-    #         reverse("store:add-item-cart"),
-    #         {"package": self.product_3.id},
-    #     )
-
-    #     res = client.post(
-    #         reverse("store:remove-item-cart"),
-    #         {"package": self.product_3.id},
-    #     )
-
-    #     self.assertEqual(res.status_code, status.HTTP_200_OK)
-
-    #     user_cart, _ = Sell.get_user_cart(user=self.user)
-    #     item_in_cart = user_cart.products.filter(id=self.product_3.id).exists()
-    #     self.assertFalse(item_in_cart)
