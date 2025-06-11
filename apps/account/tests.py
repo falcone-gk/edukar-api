@@ -15,7 +15,9 @@ from PIL import Image
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
-from store.models import Category, Product
+from store.models import Category, Product, Sell
+
+from helpers.choices import SellStatus
 
 # Create your tests here.
 
@@ -915,5 +917,67 @@ class TestUserProductsView(TestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {new_token.key}")
 
         response = self.client.get(reverse("account:user-products"))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+
+
+class TestUserPurchasesView(BaseSetup):
+    def setUp(self):
+        super().setUp()
+        self.client = APIClient()
+
+        # Create some products
+        self.product1 = Product.objects.create(
+            name="Product 1", price=100, slug="product-1"
+        )
+        self.product2 = Product.objects.create(
+            name="Product 2", price=200, slug="product-2"
+        )
+
+        # Create purchases for test user
+        self.purchase1 = Sell.objects.create(
+            user=self.user, total_cost=100, status=SellStatus.FINISHED
+        )
+        self.purchase1.products.add(self.product1)
+
+        self.purchase2 = Sell.objects.create(
+            user=self.user, total_cost=200, status=SellStatus.FINISHED
+        )
+        self.purchase2.products.add(self.product2)
+
+        # Create purchase for another user
+        self.other_purchase = Sell.objects.create(
+            user=self.user2, total_cost=300, status=SellStatus.FINISHED
+        )
+        self.other_purchase.products.add(self.product1, self.product2)
+
+    def test_get_user_purchases_authenticated(self):
+        """Test authenticated user can retrieve their purchases"""
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.access}")
+        response = self.client.get(reverse("account:user-purchases"))
+        data = json.loads(response.content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(data), 2)
+        # Verify only the current user's purchases are returned
+        # TODO: Revisar la estructura de la data que retorna el endpoint
+        # purchase_ids = [p["products"][0]["id"] for p in data]
+        # self.assertIn(self.purchase1.id, purchase_ids)
+        # self.assertIn(self.purchase2.id, purchase_ids)
+        # self.assertNotIn(self.other_purchase.id, purchase_ids)
+
+    def test_get_user_purchases_unauthenticated(self):
+        """Test unauthenticated access is denied"""
+        response = self.client.get(reverse("account:user-purchases"))
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_user_purchases_empty(self):
+        """Test empty response when user has no purchases"""
+        # Delete all purchases for test user
+        Sell.objects.filter(user=self.user).delete()
+
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.access}")
+        response = self.client.get(reverse("account:user-purchases"))
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)

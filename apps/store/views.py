@@ -133,58 +133,6 @@ class ProductViewSet(ReadOnlyModelViewSet):
         )
 
 
-# class AddItemCartView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def post(self, request, *args, **kwargs):
-#         serializer = AddCartValidationSerializer(
-#             data=request.data, context={"request": request}
-#         )
-#         serializer.is_valid(raise_exception=True)
-#         data = serializer.data
-#         product = data.get("product", None)
-
-#         user = self.request.user
-#         user_cart, _ = Sell.get_user_cart(user=user)
-#         user_cart.on_cart_at = datetime.now(tz=timezone.utc)
-#         if product is not None:
-#             user_cart.products.add(product)
-
-#         user_cart.total_cost = user_cart.get_total_cost()
-#         user_cart.save()
-
-#         cart_serializer = CartSerializer(user_cart)
-#         # Aquí puedes añadir lógica para guardar el carrito si es necesario
-#         return Response(
-#             cart_serializer.data,
-#             status=status.HTTP_200_OK,
-#         )
-
-
-# class RemoveItemCartAPIView(APIView):
-#     permission_classes = (IsAuthenticated,)
-
-#     def get_cart(self):
-#         user = self.request.user
-#         user_cart, _ = Sell.get_user_cart(user=user)
-#         return user_cart
-
-#     def post(self, request, *args, **kwargs):
-#         data = request.data
-#         product = data.get("product", None)
-#         user_cart = self.get_cart()
-
-#         if product is not None:
-#             user_cart.products.remove(product)
-
-#         cart_serializer = CartSerializer(user_cart)
-
-#         return Response(
-#             cart_serializer.data,
-#             status=status.HTTP_200_OK,
-#         )
-
-
 class CheckProductPurchaseView(APIView):
     permission_classes = [IsAuthenticated]
 

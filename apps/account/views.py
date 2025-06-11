@@ -88,7 +88,6 @@ class UpdateUserProfileAPIView(generics.UpdateAPIView):
         return response
 
 
-# TODO: Add test for this endpoint
 class UserProductsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -116,7 +115,6 @@ class UserProductsView(APIView):
         return Response(serializer.data)
 
 
-# TODO: Add test for this endpoint
 class UserPurchasesView(APIView):
     permission_classes = [IsAuthenticated]
 

@@ -22,13 +22,18 @@ class Cloudflare:
         self.bucket_name = settings.EXAMS_BUCKET_NAME
 
         # Configure the S3 client for Cloudflare R2
-        self.s3_client = boto3.client(
-            "s3",
-            endpoint_url=f"https://{self.account_id}.r2.cloudflarestorage.com",
-            aws_access_key_id=self.access_key_id,
-            aws_secret_access_key=self.secret_access_key,
-            config=Config(signature_version="s3v4"),
-        )
+        self.s3_client = self._create_client()
+
+    def _create_client(self):
+        environment = settings.ENVIRONMENT
+        if environment == "PROD":
+            return boto3.client(
+                "s3",
+                endpoint_url=f"https://{self.account_id}.r2.cloudflarestorage.com",
+                aws_access_key_id=self.access_key_id,
+                aws_secret_access_key=self.secret_access_key,
+                config=Config(signature_version="s3v4"),
+            )
 
     def get_document(self, document: str):
         logger.info(f"El usuario '{self.user}' quiere acceder a '{document}'")
