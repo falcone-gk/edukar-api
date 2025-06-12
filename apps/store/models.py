@@ -229,6 +229,7 @@ class Sell(models.Model):
     )
     order_data = models.JSONField(null=True, blank=True)
     order_number = models.CharField(max_length=50, editable=False, blank=True)
+    order_at = models.DateTimeField(auto_now_add=True, null=True)
 
     receipt_number = models.PositiveIntegerField(
         null=True, blank=True, editable=False

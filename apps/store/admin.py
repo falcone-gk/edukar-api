@@ -94,6 +94,7 @@ class SellAdmin(admin.ModelAdmin):
         "total_cost",
         "paid_at",
         "order_id",
+        "order_at",
     )
     list_filter = ("status", "paid_at")
     search_fields = (
