@@ -123,9 +123,11 @@ class UserPurchasesView(APIView):
     # TODO: Agregar test que verifique el filtro de compras
     def get(self, request):
         # Filter the purchases for the authenticated user
-        purchases = Sell.objects.filter(
-            user=request.user, status=SellStatus.FINISHED
-        ).prefetch_related("products")
+        purchases = (
+            Sell.objects.filter(user=request.user, status=SellStatus.FINISHED)
+            .order_by("-paid_at")
+            .prefetch_related("products")
+        )
 
         # Serialize the purchase data
         serializer = SellSerializer(purchases, many=True)
