@@ -15,6 +15,8 @@ from rest_framework.response import Response
 from store.models import Category, Sell
 from store.serializers import PrivateProductSerializer, SellSerializer
 
+from helpers.choices import SellStatus
+
 
 # Create your views here.
 class UserByTokenAPIView(views.APIView):
@@ -118,11 +120,12 @@ class UserProductsView(APIView):
 class UserPurchasesView(APIView):
     permission_classes = [IsAuthenticated]
 
+    # TODO: Agregar test que verifique el filtro de compras
     def get(self, request):
         # Filter the purchases for the authenticated user
-        purchases = Sell.objects.filter(user=request.user).prefetch_related(
-            "products"
-        )
+        purchases = Sell.objects.filter(
+            user=request.user, status=SellStatus.FINISHED
+        ).prefetch_related("products")
 
         # Serialize the purchase data
         serializer = SellSerializer(purchases, many=True)
