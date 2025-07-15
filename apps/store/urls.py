@@ -20,7 +20,12 @@ urlpatterns = [
         views.CategoryFiltersAPIView.as_view(),
         name="category-filters",
     ),
-    path("payment", views.UserProductBulkCreateView.as_view(), name="payment"),
+    # path("payment", views.UserProductBulkCreateView.as_view(), name="payment"),
+    path(
+        "invoice/send/<int:sell_id>/",
+        views.InvoiceSendAPIView.as_view(),
+        name="send_invoice_email",
+    ),
     path(
         "document/download/<slug:slug>",
         views.DownloadProductDocumentView.as_view(),
@@ -29,4 +34,5 @@ urlpatterns = [
     path(
         "lreclamaciones", views.ClaimCreateView.as_view(), name="lreclamaciones"
     ),
+    path("invoice/<int:sell_id>/", views.view_invoice, name="view_invoice"),
 ]

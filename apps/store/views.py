@@ -4,6 +4,7 @@ from account.models import UserProduct
 from account.permissions import IsProductOwner
 from core.paginators import CustomPagination
 from django.http import Http404
+from django.shortcuts import render
 from django.utils.translation import gettext as _
 from rest_framework import mixins, status
 from rest_framework.decorators import action
@@ -24,7 +25,6 @@ from store.serializers import (
     CreateSellSerializer,
     ProductCreateCommentSerializer,
     ProductSerializer,
-    UserProductBulkCreateSerializer,
 )
 from store.tasks import send_sell_receipt_to_user_email, send_user_claim
 
@@ -255,22 +255,22 @@ class StartSellView(mixins.CreateModelMixin, GenericViewSet):
 
 
 # TODO: Se descomentará cuando se habilite pasarela
-class UserProductBulkCreateView(APIView):
-    permission_classes = [IsAuthenticated]
+# class UserProductBulkCreateView(APIView):
+#     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        serializer = UserProductBulkCreateSerializer(
-            data=request.data, context={"request": request}
-        )
-        serializer.is_valid(raise_exception=True)
-        sell = serializer.save()
+#     def post(self, request, *args, **kwargs):
+#         serializer = UserProductBulkCreateSerializer(
+#             data=request.data, context={"request": request}
+#         )
+#         serializer.is_valid(raise_exception=True)
+#         sell = serializer.save()
 
-        send_sell_receipt_to_user_email(sell)
+#         send_sell_receipt_to_user_email(sell)
 
-        return Response(
-            {"receipt_url": sell.receipt.url},
-            status=status.HTTP_201_CREATED,
-        )
+#         return Response(
+#             {"receipt_url": sell.receipt.url},
+#             status=status.HTTP_201_CREATED,
+#         )
 
 
 # TODO: Add test for this view
@@ -309,3 +309,52 @@ class ClaimCreateView(APIView):
         claim = serializer.save()
         send_user_claim(claim)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+def view_invoice(request, sell_id):
+    """
+    Vista para mostrar el HTML del recibo de una venta.
+    :param request: HttpRequest
+    :param sell_id: ID de la venta
+    :return: HttpResponse con el HTML renderizado
+    """
+    sell = get_object_or_404(Sell, id=sell_id)
+    receipt_data = sell.to_receipt_json
+    return render(request, "store/invoice_template.html", receipt_data)
+
+
+# Este es un endpoint temporal en el caso que no se haya enviado correctamente el correo
+class InvoiceSendAPIView(APIView):
+    """
+    APIView para generar un PDF del recibo y enviarlo por correo electrónico.
+    """
+
+    def get(self, request, sell_id):
+        """
+        Genera el PDF del recibo y lo envía por correo.
+        :param request: HttpRequest
+        :param sell_id: ID de la venta
+        :return: Response con el resultado de la operación
+        """
+        sell = get_object_or_404(Sell, id=sell_id)
+
+        # Verifica si la venta está marcada como pagada
+        if sell.status != SellStatus.FINISHED:
+            return Response(
+                {"error": "La venta no está marcada como pagada."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Genera el PDF del recibo (esto ya se hace en el método `generate_receipt` del modelo)
+        sell.generate_receipt()
+
+        # Envía el correo electrónico con el PDF adjunto
+        send_sell_receipt_to_user_email(sell)
+        logger.info(
+            f"Se ha enviado el correo al usuario {sell.user.username}, con ID de compra '{sell.id}'"
+        )
+
+        return Response(
+            {"message": "El recibo ha sido generado y enviado por correo."},
+            status=status.HTTP_200_OK,
+        )

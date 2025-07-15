@@ -8,7 +8,7 @@
         margin: 0;
         padding: 0;
         box-sizing: border-box;
-        font-family: Arial, sans-serif; /* Fallback font for better rendering */
+        font-family: Arial, sans-serif;
       }
 
       body {
@@ -22,7 +22,7 @@
         max-width: 800px;
         margin: 0 auto;
         padding: 20px;
-        border: 1px solid #e0e0e0;
+        position: relative;
       }
 
       .header {
@@ -54,12 +54,12 @@
       }
 
       .info-grid {
-        display: block; /* Simplified to avoid unsupported grid */
+        display: block;
       }
 
       .info-item {
         display: inline-block;
-        width: 49%; /* Two columns */
+        width: 49%;
         margin-bottom: 10px;
         vertical-align: top;
       }
@@ -108,10 +108,16 @@
         border-top: 2px solid #e0e0e0;
       }
 
-      .note {
-        margin-top: 12px;
-        text-align: left;
+      footer {
+        margin-top: 40px;
+        padding-top: 10px;
+        border-top: 1px solid #e0e0e0;
         font-size: 12px;
+        text-align: left;
+      }
+
+      footer p {
+        font-size: 10px;
       }
     </style>
   </head>
@@ -125,6 +131,11 @@
             alt="Logo de Edukar"
             class="logo-svg"
           />
+          <div style="font-size: 12px; margin-top: 10px">
+            <p>RUC: 10462656187</p>
+            <p>Nombre Comercial: Edukar</p>
+            <p>Dirección Comercial: Urb. Juan XXIII LT. 10 Mz. B Dpto. C3</p>
+          </div>
         </div>
         <div class="receipt-number">Recibo #{{ receipt_number }}</div>
       </div>
@@ -175,6 +186,13 @@
         </table>
         <div class="total">Total: S/{{ total }}</div>
       </div>
+
+      <!-- Footer -->
+      <footer>
+        <p>
+          Es parte de nuestro compromiso atenderlo cada día mejor; por lo tanto, si bien este comprobante no es oficial, puede ser utilizado para cualquier consulta o reclamo que desee efectuar, puede recurrir a nuestra línea de celular 924271370.
+        </p>
+      </footer>
     </div>
   </body>
 </html>

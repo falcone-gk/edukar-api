@@ -171,110 +171,110 @@ class ProductCreateCommentSerializer(serializers.ModelSerializer):
 #         )
 
 
-class UserProductBulkCreateSerializer(serializers.Serializer):
-    products = serializers.ListField(
-        child=serializers.PrimaryKeyRelatedField(
-            queryset=Product.objects.all()
-        ),
-        allow_empty=False,
-    )
-    first_name = serializers.CharField(max_length=255, allow_blank=False)
-    last_name = serializers.CharField(max_length=255, allow_blank=False)
-    email = serializers.EmailField(max_length=255, allow_blank=False)
-    token_id = serializers.CharField(max_length=25, allow_blank=False)
+# class UserProductBulkCreateSerializer(serializers.Serializer):
+#     products = serializers.ListField(
+#         child=serializers.PrimaryKeyRelatedField(
+#             queryset=Product.objects.all()
+#         ),
+#         allow_empty=False,
+#     )
+#     first_name = serializers.CharField(max_length=255, allow_blank=False)
+#     last_name = serializers.CharField(max_length=255, allow_blank=False)
+#     email = serializers.EmailField(max_length=255, allow_blank=False)
+#     token_id = serializers.CharField(max_length=25, allow_blank=False)
 
-    def validate_products(self, products):
-        user = self.context["request"].user
+#     def validate_products(self, products):
+#         user = self.context["request"].user
 
-        for product in products:
-            UserProduct.validate_product_purchase(user, product)
+#         for product in products:
+#             UserProduct.validate_product_purchase(user, product)
 
-        return products
+#         return products
 
-    def create(self, validated_data):
-        user = self.context["request"].user
-        user_name = validated_data["first_name"]
-        user_last_name = validated_data["last_name"]
-        user_email = validated_data["email"]
-        token_id = validated_data["token_id"]
+#     def create(self, validated_data):
+#         user = self.context["request"].user
+#         user_name = validated_data["first_name"]
+#         user_last_name = validated_data["last_name"]
+#         user_email = validated_data["email"]
+#         token_id = validated_data["token_id"]
 
-        products = validated_data["products"]
-        user_products = []
+#         products = validated_data["products"]
+#         user_products = []
 
-        for product in products:
-            if product.type == ProductTypes.PACKAGE:
-                # If the product is a package, add its items instead
-                package_items = product.items.all()
-                user_products.extend(
-                    [
-                        UserProduct(user=user, product=item)
-                        for item in package_items
-                    ]
-                )
-            else:
-                # Add non-package products directly
-                user_products.append(UserProduct(user=user, product=product))
+#         for product in products:
+#             if product.type == ProductTypes.PACKAGE:
+#                 # If the product is a package, add its items instead
+#                 package_items = product.items.all()
+#                 user_products.extend(
+#                     [
+#                         UserProduct(user=user, product=item)
+#                         for item in package_items
+#                     ]
+#                 )
+#             else:
+#                 # Add non-package products directly
+#                 user_products.append(UserProduct(user=user, product=product))
 
-        try:
-            with transaction.atomic():
-                # Bulk create UserProduct entries
-                UserProduct.objects.bulk_create(user_products)
+#         try:
+#             with transaction.atomic():
+#                 # Bulk create UserProduct entries
+#                 UserProduct.objects.bulk_create(user_products)
 
-                # Obteniendo precio total
-                total_cost = Decimal("0.00")
-                for prod in products:
-                    total_cost += prod.price
+#                 # Obteniendo precio total
+#                 total_cost = Decimal("0.00")
+#                 for prod in products:
+#                     total_cost += prod.price
 
-                # Create Sell instance and link products
-                sell = Sell.objects.create(
-                    user=user,
-                    paid_at=timezone.now(),
-                    total_cost=total_cost,
-                    user_name=user_name,
-                    user_last_name=user_last_name,
-                    user_email=user_email,
-                )
-                sell.products.add(*products)
+#                 # Create Sell instance and link products
+#                 sell = Sell.objects.create(
+#                     user=user,
+#                     paid_at=timezone.now(),
+#                     total_cost=total_cost,
+#                     user_name=user_name,
+#                     user_last_name=user_last_name,
+#                     user_email=user_email,
+#                 )
+#                 sell.products.add(*products)
 
-                # generate the pdf for the receipt
-                receipt_data = sell.to_receipt_json
-                html_string = render_to_string(
-                    "store/invoice_template.html", receipt_data
-                )
-                # Generate the PDF
-                html = HTML(string=html_string)
-                pdf_content = html.write_pdf()
+#                 # generate the pdf for the receipt
+#                 receipt_data = sell.to_receipt_json
+#                 html_string = render_to_string(
+#                     "store/invoice_template.html", receipt_data
+#                 )
+#                 # Generate the PDF
+#                 html = HTML(string=html_string)
+#                 pdf_content = html.write_pdf()
 
-                # Save the PDF in the receipt field
-                pdf_filename = (
-                    f"receipt_{timezone.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-                )
-                sell.receipt.save(pdf_filename, ContentFile(pdf_content))
+#                 # Save the PDF in the receipt field
+#                 pdf_filename = (
+#                     f"receipt_{timezone.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+#                 )
+#                 sell.receipt.save(pdf_filename, ContentFile(pdf_content))
 
-                culqi = Culqi()
-                charge_data = culqi.create_charge(
-                    float(total_cost), user_email, token_id, "PEN"
-                )
+#                 culqi = Culqi()
+#                 charge_data = culqi.create_charge(
+#                     float(total_cost), user_email, token_id, "PEN"
+#                 )
 
-                sell.sell_identifier = charge_data["id"]
-                sell.metadata = charge_data
-                sell.save()
+#                 sell.sell_identifier = charge_data["id"]
+#                 sell.metadata = charge_data
+#                 sell.save()
 
-                logger.info(
-                    f"El usuario {user.username} realizó su compra de manera exitosa: ID de compra {sell.id}"
-                )
+#                 logger.info(
+#                     f"El usuario {user.username} realizó su compra de manera exitosa: ID de compra {sell.id}"
+#                 )
 
-            return sell
+#             return sell
 
-        except Exception as error:
-            error_msg = {
-                "message": "Hubo un error al realizar la venta.",
-                "error": str(error),
-            }
-            logger.error(
-                f"El usuario {user.username} tuvo fallas en su compra a las {timezone.now()}. Error: {error}"
-            )
-            raise serializers.ValidationError(error_msg)
+#         except Exception as error:
+#             error_msg = {
+#                 "message": "Hubo un error al realizar la venta.",
+#                 "error": str(error),
+#             }
+#             logger.error(
+#                 f"El usuario {user.username} tuvo fallas en su compra a las {timezone.now()}. Error: {error}"
+#             )
+#             raise serializers.ValidationError(error_msg)
 
 
 class ThreeDSParametersSerializer(serializers.Serializer):
