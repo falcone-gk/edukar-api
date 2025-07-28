@@ -3,10 +3,13 @@ from rest_framework import serializers
 from services.models import Course, Exams
 from store.models import Product, VideoPart
 
+from apps.store.serializers import ProductSerializer
+
 
 class ExamsSerializer(serializers.ModelSerializer):
     # cover = serializers.CharField(source="cover.url")
     university = serializers.SerializerMethodField()
+    source_video_product = ProductSerializer()
 
     class Meta:
         model = Exams

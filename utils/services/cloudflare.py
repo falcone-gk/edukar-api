@@ -60,7 +60,9 @@ class Cloudflare:
             )
             logger.info(f"Se va a subió exitosamente el examen {name}")
         except botocore.exceptions.ClientError as error:
-            logger.warn(f"Hubo un error al subir el examen '{name}'")
+            logger.warn(
+                f"Hubo un error al subir el examen '{name}'. El error es {error}"
+            )
             raise error
 
     def get_video_signed_url(self, video_uid):

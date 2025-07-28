@@ -44,9 +44,19 @@ class Exams(models.Model):
     source_exam = models.CharField(max_length=200)
     source_video_solution = models.URLField(max_length=200, blank=True)
     source_video_solution_premium = models.URLField(max_length=200, blank=True)
-    is_delete = models.BooleanField(null=False, default=False)
 
-    products = models.ManyToManyField(Product, related_name="exams", blank=True)
+    # Este campo es para vincular el examen con el producto de tipo Video.
+    source_video_product = models.ForeignKey(
+        Product,
+        related_name="exams",
+        null=True,
+        blank=True,
+        help_text="Producto de tipo Video",
+        on_delete=models.SET_NULL,
+    )
+
+    is_delete = models.BooleanField(null=False, default=False)
+    # products = models.ManyToManyField(Product, related_name="exams", blank=True)
 
     def clean(self):
         """Validate exam type and area before saving."""

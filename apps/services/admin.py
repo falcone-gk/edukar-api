@@ -27,7 +27,7 @@ class ExamsAdmin(admin.ModelAdmin):
     list_filter = ("university", "type", "area", "year", "is_delete")
     ordering = ("-year", "title")
     prepopulated_fields = {"slug": ("title",)}
-    autocomplete_fields = ("university",)
+    autocomplete_fields = ("university", "source_video_product")
 
     fieldsets = (
         (
@@ -51,20 +51,12 @@ class ExamsAdmin(admin.ModelAdmin):
                 "fields": (
                     "source_exam",
                     "source_video_solution",
-                    "source_video_solution_premium",
+                    "source_video_product",
                 ),
                 "classes": ("collapse",),  # Collapsible section
             },
         ),
-        (
-            "Related Products",
-            {
-                "fields": ("products",),
-            },
-        ),
     )
-
-    filter_horizontal = ("products",)
 
     def save_model(self, request, obj, form, change):
         """Ensure exam type and area are valid before saving."""
