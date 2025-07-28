@@ -79,6 +79,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "items",
             "identifier",
             "comments",
+            "published_at",
         )
 
     def get_items(self, obj):

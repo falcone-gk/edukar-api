@@ -33,6 +33,7 @@ class ProductAdmin(admin.ModelAdmin):
         "type",
         "show",
         "identifier",
+        "published_at",
     )
     list_filter = ("category", "type", "show")
     search_fields = ("name", "slug", "identifier", "category__name")
@@ -54,6 +55,7 @@ class ProductAdmin(admin.ModelAdmin):
                     "type",
                     "source",
                     "show",
+                    "published_at",
                 ),
             },
         ),

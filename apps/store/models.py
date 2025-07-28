@@ -83,6 +83,7 @@ class Product(models.Model):
         force_format="WebP",
         upload_to=product_upload_to,
         null=True,
+        blank=True,
     )
     show = models.BooleanField(default=True)
     # TODO: Propiedad a agregar cuando tengamos productos de stock
@@ -92,6 +93,7 @@ class Product(models.Model):
     identifier = models.CharField(
         max_length=12, unique=True, editable=False, null=True, blank=True
     )
+    published_at = models.DateField(null=True)
 
     @property
     def is_one_time_purchase(self):
