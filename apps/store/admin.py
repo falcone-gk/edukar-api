@@ -22,10 +22,12 @@ class ProductAttributeInline(admin.TabularInline):
 class VideoPartInline(admin.TabularInline):
     model = VideoPart
     extra = 1
+    prepopulated_fields = {"slug": ("title",)}
 
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
+    inlines = [ProductAttributeInline, VideoPartInline]
     list_display = (
         "name",
         "category",
@@ -83,8 +85,6 @@ class ProductAdmin(admin.ModelAdmin):
                 f'<img src="{obj.product_image.url}" width="50" height="50" style="border-radius:5px;" />'
             )
         return "No Image"
-
-    inlines = [ProductAttributeInline, VideoPartInline]
 
 
 @admin.register(Sell)
