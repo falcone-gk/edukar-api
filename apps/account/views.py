@@ -9,7 +9,6 @@ from forum.models import Post
 from forum.permissions import IsAuthorOrReadOnly
 from forum.serializers import PostResumeSerializer
 from rest_framework import generics, mixins, status, views, viewsets
-from rest_framework.authtoken.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from store.models import Category, Sell
@@ -18,7 +17,6 @@ from store.serializers import PrivateProductSerializer, SellSerializer
 from helpers.choices import SellStatus
 
 
-# Create your views here.
 class UserByTokenAPIView(views.APIView):
     permission_classes = (IsAuthenticated,)
 
@@ -90,7 +88,7 @@ class UpdateUserProfileAPIView(generics.UpdateAPIView):
         return response
 
 
-class UserProductsView(APIView):
+class UserProductsView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -117,7 +115,7 @@ class UserProductsView(APIView):
         return Response(serializer.data)
 
 
-class UserPurchasesView(APIView):
+class UserPurchasesView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     # TODO: Agregar test que verifique el filtro de compras

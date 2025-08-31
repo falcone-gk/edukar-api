@@ -11,7 +11,7 @@ router.register(r"sells", views.StartSellView, basename="sell")
 urlpatterns = [
     path("", include(router.urls)),
     path(
-        "cart/check-product",
+        "cart/check-product/",
         views.CheckProductPurchaseView.as_view(),
         name="cart-check-product",
     ),
@@ -27,12 +27,14 @@ urlpatterns = [
     #     name="send_invoice_email",
     # ),
     path(
-        "document/download/<slug:slug>",
+        "document/download/<slug:slug>/",
         views.DownloadProductDocumentView.as_view(),
         name="download-document",
     ),
     path(
-        "lreclamaciones", views.ClaimCreateView.as_view(), name="lreclamaciones"
+        "lreclamaciones/",
+        views.ClaimCreateView.as_view(),
+        name="lreclamaciones",
     ),
     # path("invoice/<int:sell_id>/", views.view_invoice, name="view_invoice"),
 ]
