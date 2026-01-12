@@ -945,6 +945,10 @@ class TestUserPurchasesView(BaseSetup):
         )
         self.purchase2.products.add(self.product2)
 
+        self.purchase3 = Sell.objects.create(
+            user=self.user, total_cost=200, status=SellStatus.PENDING
+        )
+
         # Create purchase for another user
         self.other_purchase = Sell.objects.create(
             user=self.user2, total_cost=300, status=SellStatus.FINISHED
@@ -958,13 +962,8 @@ class TestUserPurchasesView(BaseSetup):
         data = json.loads(response.content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Solo debe haber dos porque la tercera compra está pendiente
         self.assertEqual(len(data), 2)
-        # Verify only the current user's purchases are returned
-        # TODO: Revisar la estructura de la data que retorna el endpoint
-        # purchase_ids = [p["products"][0]["id"] for p in data]
-        # self.assertIn(self.purchase1.id, purchase_ids)
-        # self.assertIn(self.purchase2.id, purchase_ids)
-        # self.assertNotIn(self.other_purchase.id, purchase_ids)
 
     def test_get_user_purchases_unauthenticated(self):
         """Test unauthenticated access is denied"""
