@@ -252,6 +252,16 @@ else:
             },
         },
         "loggers": {
+            "django.security.DisallowedHost": {
+                "handlers": ["file", "console"],
+                "level": "ERROR",
+                "propagate": False,
+            },
+            "django.request": {
+                "handlers": ["file", "console"],
+                "level": "ERROR",
+                "propagate": False,
+            },
             "": {
                 "handlers": ["file", "console"],
                 "level": "DEBUG",
