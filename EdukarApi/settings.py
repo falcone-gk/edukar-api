@@ -199,7 +199,10 @@ if not DEBUG:
 HUEY = {
     "huey_class": "huey.RedisHuey",  # Huey implementation to use.
     "name": DATABASES["default"]["NAME"],  # Use db name for huey.
-    "immediate": DEBUG,  # If DEBUG=True, run synchronously.
+    "immediate": env(
+        "HUEY_IMMEDIATE",
+        default=False,  # If False, run synchronously.
+    ),
     "connection": {
         "host": env("REDIS_HOST"),
         "port": 6379,
